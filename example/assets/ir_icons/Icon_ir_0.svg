@@ -1,0 +1,18 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107.69 122.4">
+  <title>Icon-robot-2</title>
+  <g id="Layer_2" data-name="Layer 2">
+    <g id="Layer_2-2" data-name="Layer 2-2">
+      <line x1="56.99" y1="36.29" x2="56.99" y2="17.15" style="fill: none"/>
+      <rect x="32.54" y="17.15" width="28.85" height="19.15" style="fill: #455a64"/>
+      <rect x="22.08" y="38.08" width="20.66" height="56.8" transform="matrix(0.95, -0.32, 0.32, 0.95, -19.63, 13.93)" style="fill: #455a64"/>
+      <polygon points="107.69 39.47 101.38 30.66 87.94 40.3 72 28.41 65.52 37.09 87.78 53.7 87.8 53.72 107.69 39.47" style="fill: #455a64"/>
+      <polygon points="107.69 14.25 101.38 23.05 87.94 13.42 72 25.31 65.52 16.63 87.78 0.02 87.8 0 107.69 14.25" style="fill: #455a64"/>
+      <path d="M13.11,109.55h81.6a7,7,0,0,1,7,7v5.85H6.11v-5.85A7,7,0,0,1,13.11,109.55Z" style="fill: #455a64"/>
+      <path d="M73.18,10.83v32H65a8,8,0,0,1-8-8v-16a8,8,0,0,1,8-8Z" style="fill: #ffc107"/>
+      <circle cx="18.88" cy="26.83" r="18.88" style="fill: #ffc107"/>
+      <circle cx="18.88" cy="26.83" r="6.2" style="fill: #455a64"/>
+      <path d="M15.28,109.55,33.62,82.47a3,3,0,0,1,2.49-1.32h9.38A3,3,0,0,1,48,82.44l18.7,27.11Z" style="fill: #ffc107"/>
+      <circle cx="41.12" cy="93.93" r="6.11" style="fill: #455a64"/>
+    </g>
+  </g>
+</svg>
