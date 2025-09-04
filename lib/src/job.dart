@@ -1,4 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:csv/csv.dart';
+import 'package:flutter/foundation.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:job_entry/styles/savedWidgets.dart';
@@ -7,6 +14,10 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:job_entry/src/database/database.dart';
 import 'package:job_entry/src/functions/lsi_functions.dart';
 import 'package:multi_dropdown/multiselect_dropdown.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 enum SelectedView{detail, list}
 enum SelectedSubView{assemblies, materials, workers, notes}
@@ -45,6 +56,9 @@ class _JobScreenState extends State<JobScreen> {
   bool save = false;
   bool delete = false;
   bool showDetailView = true;
+  bool isTemplate = false;
+
+  List<List<dynamic>> listDataToExport = [];
 
   Timer? saveTimer;
   Timer? deleteTimer;
@@ -95,6 +109,7 @@ class _JobScreenState extends State<JobScreen> {
             'status': 'Not Started',
             'part': 'part1',
             'qty': '10',
+            'template': true,
             'reqDate': DateTime.now().add(Duration(days: 14)).toString(),
             'assemblies': ['job2', 'job3'],
             'materials': {},
@@ -118,6 +133,7 @@ class _JobScreenState extends State<JobScreen> {
             'status': 'In Progress',
             'part': 'part2',
             'qty': '5',
+            'template': false,
             'startDate': DateTime.now().subtract(Duration(days: 7)).toString(),
             'reqDate': DateTime.now().add(Duration(days: 7)).toString(),
             'assemblies': [],
@@ -131,6 +147,7 @@ class _JobScreenState extends State<JobScreen> {
             'status': 'Complete',
             'part': 'part3',
             'qty': '20',
+            'template': false,
             'quality': 'Fair',
             'startDate': DateTime.now().subtract(Duration(days: 14)).toString(),
             'reqDate': DateTime.now().subtract(Duration(days: 7)).toString(),
@@ -277,7 +294,31 @@ class _JobScreenState extends State<JobScreen> {
 
       isJobNew = false;
       isArchived = job['archived'] ?? false;
+      isTemplate = job['template'] ?? false;
 
+      setState(() {});
+    }
+  }
+
+  void autofillDetailFields() {
+    if(selectedJobKey.isNotEmpty && jobs.containsKey(selectedJobKey)){
+      var job = jobs[selectedJobKey];
+      _searchbarController.text = '';
+      _detailsController[0].text = 'Not Started';
+      _detailsController[1].text = job['part'] ?? '';
+      _detailsController[2].text = job['qty'] ?? '';
+      _detailsController[3].text = job['quality'] ?? '';
+
+      jobs[selectedJobKey]['notes'] = {};
+
+      dates[0] = null;
+      dates[1] = null;
+      dates[2] = null;
+
+      isJobNew = true;
+      isArchived = false;
+      isTemplate = false;
+      
       setState(() {});
     }
   }
@@ -287,19 +328,154 @@ class _JobScreenState extends State<JobScreen> {
     for (var controller in _detailsController) {
       controller.clear();
     }
-
+    
     isJobNew = true;
     isArchived = false;
     selectedJobKey = '';
+    isTemplate = false;
     setState(() {});
   }
 
-  void errorMessage(String message) {
+  void addLineToExportList(bool isHeader, String name, String part, String qty, String quality, String reqDate, String status) {
+    List<dynamic> data = [];
+
+    data.add(name);
+    data.add(part);
+    data.add(qty);
+    data.add(quality);
+    data.add(reqDate);
+    data.add(status);
+
+    if (isHeader) {
+      listDataToExport.insert(0, data);
+    } else {
+      listDataToExport.add(data);
+    }
+  }
+
+  dynamic createCsvString() {
+    dynamic csvString;
+    csvString = ListToCsvConverter().convert(listDataToExport);
+    return csvString;
+  }
+
+  Future<Uint8List> generatePdf() async {
+    final pdf = pw.Document();
+    
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return [
+            pw.Column(
+              children: [ 
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text("${DateTime.now().month}/${DateTime.now().day}/${DateTime.now().year}"),
+                  ]
+                )
+              ]
+            ),
+            pw.SizedBox(height: 40),
+            pw.Container(
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Expanded(child: pw.Container(child: 
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start, 
+                      children: [
+                        pw.Text("Job name: "),
+                        pw.Text("Workers: "),
+                      ]
+                    ))),
+                  pw.Container(height: 40),
+                  pw.Expanded(child: pw.Container(child: 
+                    pw.Column( 
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text("Start Date: __/__/____"),
+                        pw.Text("Finish Date: __/__/____"),
+                        pw.Text("Required By: __/__/____"),
+                      ]
+                    )
+                  )),
+                ]
+              )
+            ),
+            pw.SizedBox(height: 40),
+          ];
+        },
+      ),
+    );
+
+    return await pdf.save();
+  }
+
+  // single job export
+  Future<void> exportJobInfo(BuildContext context, String filename) async {
+    if (selectedJobKey == '' || isJobNew) {
+      // should we error message or save a template version of the single job PDF?
+      errorMessage('Job Not Saved', 'Please save the job before attempting to export.');
+    } else {
+      final bytes = await generatePdf();
+
+      if (kIsWeb) {
+        await FileSaver.instance.saveFile(
+          name: filename,
+          bytes: bytes,
+          fileExtension: 'pdf',
+          mimeType: MimeType.pdf,
+        );
+      } else {
+        var status = await Permission.storage.request();
+        if (status.isGranted) {
+          final directory = await getExternalStorageDirectory();
+          if (directory != null) {
+            final path = '${directory.path}/$filename.pdf';
+            final file = File(path);
+            await file.writeAsBytes(bytes);
+          }
+        } else {
+          errorMessage('Permission Denied', 'Storage permission denied.');
+        }
+      }
+    }
+  }
+
+  // auto download the csvString as a csv file
+  Future<void> exportCsv(String csvContent, String filename) async {
+    Uint8List bytes = Uint8List.fromList(utf8.encode(csvContent));
+    
+    if (kIsWeb) {
+      await FileSaver.instance.saveFile(
+        name: filename,
+        bytes: bytes,
+        fileExtension: 'csv',
+        mimeType: MimeType.csv,
+      );
+    } else {
+      var status = await Permission.storage.request();
+      if (status.isGranted) {
+        final directory = await getExternalStorageDirectory();
+        if (directory != null) {
+          final path = '${directory.path}/$filename.csv';
+          final file = File(path);
+          await file.writeAsBytes(bytes);
+        }
+      } else {
+        errorMessage('Permission Denied', 'Storage permission denied.');
+      }
+    }
+  }
+
+  void errorMessage(String title, String message) {
     showDialog(context: context, builder: (BuildContext context) {
       return AlertDialog(
         backgroundColor: CSS.lighten(Theme.of(context).canvasColor, 0.06),
         title: Text(
-          'Missing Fields',
+          title,
           style: TextStyle(
             color: Theme.of(context).primaryTextTheme.bodyMedium!.color,
             fontFamily: 'Klavika',
@@ -555,19 +731,19 @@ class _JobScreenState extends State<JobScreen> {
                       text: 'submit',
                       onTap: () {
                         if(screen == 'assemblies' && _subsController[0].text.isEmpty){
-                          errorMessage('Please select a job to add as an assembly');
+                          errorMessage('Missing Fields', 'Please select a job to add as an assembly');
                           return;
                         }
                         if(screen == 'materials' && (_subsController[0].text.isEmpty || _subsController[1].text.isEmpty)){
-                          errorMessage('Please select an item andenter a quantity');
+                          errorMessage('Missing Fields', 'Please select an item and enter a quantity');
                           return;
                         }
                         if(screen == 'workers' && _subsController[0].text.isEmpty){
-                          errorMessage('Please select a worker');
+                          errorMessage('Missing Fields', 'Please select a worker');
                           return;
                         }
                         if(screen == 'notes' && _subsController[0].text.isEmpty){
-                          errorMessage('Please enter a note');
+                          errorMessage('Missing Fields', 'Please enter a note');
                           return;
                         }
 
@@ -1152,12 +1328,12 @@ class _JobScreenState extends State<JobScreen> {
               alignment: WrapAlignment.start,
               children: [
                 Container( 
-                  width: 320,
+                  width: 365,
                   decoration: BoxDecoration(
                     color: Theme.of(context).canvasColor,
                     borderRadius: BorderRadius.circular(10)
                   ),
-                  padding: EdgeInsets.all(5),
+                  padding: EdgeInsets.all(10),
                   margin: EdgeInsets.fromLTRB(10, 5, 10, 5),
                   child: Column(
                     children: [
@@ -1209,7 +1385,7 @@ class _JobScreenState extends State<JobScreen> {
                               child: Container(
                                 width: 40,
                                 height: 30,
-                                margin: EdgeInsets.all(10),
+                                margin: EdgeInsets.all(1),
                                 padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
@@ -1218,6 +1394,31 @@ class _JobScreenState extends State<JobScreen> {
                                 ),
                                 child: Icon(
                                   Icons.refresh,
+                                  color: Theme.of(context).primaryColorLight,
+                                  size: 20
+                                )
+                              )
+                            )
+                          ),
+                          // To export only a single job's information
+                          FocusedInkWell (
+                            onTap: () {
+                              exportJobInfo(context, _searchbarController.text);
+                            },
+                            child: Tooltip(
+                              message: 'Export',
+                              child: Container(
+                                width: 40,
+                                height: 30,
+                                margin: EdgeInsets.all(5),
+                                padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).primaryColorDark,
+                                  borderRadius: BorderRadius.circular(5)
+                                ),
+                                child: Icon(
+                                  Icons.download,
                                   color: Theme.of(context).primaryColorLight,
                                   size: 20
                                 )
@@ -1364,7 +1565,42 @@ class _JobScreenState extends State<JobScreen> {
                             }
                           ),
                         ]
-                      )
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 150,
+                            child: Text(
+                              "Set as Template:",
+                              style: TextStyle(
+                                color: Theme.of(context).primaryTextTheme.bodyMedium!.color,
+                                fontFamily: 'Klavika',
+                                package: 'css',
+                                fontSize: 20,
+                                decoration: TextDecoration.none
+                              )
+                            )
+                          ),
+                          Tooltip(
+                            message: 'Set as template',
+                            child: Checkbox(
+                              value: isTemplate,
+                              activeColor: Theme.of(context).primaryColorDark,
+                              checkColor: Theme.of(context).primaryColorLight,
+                              side: BorderSide(
+                                color: Theme.of(context).primaryColorDark,
+                                width: 2
+                              ),
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  isTemplate = value!;
+                                });
+                              }
+                            )
+                          ),
+                        ]
+                      ),
                     ],
                   )
                 ),
@@ -1541,7 +1777,7 @@ class _JobScreenState extends State<JobScreen> {
                   onTap: () async {
                     if(!isArchived){
                       if(_detailsController[0].text.isEmpty || _detailsController[2].text.isEmpty || _detailsController[3].text.isEmpty || _searchbarController.text.isEmpty){
-                        errorMessage('Please fill out the following fields: ${_detailsController[0].text.isEmpty?'\nQty Produced': ''}${_detailsController[2].text.isEmpty?'\nQuality': ''}${_detailsController[3].text.isEmpty?'\nName': ''}');
+                        errorMessage('Missing Fields', 'Please fill out the following fields: ${_detailsController[0].text.isEmpty?'\nQty Produced': ''}${_detailsController[2].text.isEmpty?'\nQuality': ''}${_detailsController[3].text.isEmpty?'\nName': ''}');
                         return;
                       }
 
@@ -1622,7 +1858,8 @@ class _JobScreenState extends State<JobScreen> {
     double diff = deviceWidth-minSize;
     double size = diff>0?minSize+diff:minSize;
     
-    Widget row(String key, String name, String part, String qty, String quality, String reqDate, String status, bool archived, bool legend) {
+    Widget row(bool isHeader, String key, String name, String part, String qty, String quality, String reqDate, String status, String template, bool archived, bool legend) {
+      addLineToExportList(isHeader, name, part, qty, quality, reqDate, status);
       try{
         return InkWell( 
           onTap: () {
@@ -1751,6 +1988,32 @@ class _JobScreenState extends State<JobScreen> {
                     style: Theme.of(context).primaryTextTheme.bodySmall,
                   )
                 ),
+                InkWell( 
+                  onTap: () {
+                     setState(() {
+                      selectedJobKey = key;
+                      selectedView = SelectedView.detail;
+                    },);
+                    autofillDetailFields();
+                  }, 
+                  child: Container(
+                    width: 120,
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(
+                          color: Theme.of(context).canvasColor,
+                          width: 2
+                        ) 
+                      )
+                    ),
+                    child: Text(
+                      template,
+                      style: Theme.of(context).primaryTextTheme.bodySmall,
+                    )
+                  )
+                ),
               ],
             ),
           )
@@ -1767,6 +2030,7 @@ class _JobScreenState extends State<JobScreen> {
       for (String key in jobs.keys) {
         rows.add(
           row(
+            false,
             key,
             jobs[key]['name'] ?? '',
             jobs[key]['part']==null?'':parts[jobs[key]['part']]['name'] ?? '',
@@ -1774,6 +2038,7 @@ class _JobScreenState extends State<JobScreen> {
             jobs[key]['quality'] ?? '',
             jobs[key]['reqDate'] ?? '-',
             jobs[key]['status'] ?? 'Not Started',
+            jobs[key]['template'] ? 'Use Template' : '',
             jobs[key]['archived'] ?? false,
             false
           )
@@ -1788,28 +2053,40 @@ class _JobScreenState extends State<JobScreen> {
       height: deviceHeight - 40,
       width: deviceWidth,
       color: Theme.of(context).cardColor,
-      child: SingleChildScrollView (
-        child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Column (
-          children: [
-          const SizedBox(
-            height: 10.0,
+      child: Stack(children: [
+          LSIFloatingActionButton(
+            allowed: true,
+            alignment: Alignment.bottomRight,
+            message: 'Export',
+            onTap: () {
+              exportCsv(createCsvString(), 'all_jobs');
+            },
+            color: Theme.of(context).secondaryHeaderColor,
+            icon: Icons.download,
           ),
-          row( 
-            '',
-            'Name',
-            'Part', 
-            'Qty',
-            'Quality',
-            'Req Date',
-            'Status',
-            false,
-            true
-          )
-        ] + rows,
-      )))
-    );
+          SingleChildScrollView (
+            child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Column (
+              children: [
+              const SizedBox(
+                height: 10.0,
+              ),
+              row(
+                true, 
+                '',
+                'Name',
+                'Part', 
+                'Qty',
+                'Quality',
+                'Req Date',
+                'Status',
+                'Template',
+                false,
+                true
+              )
+            ] + rows,)))
+      ]));
   }
 
   @override
