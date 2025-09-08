@@ -1,4 +1,3 @@
-// ignore: file_names
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:list_english_words/list_english_words.dart';

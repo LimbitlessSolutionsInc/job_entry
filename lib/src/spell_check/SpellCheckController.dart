@@ -1,6 +1,5 @@
-// ignore: file_names
 import 'package:flutter/material.dart';
-import 'spellCheckerData.dart';
+import 'SpellCheckerData.dart';
 
 class SpellCheckController extends TextEditingController {
 
