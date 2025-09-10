@@ -7,6 +7,7 @@ class ProjectData {
     this.department,
     required this.id,
     this.dueDate,
+    this.isQualityCheck = false,
   });
 
   final int color;
@@ -16,4 +17,5 @@ class ProjectData {
   final String createdBy;
   final String? department;
   final String id;
+  bool isQualityCheck;
 }

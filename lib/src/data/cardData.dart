@@ -14,13 +14,21 @@ class CardData {
     this.checkList,
     this.comments,
     this.boardId,
-    this.labels
+    this.labels,
+    this.isRouter = false,
+    this.completedDate,
+    this.status,
+    this.good,
+    this.bad,
+    this.isApproved,
+    this.isArchive,
+    this.routers,
   });
 
   String? title;
-  final String? dateCreated;
-  final String? createdBy;
-  final String? id;
+  String? dateCreated;
+  String? createdBy;
+  String? id;
   Map<String,dynamic>? comments;
   Map<String,dynamic>? checkList;
   List<String>? assigned;
@@ -32,4 +40,12 @@ class CardData {
   int? priority;
   String? level;
   Map<String,dynamic>? labels;
+  bool isRouter;
+  String? completedDate;
+  String? status;
+  int? good;
+  int? bad;
+  bool? isApproved;
+  bool? isArchive; // if archieved, should be added to the list of assembilies of this router
+  List<CardData>? routers; // list of assembilies for job packet
 }
