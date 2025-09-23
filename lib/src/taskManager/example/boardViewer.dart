@@ -1,7 +1,3 @@
-// TODO:
-// should have router card, fill in task card, have timeline modal (complete timeline of assemblies),
-// should be the only one that needs database for task card data
-
 import 'dart:async';
 
 import 'package:firebase_database/firebase_database.dart';
@@ -18,6 +14,9 @@ import '../../../styles/globals.dart';
 
 import '../../database/push.dart';
 import '../../database/database.dart';
+
+// TODO: should have router card + fill in task card
+// TODO: have timeline modal (complete timeline of assemblies)
 
 class BoardViewer extends StatefulWidget {
   const BoardViewer({

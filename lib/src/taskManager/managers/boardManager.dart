@@ -1,5 +1,3 @@
-// don't forget to add when routers move boards 
-// they add on to the list of assembilies
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../spell_check/SpellChecker.dart';
@@ -11,6 +9,8 @@ import '../../../../../src/functions/lsi_functions.dart';
 import '../../task_master.dart';
 import '../example/taskCard.dart';
 import '../example/taskWidgets.dart';
+
+// TODO: when routers move boards they add on to the list of assembilies
 
 class BoardManager extends StatefulWidget {
   const BoardManager({

@@ -4,6 +4,8 @@ import 'package:job_entry/src/taskManager/example/taskCard.dart';
 import 'package:job_entry/src/taskManager/example/boardViewer.dart';
 import 'package:job_entry/styles/globals.dart';
 
+// TODO: Test with testing user, make router and task project
+
 class RouterScreen extends StatefulWidget {
   RouterScreen({
     super.key,
