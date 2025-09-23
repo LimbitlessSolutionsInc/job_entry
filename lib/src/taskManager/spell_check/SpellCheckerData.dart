@@ -78,7 +78,6 @@ class SpellData {
   // }
 
   void recursiveWalk(Node node){
-    if(node == null) return;
     for(Node cNode in node.edges.values) {
       recursiveWalk(cNode);
     }

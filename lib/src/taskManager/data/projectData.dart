@@ -17,5 +17,5 @@ class ProjectData {
   final String createdBy;
   final String? department;
   final String id;
-  bool isQualityCheck;
+  bool isQualityCheck; // if false, is just a task project
 }

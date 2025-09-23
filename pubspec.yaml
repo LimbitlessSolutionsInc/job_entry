@@ -30,10 +30,12 @@ dependencies:
   pdf: ^3.7.4
   universal_html: ^2.2.4
   list_english_words: 0.2.0
+  flutter_colorpicker: ^1.0.3
 
   css:
     git:
       url: https://github.com/LimbitlessSolutionsInc/css.git
+  http: ^1.5.0
 
 dev_dependencies:
   flutter_test:

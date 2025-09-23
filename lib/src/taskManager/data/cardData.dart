@@ -11,6 +11,7 @@ class CardData {
     this.points,
     this.assigned = const [],
     this.editors = const [],
+    this.approvers = const[],
     this.checkList,
     this.comments,
     this.boardId,
@@ -33,6 +34,7 @@ class CardData {
   Map<String,dynamic>? checkList;
   List<String>? assigned;
   List<String> editors;
+  List<String>? approvers;
   int? points;
   String? dueDate;
   String? description;
@@ -46,6 +48,6 @@ class CardData {
   int? good;
   int? bad;
   bool? isApproved;
-  bool? isArchive; // if archieved, should be added to the list of assembilies of this router
+  bool? isArchive; // if archived, should be added to the list of assembilies of this router
   List<CardData>? routers; // list of assembilies for job packet
 }

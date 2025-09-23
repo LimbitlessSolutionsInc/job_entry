@@ -19,7 +19,7 @@ class SpellCheckController extends TextEditingController {
     final TextStyle composingStyle = style!.merge(
       const TextStyle(decoration: TextDecoration.underline),
     );
-    final TextStyle errorStyle = style.merge(
+    style.merge(
       const TextStyle(decoration: TextDecoration.underline, color: Colors.red),
     );
     

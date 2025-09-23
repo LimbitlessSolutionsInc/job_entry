@@ -3,9 +3,33 @@ library my_prj.globals;
 import 'dart:io';
 import 'package:css/css.dart';
 import 'package:flutter/material.dart';
+import '../src/organization/organization.dart';
+import '../src/access/access_credentials.dart';
+import '../src/access/auth_client.dart';
 export 'package:css/css.dart';
 
+
 typedef HomeCallback = void Function({required LSICallbacks call, AppScreens? place, Map<String,dynamic>? info});
+
+class UsersProfile{
+  UsersProfile({
+    required this.imageUrl,
+    required this.uid,
+    required this.displayName,
+    this.credentials,
+    this.status = OrgStatus.assistant,
+    this.client,
+    this.canRemoteWork = false
+  });
+
+  OrgStatus status;
+  String? imageUrl;
+  String uid;
+  String displayName;
+  AccessCredentials? credentials;
+  AuthClient? client;
+  bool canRemoteWork;
+}
 
 enum LSICallbacks{
   Reset,
@@ -130,6 +154,9 @@ dynamic classSchedules;
 dynamic cohortSchedules;
 
 dynamic patients = {};
+
+late UsersProfile currentUser;
+late UsersProfile clickedUser;
 
 Size navSize = const Size(55,95);
 double appBarHeight = 50;

@@ -1,8 +1,7 @@
-import 'package:css/css.dart';
 import 'package:flutter/material.dart';
 import '../data/cardData.dart';
 import 'taskWidgets.dart';
-import '../../styles/savedWidgets.dart';
+import '../../../styles/savedWidgets.dart';
 
 /// Creates task cards with given information
 class TaskCard extends StatelessWidget {

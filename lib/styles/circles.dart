@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:css/css.dart';
+import '../src/time/time.dart';
 
 class Circle{
   Circle({
@@ -10,6 +11,165 @@ class Circle{
 
   List<Path> paths;
   Widget widget;
+}
+
+class TimeTracking{
+  static double sweepConversion({bool isInMinutes = true, required dynamic times}){
+    if(isInMinutes){
+      return -0.226*(times)+311;
+    }
+    else{
+      return -0.226*(Time.convertTimeToMinutes(times))+311;
+    }
+  }
+  static Widget labels({
+    bool visible = true, 
+    required BuildContext context,
+    EdgeInsets margin = const EdgeInsets.all(5),
+    Function()? onTap,
+    required Widget child,
+    bool show = true,
+    required double height,
+    required double width
+  }){
+    return (show)?Align(  
+      alignment: Alignment.topRight,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          margin: margin,
+          height: height,
+          width: width,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.all(Radius.circular(5)),
+            border: Border.all(
+              width: 1,
+              color: (visible)?Theme.of(context).secondaryHeaderColor:(Theme.of(context).brightness == Brightness.dark)?lightGrey:darkGrey
+            ),
+            color: (visible)?const Color(0x99000000):Colors.transparent,//Theme.of(context).cardColor,
+          ),
+          child: child,
+        )
+      )
+    ):Container();
+  }
+
+  static Circle hover({
+    Color color = lightGrey, 
+    required double width, 
+    double spacing = 0.1,
+    int incriments = 1,
+    double percentage = 1, 
+    required double deg, 
+    required double sweep,
+    required double size,
+    Alignment alignment = Alignment.topRight,
+    Offset? offset,
+  }){
+    offset = offset ?? Offset(-(size/2.8)/2,(size/2.8)/2);
+
+    OpenPainter cc = OpenPainter(
+      color: color,
+      innerRadius: width,
+      outerRadius: width/(1+spacing),
+      total: incriments,
+      useStroke: (incriments == 1)?false:true,
+      percentage: percentage,
+      startAngle: deg,
+      sweepAngle: sweep,
+      setOffset: offset,
+    );
+
+    return Circle(
+      paths: cc.paths,
+      widget: ClipRect(
+        child: Align(
+          alignment: alignment,
+          child:Container(
+            //color: Colors.red,
+            width: size,
+            height: size,
+            alignment: alignment,
+            child: CustomPaint(
+              painter: cc,
+            ),
+          )
+        )
+      )
+    );
+  }
+
+  static Widget timeCircles({
+    Color color = lightGrey, 
+    required double width, 
+    double spacing = 0.1,
+    int incriments = 1,
+    double percentage = 1, 
+    required double deg, 
+    required double sweep,
+    required double size,
+    Alignment alignment = Alignment.topRight,
+    Offset? offset,
+  }){
+    offset = offset ?? Offset(-(size/2.8)/2,(size/2.8)/2);
+
+    return ClipRect(
+      child: Align(
+        alignment: alignment,
+        child:Container(
+          //color: Colors.red,
+          width: size,
+          height: size,
+          alignment: alignment,
+          child: CustomPaint(
+            painter: OpenPainter(
+              color: color,
+              innerRadius: width,
+              outerRadius: width/(1+spacing),
+              total: incriments,
+              useStroke: (incriments == 1)?false:true,
+              percentage: percentage,
+              startAngle: deg,
+              sweepAngle: sweep,
+              setOffset: offset,
+            ),
+          ),
+        )
+      )
+    );
+  }
+
+  static Widget textLocation({
+    required EdgeInsets margin, 
+    required String title,
+    String fontFamily = 'Klavika',
+    Color fontColor = Colors.black,
+    double  fontSize = 16
+  }){
+    
+    // if(title){
+    //   fontFamily = 'Klavika Bold';
+    //   fontColor = darkGrey;
+    // }
+
+    return Align(
+      alignment: Alignment.topRight,
+      child: 
+      Container(
+        margin: margin,
+        child:Text(
+          title,
+          style: TextStyle(
+            color: fontColor,
+            fontFamily: fontFamily,
+            package: fontFamily.contains('Klavika') || fontFamily.contains('Museo')?'css':null,
+            fontSize: fontSize
+          ),
+        ),
+      )
+    );
+  }
 }
 
 class OpenPainter extends CustomPainter {

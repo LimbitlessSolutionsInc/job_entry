@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:job_entry/src/data/cardData.dart';
-import 'package:job_entry/src/example/taskCard.dart';
+import 'package:job_entry/src/taskManager/data/cardData.dart';
+import 'package:job_entry/src/taskManager/example/taskCard.dart';
+import 'package:job_entry/src/taskManager/example/boardViewer.dart';
 import 'package:job_entry/styles/globals.dart';
 
 class RouterScreen extends StatefulWidget {
@@ -40,19 +41,18 @@ class _RouterScreenState extends State<RouterScreen> {
       if(testing){
         CardData test1 = CardData(
           title: "Task 1",
-          dateCreated: DateTime.now().toString(),
+          dateCreated: "09/09",
           createdBy: "User 1",
-          dueDate: DateTime.now().toString(),
           points: 0,
         );
         list?.add(test1);
         CardData test2 = CardData(
           title: "Router 1",
           status: "In progress", 
-          dateCreated: DateTime.now().toString(),
-          dueDate: DateTime.now().toString(),
+          dateCreated: "09/09",
+          dueDate: "09/11",
           isRouter: true,
-          completedDate: "9/9/2025", 
+          completedDate: "09/10", 
           points: 0,
           good: 140, 
           bad: 10, 
@@ -76,7 +76,7 @@ class _RouterScreenState extends State<RouterScreen> {
     deviceWidth = currentSize.width;
 
     return Scaffold(
-      body: Stack(
+      body: Row(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +109,19 @@ class _RouterScreenState extends State<RouterScreen> {
                 child: TaskCard(cardData: list!.last, height: 10, width: 70, context: context)
               )
             ],
-          )]
+          ),
+          // Column(
+          //   crossAxisAlignment: CrossAxisAlignment.start,
+          //   children: [
+          //     BoardViewer(
+          //       project: 'Box', 
+          //       department: 'Quality', 
+          //       width: 250, 
+          //       height: 500, 
+          //       color: 0)
+          //   ]
+          // )
+          ]
       )
     );
   }

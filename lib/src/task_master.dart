@@ -1,5 +1,5 @@
-export 'managers/boardManager.dart';
-export 'managers/projectManager.dart';
-export 'data/projectData.dart';
-export 'data/boardData.dart';
-export 'data/cardData.dart';
+export 'taskManager/managers/boardManager.dart';
+export 'taskManager/managers/projectManager.dart';
+export 'taskManager/data/projectData.dart';
+export 'taskManager/data/boardData.dart';
+export 'taskManager/data/cardData.dart';
