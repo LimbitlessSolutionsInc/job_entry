@@ -5,6 +5,7 @@ import 'package:job_entry/src/taskManager/example/boardViewer.dart';
 import 'package:job_entry/styles/globals.dart';
 
 // TODO: Test with testing user, make router and task project
+// TODO: make the library only need the current user as input?
 
 class RouterScreen extends StatefulWidget {
   RouterScreen({

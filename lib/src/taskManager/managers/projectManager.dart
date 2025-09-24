@@ -524,7 +524,7 @@ class _ProjectManagerState extends State<ProjectManager> {
         );
         if (picked != null && picked != selectedDate) {
           setState(() {
-            var formatter = DateFormat('MM-dd-y');
+            var formatter = DateFormat('MM-dd-yy');
             assignedDate = formatter.format(picked);
             selectedDate = picked;
           });
@@ -612,7 +612,7 @@ class _ProjectManagerState extends State<ProjectManager> {
                           child: SizedBox(
                             child: Text(
                               (assignedDate == '')
-                                  ? DateFormat('MM-dd-y').format(DateTime.now())
+                                  ? DateFormat('MM-dd-yy').format(DateTime.now())
                                   : assignedDate,
                               style: TextStyle(
                                   color: Theme.of(context)

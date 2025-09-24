@@ -193,6 +193,22 @@ class _BoardViewerState extends State<BoardViewer> {
     return allowed;
   }
 
+  // mainly for quality team view only permissions
+  bool allowView() {
+    bool allowed = false;
+    // double check this is the right string
+    if (userData['orgData']['department'] == 'Quality') {
+      currentBoardData.forEach((key, value) {
+        // assumes that every board is an assembly board if the first one is
+        if (value.isAssembly && fbLoc != 'Ind') {
+          allowed = true;
+        }
+      });
+      return allowed;
+    }
+    return allowed;
+  }
+
   Map<String,BoardData> boardData(dynamic projectBoardData) {
     Map<String,BoardData> data = {};
     if (projectBoardData != null) {
@@ -202,6 +218,10 @@ class _BoardViewerState extends State<BoardViewer> {
           title: projectBoardData[key]['title'],
           createdBy: projectBoardData[key]['createdBy'],
           dateCreated: projectBoardData[key]['dateCreated'],
+          isAssembly: projectBoardData[key]['isAssembly'],
+          isArchive: (projectBoardData[key]['isArchive'] == null)
+              ? false
+              : projectBoardData[key]['isArchive'],
           priority: projectBoardData[key]['priority'],
           color: color,
           notify: (projectBoardData[key]['notify'] == null)
@@ -213,6 +233,7 @@ class _BoardViewerState extends State<BoardViewer> {
     return data;
   }
 
+  // edit this to include the new vars added
   Map<String,CardData> cardData(dynamic projectCardData) {
     Map<String,CardData> data = {};
     if (projectCardData != null) {
@@ -251,6 +272,20 @@ class _BoardViewerState extends State<BoardViewer> {
           }
         }
 
+        List<String> approvers = [];
+        if(projectCardData[key]['data']['approvers'] != null){
+          for(int i = 0; i < projectCardData[key]['data']['approvers'].length;i++){
+            approvers.add(projectCardData[key]['data']['approvers'][i]);
+          }
+        }
+
+        List<CardData> routers = [];
+        if(projectCardData[key]['data']['routers'] != null){
+          for(int i = 0; i < projectCardData[key]['data']['routers'].length;i++){
+            routers.add(projectCardData[key]['data']['routers'][i]);
+          }
+        }
+
         data[key] = CardData(
           id: key,
           title: projectCardData[key]['data']['title'],
@@ -262,11 +297,14 @@ class _BoardViewerState extends State<BoardViewer> {
           points: projectCardData[key]['data']?['points'] ?? 0,
           assigned: assigned,
           editors: editors,
+          approvers: approvers,
           checkList: LSIFunctions.getFromData(projectCardData[key]['data']['subTasks'], 'st_'),
           comments: LSIFunctions.getFromData(projectCardData[key]['data']['comments'], 'act_'),
           boardId: projectCardData[key]['board'],
           level: projectCardData[key]['data']['priority'],
-          labels: labels
+          labels: labels,
+          isRouter: projectCardData[key]['data']['isRouter'], 
+          routers: routers,         
         );
       }
     }
@@ -288,7 +326,7 @@ class _BoardViewerState extends State<BoardViewer> {
       allowEditing: allowEditing(),
       projectId: selectedProject,
       onSubmit: (title, priority, notify) {
-        DateFormat dayFormatter = DateFormat('y-MM-dd hh:mm:ss');
+        DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
         String date = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
         Database.push(
           'team', 
@@ -438,9 +476,10 @@ class _BoardViewerState extends State<BoardViewer> {
           location: id
         );
       },
+      // this only applicable to task cards, not router cards
       assignPoints: (name, points, id) {
         List<String> pushTo = [];
-        DateFormat dayFormatter = DateFormat('y-MM-dd hh:mm:ss');
+        DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
         String createdDate = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
 
         dynamic archiveData = {
@@ -531,6 +570,7 @@ class _BoardViewerState extends State<BoardViewer> {
     );
   }
 
+  // would not be used for routers, make new func for archive
   Widget showCompletedTasks([String? uid]){
     List<Widget> completedTaskCards = [];
 
@@ -776,6 +816,7 @@ class _BoardViewerState extends State<BoardViewer> {
     );  
   }
 
+  // maybe make a different one for the router?
   Widget chartInfo() {
     List<String> names = ['Complete', 'Overdue', 'Planned', 'No Due Date'];
     List<Color> colors = [Colors.blue, Colors.red, Colors.orange, Colors.grey];
@@ -907,7 +948,7 @@ class _BoardViewerState extends State<BoardViewer> {
         }
       }
       catch(e){
-        print('boardViewer.dart -> charInfo -> getMax -> Exception: $e');
+        print('boardViewer.dart -> chartInfo -> getMax -> Exception: $e');
       }
     }
 

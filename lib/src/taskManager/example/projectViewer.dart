@@ -173,7 +173,7 @@ class _ProjectViewerState extends State<ProjectViewer> {
             }
           },
           onSubmit: (title, image, date, color) {
-            DateFormat dayFormatter = DateFormat('y-MM-dd hh:mm:ss');
+            DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
             String createdDate =
                 dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
             Database.push('team', children: child + '/', data: {
@@ -208,7 +208,7 @@ class _ProjectViewerState extends State<ProjectViewer> {
             }
           },
           onComplete: (project) {
-            DateFormat dayFormatter = DateFormat('y-MM-dd hh:mm:ss');
+            DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
             String createdDate =
                 dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
             Database.update('team',

@@ -723,7 +723,7 @@ class Time{
   }
   static dynamic getTempData(TimeSheetType tsType, int currentWeek){
     dynamic tempData;
-    List<String> dates = Time.getTimesheetDates('y-MM-dd', currentWeek).split(' - ');
+    List<String> dates = Time.getTimesheetDates('MM-dd-yy', currentWeek).split(' - ');
     String useInfo = '';
 
     if(tsType == TimeSheetType.LOGGER){
@@ -974,7 +974,7 @@ class Time{
     List<String> holidays = getHolidays();
     String toReturn = 'Timesheet is accurate and ready to submit! Please make sure this is correct!';
     DateFormat formatter = DateFormat('M/d');
-    String dates = getTimesheetDates('y-MM-dd',currentTimeSheet);
+    String dates = getTimesheetDates('MM-dd-yy',currentTimeSheet);
     List<String> date = dates.split(' - ');
 
     int week = 1;

@@ -363,7 +363,7 @@ class _BoardManagerState extends State<BoardManager> {
 
   /// Prepares card data into JSON format to be sent to database
   void submitCardData() {
-    DateFormat dayFormatter = DateFormat('MM-dd-y hh:mm:ss');
+    DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
     String dueDate = '';
     if (assignedDate != '') {
       dueDate = dayFormatter.format(selectedDate).replaceAll(' ', 'T');
@@ -646,7 +646,7 @@ class _BoardManagerState extends State<BoardManager> {
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
-        var formatter = DateFormat('MM-dd-y');
+        var formatter = DateFormat('MM-dd-yy');
         assignedDate = formatter.format(picked);
         selectedDate = picked;
       });
@@ -1513,7 +1513,7 @@ class _BoardManagerState extends State<BoardManager> {
                                                     SpellCheckController());
                                                 checkList.add(false);
                                                 DateFormat dayFormatter =
-                                                    DateFormat('MM-dd-y');
+                                                    DateFormat('MM-dd-yy');
                                                 String createdDate =
                                                     dayFormatter
                                                         .format(DateTime.now());
@@ -1594,7 +1594,7 @@ class _BoardManagerState extends State<BoardManager> {
                                                 activityControllers.add(
                                                     SpellCheckController());
                                                 DateFormat dayFormatter =
-                                                    DateFormat('MM-dd-y');
+                                                    DateFormat('MM-dd-yy');
                                                 String createdDate =
                                                     dayFormatter
                                                         .format(DateTime.now());

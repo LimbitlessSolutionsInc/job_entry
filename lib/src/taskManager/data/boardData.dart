@@ -8,7 +8,6 @@ class BoardData {
     this.color,
     this.notify = false,
     this.isAssembly = false,
-    this.index,
     this.isArchive
   });
 
@@ -20,6 +19,5 @@ class BoardData {
   final int? color;
   final bool? notify;
   bool isAssembly;
-  int? index; // order of the board for the assembly order, can only add to the first (board 0)
   bool? isArchive; 
 }
