@@ -18,6 +18,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:job_entry/src/functions/saveFile/saveFile.dart';
 
 enum SelectedView{detail, list}
 enum SelectedSubView{assemblies, materials, workers, notes}
@@ -421,54 +422,60 @@ class _JobScreenState extends State<JobScreen> {
     } else {
       final bytes = await generatePdf();
 
-      if (kIsWeb) {
-        await FileSaver.instance.saveFile(
-          name: filename,
-          bytes: bytes,
-          fileExtension: 'pdf',
-          mimeType: MimeType.pdf,
-        );
-      } else {
-        var status = await Permission.storage.request();
-        if (status.isGranted) {
-          final directory = await getExternalStorageDirectory();
-          if (directory != null) {
-            final path = '${directory.path}/$filename.pdf';
-            final file = File(path);
-            await file.writeAsBytes(bytes);
-          }
-        } else {
-          errorMessage('Permission Denied', 'Storage permission denied.');
-        }
-      }
+      SaveFile.saveBytes(
+        printName: filename, 
+        fileType: 'pdf', 
+        bytes: bytes
+      );
+
+      // if (kIsWeb) {
+      //   await FileSaver.instance.saveFile(
+      //     name: filename,
+      //     bytes: bytes,
+      //     fileExtension: 'pdf',
+      //     mimeType: MimeType.pdf,
+      //   );
+      // } else {
+      //   var status = await Permission.storage.request();
+      //   if (status.isGranted) {
+      //     final directory = await getExternalStorageDirectory();
+      //     if (directory != null) {
+      //       final path = '${directory.path}/$filename.pdf';
+      //       final file = File(path);
+      //       await file.writeAsBytes(bytes);
+      //     }
+      //   } else {
+      //     errorMessage('Permission Denied', 'Storage permission denied.');
+      //   }
+      // }
     }
   }
 
   // auto download the csvString as a csv file
-  Future<void> exportCsv(String csvContent, String filename) async {
-    Uint8List bytes = Uint8List.fromList(utf8.encode(csvContent));
+  // Future<void> exportCsv(String csvContent, String filename) async {
+  //   Uint8List bytes = Uint8List.fromList(utf8.encode(csvContent));
     
-    if (kIsWeb) {
-      await FileSaver.instance.saveFile(
-        name: filename,
-        bytes: bytes,
-        fileExtension: 'csv',
-        mimeType: MimeType.csv,
-      );
-    } else {
-      var status = await Permission.storage.request();
-      if (status.isGranted) {
-        final directory = await getExternalStorageDirectory();
-        if (directory != null) {
-          final path = '${directory.path}/$filename.csv';
-          final file = File(path);
-          await file.writeAsBytes(bytes);
-        }
-      } else {
-        errorMessage('Permission Denied', 'Storage permission denied.');
-      }
-    }
-  }
+  //   if (kIsWeb) {
+  //     await FileSaver.instance.saveFile(
+  //       name: filename,
+  //       bytes: bytes,
+  //       fileExtension: 'csv',
+  //       mimeType: MimeType.csv,
+  //     );
+  //   } else {
+  //     var status = await Permission.storage.request();
+  //     if (status.isGranted) {
+  //       final directory = await getExternalStorageDirectory();
+  //       if (directory != null) {
+  //         final path = '${directory.path}/$filename.csv';
+  //         final file = File(path);
+  //         await file.writeAsBytes(bytes);
+  //       }
+  //     } else {
+  //       errorMessage('Permission Denied', 'Storage permission denied.');
+  //     }
+  //   }
+  // }
 
   void errorMessage(String title, String message) {
     showDialog(context: context, builder: (BuildContext context) {
@@ -2059,7 +2066,11 @@ class _JobScreenState extends State<JobScreen> {
             alignment: Alignment.bottomRight,
             message: 'Export',
             onTap: () {
-              exportCsv(createCsvString(), 'all_jobs');
+              SaveFile.saveString(
+                printName: 'all_jobs', 
+                fileType: 'csv', 
+                data: createCsvString()
+              );
             },
             color: Theme.of(context).secondaryHeaderColor,
             icon: Icons.download,

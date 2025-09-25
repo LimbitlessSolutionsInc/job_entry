@@ -22,6 +22,7 @@ class RouterScreen extends StatefulWidget {
 class _RouterScreenState extends State<RouterScreen> {
   Size currentSize = Size(0, 0);
   bool testing = true;
+  String selectedProcess = '';
   List<CardData>? list;
   
   @override
@@ -79,52 +80,15 @@ class _RouterScreenState extends State<RouterScreen> {
     deviceWidth = currentSize.width;
 
     return Scaffold(
-      body: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Card Testing", style: TextStyle(fontSize: 50),),
-              Text("Task Card", style: TextStyle(fontSize: 25),),
-              Container(
-                height: 250,
-                padding: const EdgeInsets.only(top: 10),
-                width: 500,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  border: Border(
-                    bottom: BorderSide(color: Theme.of(context).primaryColorDark, width: 1),
-                  ),
-                ),
-                child: TaskCard(cardData: list!.first, height: 10, width: 70, context: context)
-              ),
-              Text("Router Card", style: TextStyle(fontSize: 25),),
-              Container(
-                height: 250,
-                padding: const EdgeInsets.only(top: 10),
-                width: 500,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  border: Border(
-                    bottom: BorderSide(color: Theme.of(context).primaryColorDark, width: 1),
-                  ),
-                ),
-                child: TaskCard(cardData: list!.last, height: 10, width: 70, context: context)
-              )
-            ],
-          ),
-          // Column(
-          //   crossAxisAlignment: CrossAxisAlignment.start,
-          //   children: [
-          //     BoardViewer(
-          //       project: 'Box', 
-          //       department: 'Quality', 
-          //       width: 250, 
-          //       height: 500, 
-          //       color: 0)
-          //   ]
-          // )
+      body: SizedBox(
+        height: deviceHeight,
+        width: deviceWidth,
+        child: Stack(
+          children: [
+            //align the board viewer of routes/jobs and assemblies in the center right
+            //project viewer of the processes on the left
           ]
+        )
       )
     );
   }
