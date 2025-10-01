@@ -196,7 +196,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
   }
 
   Widget processInfo() {
-    return ProcessManager()
+    return SizedBox();
   }
 
   @override

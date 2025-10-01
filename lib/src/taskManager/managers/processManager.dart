@@ -233,38 +233,43 @@ class _ProcessManagerState extends State<ProcessManager> {
 
   }
 
+  /// Exports the job and any archived assembilies
+  void exportJob() {
+
+  }
+
   /// Widget for draggable cards
   Widget dragCard(String id, int index, int jobToUse) {
-
+    return SizedBox();
   }
 
   /// Opens dialog menu with editable card information of [jobToUse] if [jobToUse] is null, assuming creating a new card, edited by current user
   Widget jobName(int? jobToUse) {
-
+    return SizedBox();
   }
 
   Widget info(bool drag, String id) {
-
+    return SizedBox();
   }
 
   Widget title(String title, String subtitle, TextEditingController controller, Color color, bool dragged) {
-
+    return SizedBox();
   }
 
   Widget process(int i, bool rotate) {
-
+    return SizedBox();
   }
 
   Widget dragProcess(int i) {
-
+    return SizedBox();
   }
 
   Widget processName() {
-
+    return SizedBox();
   }
 
   @override
   Widget build(BuildContext context) {
-    
+    return SizedBox();
   }
 }
