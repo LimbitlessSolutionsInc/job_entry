@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:job_entry/src/taskManager/data/cardData.dart';
-import 'package:job_entry/src/taskManager/example/taskCard.dart';
-import 'package:job_entry/src/taskManager/example/boardViewer.dart';
+import 'package:intl/intl.dart';
+import 'package:job_entry/src/taskManager/data/jobData.dart';
+import 'package:job_entry/src/taskManager/example/jobCard.dart';
+import 'package:job_entry/src/taskManager/example/processViewer.dart';
 import 'package:job_entry/styles/globals.dart';
 
 // TODO: Test with testing user, make router and task project
@@ -23,7 +24,7 @@ class _RouterScreenState extends State<RouterScreen> {
   Size currentSize = Size(0, 0);
   bool testing = true;
   String selectedProcess = '';
-  List<CardData>? list;
+  List<JobData>? list;
   
   @override
   void initState() {
@@ -40,24 +41,20 @@ class _RouterScreenState extends State<RouterScreen> {
   }
 
   void listenToFirebase() async{
-    list = <CardData> [];
+    list = <JobData> [];
     try{
       if(testing){
-        CardData test1 = CardData(
+        JobData test1 = JobData(
           title: "Task 1",
           dateCreated: "09/09",
           createdBy: "User 1",
-          points: 0,
         );
         list?.add(test1);
-        CardData test2 = CardData(
+        JobData test2 = JobData(
           title: "Router 1",
           status: "In progress", 
-          dateCreated: "09/09",
-          dueDate: "09/11",
-          isRouter: true,
-          completedDate: "09/10", 
-          points: 0,
+          dateCreated: "09/09/25",
+          dueDate: DateFormat('MM/dd/yy').format(DateTime.now()),
           good: 140, 
           bad: 10, 
           isApproved: false,
@@ -87,6 +84,7 @@ class _RouterScreenState extends State<RouterScreen> {
           children: [
             //align the board viewer of routes/jobs and assemblies in the center right
             //project viewer of the processes on the left
+            JobCard(jobData: list!.last, height: 150, width: 550, context: context)
           ]
         )
       )
