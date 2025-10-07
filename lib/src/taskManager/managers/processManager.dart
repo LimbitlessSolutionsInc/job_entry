@@ -329,13 +329,12 @@ class _ProcessManagerState extends State<ProcessManager> {
   /// Prepares job data into JSON format to be sent to database
   void submitJobData() {
     // TODO: check what format the date has to go in the database
-    DateFormat dayFormatter = DateFormat('MM-dd-y hh:mm:ss');
     String dueDate = '';
     if (assignedDate != '') {
-      dueDate = dayFormatter.format(selectedDate).replaceAll(' ', 'T');
+      dueDate = DateFormat('MM-dd-y').format(selectedDate).replaceAll(' ', 'T');
     }
     dynamic activities;
-    String createdDate = dayFormatter.format(DateTime.now()).replaceAll(' ','T');
+    String createdDate = DateFormat('MM-dd-y').format(selectedDate).replaceAll(' ', 'T');
     if(activityControllers.isNotEmpty) {
       for (int i = 0; i < activityControllers.length; i++) {
         String st = 'note_$i';
@@ -916,22 +915,147 @@ class _ProcessManagerState extends State<ProcessManager> {
                 )
               )
           : Container()
-        ],)
+          ],)
         ]);                   
-      }
-      Widget assembly() {
-        return SizedBox();
       }
       Widget assemblyList() {
         return SizedBox();
+      }
+      Widget notes() {
+        return Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    FocusedInkWell(
+                      onTap: () {
+                        setState(() {
+                          expandNotes = !expandNotes;
+                        });
+                      },
+                      child: Icon(
+                        (!expandNotes)
+                          ? Icons.expand
+                          : Icons.clear_outlined,
+                        color: Theme.of(context)
+                            .primaryTextTheme
+                            .bodyMedium!
+                            .color,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    TaskWidgets.iconNote(
+                      Icons.list_rounded,
+                      "Notes",
+                      TextStyle(
+                        color: Theme.of(context)
+                            .primaryTextTheme
+                            .bodyMedium!
+                            .color,
+                        fontFamily: 'Klavika',
+                        package: 'css',
+                        fontSize: 20,
+                        decoration: TextDecoration.none
+                      ),
+                    20),
+                  ],
+                ),
+                FocusedInkWell(
+                  onTap: () {
+                    if(isWorker()) {
+                      setState(() {
+                        activityControllers.add(SpellCheckController());
+                        if (jobNotes == null) {
+                          jobNotes = {
+                            'names': [currentUser.uid],
+                            'dates': [DateFormat('MM-dd-y').format(DateTime.now())],
+                          };
+                        } else {
+                          jobNotes!['names']!.add(currentUser.uid);
+                          jobNotes!['dates']!.add(DateFormat('MM-dd-y').format(DateTime.now()));
+                        }
+                      });
+                    }
+                  },
+                  child: Icon(
+                    Icons.add_box,
+                    size: 30,
+                    color: Theme.of(context)
+                        .primaryTextTheme
+                        .bodyMedium!
+                        .color,
+                  )
+                )
+              ],
+            ),
+            SizedBox(height: 10),
+            expandNotes
+              ? SizedBox(
+                  height: (activityControllers.length < 3 || expandNotes)
+                    ? activityControllers.length * 57.0
+                    : 57.0 * 3,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(0),
+                    itemCount: activityControllers.length,
+                    itemBuilder: (context, i) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: Row(children: [
+                              Text(
+                                usersProfile[jobNotes!['names']![i]]
+                                    ['displayName'],
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .primaryTextTheme
+                                      .labelSmall!
+                                      .color,
+                                  fontSize: 14,
+                                  fontFamily: 'Klavika Bold',
+                                  package: 'css',
+                                  decoration: TextDecoration.none
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                DateFormat('MM-dd-y').format(DateTime.parse(jobNotes!['dates']![i].replaceAll('T', ' '))),
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .primaryTextTheme
+                                      .labelSmall!
+                                      .color,
+                                  fontSize: 12,
+                                  fontFamily: 'MuseoSans',
+                                  decoration: TextDecoration.none
+                                )
+                              ),
+                          ])
+                          ),
+                          EnterTextFormField(
+                            width: width,
+                            color: Theme.of(context).canvasColor,
+                            maxLines: null,
+                            label: 'Write a Note',
+                            controller: activityControllers[i],
+                            onEditingComplete: () {},
+                            onSubmitted: (val) {},
+                            onTap: widget.onFocusNode
+                          ),
+                        ]);
+                    }))
+              : const SizedBox()
+          ],
+        );
       }
       Widget button() {
         return SizedBox();
       }
       Widget exportButton() {
-        return SizedBox();
-      }
-      Widget notes() {
         return SizedBox();
       }
 
@@ -984,151 +1108,6 @@ class _ProcessManagerState extends State<ProcessManager> {
           )
         )
       );
-      // Widget createActivityList() {
-      //   Widget section(int i){
-      //     return Column(
-      //       crossAxisAlignment: CrossAxisAlignment.start,
-      //       children: [
-      //         Padding(
-      //           padding: const EdgeInsets.only(left: 10),
-      //           child: Row(children: [
-      //             Text(
-      //               usersProfile[jobNotes!['names']![i]]
-      //                   ['displayName'],
-      //               style: TextStyle(
-      //                 color: Theme.of(context)
-      //                     .primaryTextTheme
-      //                     .labelSmall!
-      //                     .color,
-      //                 fontSize: 14,
-      //                 fontFamily: 'Klavika Bold',
-      //                 package: 'css',
-      //                 decoration: TextDecoration.none
-      //               ),
-      //             ),
-      //             const SizedBox(width: 10),
-      //             Text(
-      //               DateFormat('MM-dd-y').format(DateTime.parse(jobNotes!['dates']![i].replaceAll('T', ' '))),
-      //               style: TextStyle(
-      //                 color: Theme.of(context)
-      //                     .primaryTextTheme
-      //                     .labelSmall!
-      //                     .color,
-      //                 fontSize: 12,
-      //                 fontFamily: 'MuseoSans',
-      //                 decoration: TextDecoration.none
-      //               )
-      //             ),
-      //           ])
-      //         ),
-      //         EnterTextFormField(
-      //           width: width,
-      //           color: Theme.of(context).canvasColor,
-      //           maxLines: null,
-      //           label: 'Write a Note',
-      //           controller: activityControllers[i],
-      //           onEditingComplete: () {},
-      //           onSubmitted: (val) {},
-      //           onTap: widget.onFocusNode
-      //         ),
-      //       ],
-      //     );
-      //   }
-
-      //   if (activityControllers.isNotEmpty) {
-      //     List<Widget> rows = [];
-      //     for (int i = 0; i < activityControllers.length; i++) {
-      //       rows.add(section(i));
-      //       rows.add(const SizedBox(height: 5));
-      //     }
-      //     return SizedBox(
-      //       height: (activityControllers.length < 3 || expandNotes)
-      //         ? activityControllers.length * 57.0
-      //         : 57.0 * 3,
-      //       child: ListView(
-      //         padding: const EdgeInsets.all(0),
-      //         children: rows,
-      //       )
-      //     );
-      //   } else  {
-      //     return const SizedBox();
-      //   }
-      // }
-
-      //                      Row(
-      //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //                       children: [
-      //                         Row(
-      //                           children: [
-      //                             FocusedInkWell(
-      //                               onTap: () {
-      //                                 setState(() {
-      //                                   expandNotes = !expandNotes;
-      //                                 });
-      //                               },
-      //                               child: Icon(
-      //                                 (!expandNotes)
-      //                                   ? Icons.expand
-      //                                   : Icons.clear_outlined,
-      //                                 color: Theme.of(context)
-      //                                     .primaryTextTheme
-      //                                     .bodyMedium!
-      //                                     .color,
-      //                                 size: 20,
-      //                               ),
-      //                             ),
-      //                             const SizedBox(width: 10),
-      //                             TaskWidgets.iconNote(
-      //                               Icons.list_rounded,
-      //                               "Notes",
-      //                               TextStyle(
-      //                                 color: Theme.of(context)
-      //                                     .primaryTextTheme
-      //                                     .bodyMedium!
-      //                                     .color,
-      //                                 fontFamily: 'Klavika',
-      //                                 package: 'css',
-      //                                 fontSize: 20,
-      //                                 decoration: TextDecoration.none
-      //                               ),
-      //                             20),
-      //                           ],
-      //                         ),
-      //                         FocusedInkWell(
-      //                           onTap: () {
-      //                             setState(() {
-      //                               activityControllers.add(SpellCheckController());
-      //                               DateFormat dayFormatter = DateFormat('MM-dd-y');
-      //                               String createdDate = dayFormatter.format(DateTime.now());
-      //                               if (jobNotes == null) {
-      //                                 jobNotes = {
-      //                                   'names': [currentUser.uid],
-      //                                   'dates': [createdDate],
-      //                                 };
-      //                               } else {
-      //                                 jobNotes!['names']!.add(currentUser.uid);
-      //                                 jobNotes!['dates']!.add(createdDate);
-      //                               }
-      //                             });
-      //                           },
-      //                           child: Icon(
-      //                             Icons.add_box,
-      //                             size: 30,
-      //                             color: Theme.of(context)
-      //                                 .primaryTextTheme
-      //                                 .bodyMedium!
-      //                                 .color,
-      //                           ),
-      //                         )
-      //                       ],
-      //                      ),
-      //                       Container(
-      //                         color: CSS.lighten(Theme.of(context).canvasColor, 0.2),
-      //                         child: createActivityList(),
-      //                       ),
-      //                     ],
-      //                   )
-      //                 ),
       //                 Row(
       //                   mainAxisAlignment: MainAxisAlignment.spaceAround,
       //                   children: [
@@ -1154,14 +1133,6 @@ class _ProcessManagerState extends State<ProcessManager> {
       //                       )
       //                     : Container(),
       //                   ],
-      //                 )
-      //               ],
-      //             )
-      //             : LSILoadingWheel(),
-      //       ],
-      //     )
-      //   )
-      // );
     });
   }
 
