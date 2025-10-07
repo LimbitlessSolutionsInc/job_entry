@@ -1,0 +1,93 @@
+{
+  "router": {
+    "id": "router_1",
+    "title": "Test Router",
+    "dateCreated": "2025-10-07",
+    "createdBy": "test_user",
+    "color": 11184810
+  },
+  "processes": [
+    {
+      "id": "process_1",
+      "title": "Process 1",
+      "dateCreated": "2025-10-07",
+      "createdBy": "test_user",
+      "color": 11184810
+    },
+    {
+      "id": "process_2",
+      "title": "Process 2",
+      "dateCreated": "2025-10-07",
+      "createdBy": "test_user",
+      "color": 11185810
+    }
+  ],
+  "jobs": [
+    {
+      "id": "process_1_job_1",
+      "title": "Job 1 of Process 1",
+      "dateCreated": "2025-10-07",
+      "createdBy": "test_user",
+      "processId": "process_1",
+      "dueDate": "2025-10-10",
+      "workers": ["worker1", "worker2"],
+      "approvers": ["approver1"],
+      "status": "notStarted",
+      "good": 1,
+      "bad": 0,
+      "isApproved": false,
+      "isArchive": false,
+      "notes": {
+        "note_0": {
+          "comment": "This is a test note.",
+          "dateCreated": "2025-10-07",
+          "createdBy": "test_user"
+        }
+      }
+    },
+    {
+      "id": "process_1_job_2",
+      "title": "Job 2 of Process 1",
+      "dateCreated": "2025-10-07",
+      "createdBy": "test_user",
+      "processId": "process_1",
+      "dueDate": "2025-10-10",
+      "workers": ["worker1", "worker2"],
+      "approvers": ["approver1"],
+      "status": "notStarted",
+      "good": 2,
+      "bad": 0,
+      "isApproved": false,
+      "isArchive": false,
+      "notes": {
+        "note_0": {
+          "comment": "Another test note.",
+          "dateCreated": "2025-10-07",
+          "createdBy": "test_user"
+        }
+      }
+    },
+    {
+      "id": "process_2_job_1",
+      "title": "Job 1 of Process 2",
+      "dateCreated": "2025-10-07",
+      "createdBy": "test_user",
+      "processId": "process_2",
+      "dueDate": "2025-10-10",
+      "workers": ["worker1", "worker2"],
+      "approvers": ["approver1"],
+      "status": "notStarted",
+      "good": 1,
+      "bad": 0,
+      "isApproved": false,
+      "isArchive": false,
+      "notes": {
+        "note_0": {
+          "comment": "Process 2 note.",
+          "dateCreated": "2025-10-07",
+          "createdBy": "test_user"
+        }
+      }
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -115,9 +117,96 @@ class _ProcessViewerState extends State<ProcessViewer> {
     });
   }
 
-  void listenToFirebase() {
+  void listenToFirebase() async {
     if (testing) {
+      currentUser = UsersProfile(
+        uid: 'testUser',
+        displayName: 'Test User',
+        imageUrl: null,
+        status: OrgStatus.admin,
+      );
+      // Load and parse the test JSON
+      final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
+      final Map<String, dynamic> testData = json.decode(jsonString);
 
+      usersProfile = {};
+
+      // Helper to add a user if not already present
+      void addUser(String uid, {String? displayName, String? imageUrl, OrgStatus? status, bool? canRemoteWork}) {
+        if (!usersProfile.containsKey(uid)) {
+          usersProfile[uid] = {
+            'displayName': displayName ?? uid,
+            'imageUrl': imageUrl ?? 'https://example.com/$uid.png',
+            'status': status ?? OrgStatus.admin,
+            'canRemoteWork': canRemoteWork ?? false,
+          };
+        }
+      }
+
+      // Add router creator
+      final router = testData['router'];
+      addUser(router['createdBy'], displayName: 'Test User', imageUrl: 'https://example.com/image.png', status: OrgStatus.admin, canRemoteWork: true);
+
+      // Add process creators
+      for (var p in testData['processes']) {
+        addUser(p['createdBy']);
+      }
+
+      // Add job creators, workers, approvers, note creators
+      for (var j in testData['jobs']) {
+        addUser(j['createdBy']);
+        for (var w in j['workers']) {
+          addUser(w);
+        }
+        for (var a in j['approvers']) {
+          addUser(a, status: OrgStatus.admin, canRemoteWork: true);
+        }
+        if (j['notes'] != null) {
+          (j['notes'] as Map<String, dynamic>).forEach((_, note) {
+            if (note['createdBy'] != null) {
+              addUser(note['createdBy']);
+            }
+          });
+        }
+      }
+
+      // Processes
+      currentProcessData = {};
+      final processes = testData['processes'] as List;
+      for (var p in processes) {
+        currentProcessData[p['id']] = ProcessData(
+          id: p['id'],
+          title: p['title'],
+          dateCreated: p['dateCreated'],
+          createdBy: p['createdBy'],
+          color: p['color'],
+        );
+      }
+
+      // Jobs
+      currentJobData = {};
+      final jobs = testData['jobs'] as List;
+      for (var j in jobs) {
+        currentJobData[j['id']] = JobData(
+          id: j['id'],
+          title: j['title'],
+          dateCreated: j['dateCreated'],
+          createdBy: j['createdBy'],
+          processId: j['processId'],
+          dueDate: j['dueDate'],
+          workers: List<String>.from(j['workers']),
+          approvers: List<String>.from(j['approvers']),
+          status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
+          good: j['good'],
+          bad: j['bad'],
+          isApproved: j['isApproved'],
+          isArchive: j['isArchive'],
+          notes: j['notes'] as Map<String, dynamic>?,
+        );
+      }
+
+      hasStarted = true;
+      setState(() {});
     } else {
 
     }

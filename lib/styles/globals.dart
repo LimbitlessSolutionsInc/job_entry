@@ -128,6 +128,8 @@ AppScreens getAppScreensFromRoute(String route){
   return AppScreens.main;
 }
 
+bool testing = true;
+
 bool isLoggedIn = false;
 bool googleNameChange = false;
 

@@ -11,6 +11,7 @@ import '../../../../../src/functions/lsi_functions.dart';
 import '../example/taskWidgets.dart';
 import 'package:job_entry/src/taskManager/data/jobData.dart';
 import 'package:job_entry/src/taskManager/data/processData.dart';
+import 'package:job_entry/src/exporting/pdfGeneration.dart';
 
 // TODO: have timeline modal (complete timeline of assemblies)
 
@@ -103,8 +104,8 @@ class ProcessManager extends StatefulWidget {
 class _ProcessManagerState extends State<ProcessManager> {
   double width = 100;
   double height = 100;
-  double jobHeight = 61;
-  double processWidth = 100;
+  double jobHeight = 115;
+  double processWidth = 240;
 
   final ScrollController _scrollController = ScrollController();
   TextEditingController processNameController = TextEditingController();
@@ -116,6 +117,7 @@ class _ProcessManagerState extends State<ProcessManager> {
   bool updateProcess = false;
   bool expandNotes = false;
   bool expandAssembilies = false;
+  bool cardUpdateReady = false;
 
   List<TextEditingController> nameChangeController = [];
   List<int> hexColors = [
@@ -419,71 +421,20 @@ class _ProcessManagerState extends State<ProcessManager> {
 
   }
 
-  // Future<Uint8List> generatePdf() async {
-  //   final pdf = pw.Document();
-    
-  //   pdf.addPage(
-  //     pw.MultiPage(
-  //       pageFormat: PdfPageFormat.a4,
-  //       build: (pw.Context context) {
-  //         return [
-  //           pw.Column(
-  //             children: [ 
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   pw.Text("${DateTime.now().month}/${DateTime.now().day}/${DateTime.now().year}"),
-  //                 ]
-  //               )
-  //             ]
-  //           ),
-  //           pw.SizedBox(height: 40),
-  //           pw.Container(
-  //             child: pw.Row(
-  //               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //               children: [
-  //                 pw.Expanded(child: pw.Container(child: 
-  //                   pw.Column(
-  //                     crossAxisAlignment: pw.CrossAxisAlignment.start, 
-  //                     children: [
-  //                       pw.Text("Job name: "),
-  //                       pw.Text("Workers: "),
-  //                     ]
-  //                   ))),
-  //                 pw.Container(height: 40),
-  //                 pw.Expanded(child: pw.Container(child: 
-  //                   pw.Column( 
-  //                     crossAxisAlignment: pw.CrossAxisAlignment.end,
-  //                     children: [
-  //                       pw.Text("Start Date: __/__/____"),
-  //                       pw.Text("Finish Date: __/__/____"),
-  //                       pw.Text("Required By: __/__/____"),
-  //                     ]
-  //                   )
-  //                 )),
-  //               ]
-  //             )
-  //           ),
-  //           pw.SizedBox(height: 40),
-  //         ];
-  //       },
-  //     ),
-  //   );
+  // TODO: See if we need a different format like csv
+  // Saves the job and any archived assembilies to PDF format
+  // filename: name of the file, data: data to be saved (the current job plus the prev assembilies hopefully combined?)
+  void exportJob(String filename, Map<String, dynamic> data) async {
+    if (selectedJob != null || !isNewJob) {
+      final bytes = await generatePdf(data);
 
-  //   return await pdf.save();
-  // }
-
-  /// Exports the job and any archived assembilies
-  // void exportJob() {
-  //   if (selectedJob != null || !isNewJob) {
-  //     final bytes = await generatePdf();
-
-  //     SaveFile.saveBytes(
-  //       printName: filename, 
-  //       fileType: 'pdf', 
-  //       bytes: bytes
-  //     );
-  // }
+      SaveFile.saveBytes(
+        printName: filename, 
+        fileType: 'pdf', 
+        bytes: bytes
+      );
+    }
+  }
 
   /// Widget for draggable cards
   Widget dragCard(String id, int index, int jobToUse) {
@@ -547,7 +498,7 @@ class _ProcessManagerState extends State<ProcessManager> {
     }
     String tempWorker = '';
     String tempApprover = '';
-    bool cardUpdateReady = false;
+    cardUpdateReady = false;
 
     return StatefulBuilder(builder: (context, setState) {
       if (!cardUpdateReady) {
@@ -614,7 +565,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                 ])
               ),
               EnterTextFormField(
-                width: CSS.responsive() - 50,
+                width: width,
                 color: Theme.of(context).canvasColor,
                 maxLines: null,
                 label: 'Write a Note',
@@ -652,8 +603,8 @@ class _ProcessManagerState extends State<ProcessManager> {
         insetPadding: const EdgeInsets.only(left: 1, right: 1),
         child: Container(
           padding: const EdgeInsets.all(20),
-          height: height,
-          width: CSS.responsive(),
+          height: 650,
+          width: 500,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
@@ -689,7 +640,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                                       size: 20,
                                     ),
                                     SizedBox(
-                                      width: CSS.responsive() - 60,
+                                      width: width,
                                       child: EnterTextFormField(
                                         margin: const EdgeInsets.only(left: 5),
                                         height: 35,
@@ -744,7 +695,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                                             workers.removeAt(loc);
                                           });
                                         },
-                                        viewidth: CSS.responsive() - 60,
+                                        viewidth: width,
                                         uids: workers, 
                                         colors: [
                                           Colors.teal[200]!,
@@ -770,7 +721,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                                               workers.removeAt(loc);
                                             });
                                           },
-                                          viewidth: CSS.responsive() - 60,
+                                          viewidth: width,
                                           uids: workers,
                                           colors: [
                                             Colors.teal[200]!,
@@ -1035,7 +986,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                                   .color,
                               height: 45,
                               radius: 45 / 2,
-                              width: CSS.responsive() / 3 - 15,
+                              width: width / 3 - 15,
                             )
                           : Container(),
                         ],

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:job_entry/src/organization/organization.dart';
 import 'package:job_entry/src/taskManager/data/jobData.dart';
 import 'package:job_entry/src/taskManager/data/processData.dart';
 import 'package:job_entry/src/taskManager/example/jobCard.dart';
 import 'package:job_entry/src/taskManager/example/processViewer.dart';
 import 'package:job_entry/src/task_master.dart';
 import 'package:job_entry/styles/globals.dart';
+
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 
 class RouterScreen extends StatefulWidget {
   RouterScreen({
@@ -23,9 +27,9 @@ class _RouterScreenState extends State<RouterScreen> {
   Size currentSize = Size(0, 0);
   bool testing = true;
   String selectedProcess = '';
-  List<JobData>? list;
-
   String selectedRouter = '';
+  List<ProcessData> testProcessList = [];
+  List<JobData>? list;
   
   @override
   void initState() {
@@ -41,11 +45,49 @@ class _RouterScreenState extends State<RouterScreen> {
     super.dispose();
   }
 
-  void listenToFirebase() async{
-    list = <JobData> [];
-    try{
-      if(testing){
+  Future<void> listenToFirebase() async {
+    list = <JobData>[];
+    try {
+      if (testing) {
+        final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
+        final Map<String, dynamic> testData = json.decode(jsonString);
 
+        // Set up router
+        final router = testData['router'];
+        final testRouterId = router['id'];
+        selectedRouter = testRouterId;
+
+        // Set up processes
+        final processes = testData['processes'] as List;
+        testProcessList = processes.map((p) => ProcessData(
+          id: p['id'],
+          title: p['title'],
+          dateCreated: p['dateCreated'],
+          createdBy: p['createdBy'],
+          color: p['color'],
+        )).toList();
+        selectedProcess = testProcessList.first.id!;
+
+        // Set up jobs
+        final jobs = testData['jobs'] as List;
+        list = jobs.map((j) => JobData(
+          id: j['id'],
+          title: j['title'],
+          dateCreated: j['dateCreated'],
+          createdBy: j['createdBy'],
+          processId: j['processId'],
+          dueDate: j['dueDate'],
+          workers: List<String>.from(j['workers']),
+          approvers: List<String>.from(j['approvers']),
+          status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
+          good: j['good'],
+          bad: j['bad'],
+          isApproved: j['isApproved'],
+          isArchive: j['isArchive'],
+          notes: j['notes'] as Map<String, dynamic>?,
+        )).toList();
+
+        setState(() {});
       } else {
 
       }
@@ -65,13 +107,15 @@ class _RouterScreenState extends State<RouterScreen> {
       body: SizedBox(
         height: deviceHeight,
         width: deviceWidth,
-        child: Column(
+        child: Row(
           children: [
-            //align the board viewer of routes/jobs and assemblies in the center right
-            //project viewer of the processes on the left
-            JobCard(jobData: list!.first, height: 150, width: 550, context: context),
-            JobCard(jobData: list!.last, height: 150, width: 550, context: context),
-            ProcessViewer(router: "test", width: 250, height: 500, color: 1)
+          if (testProcessList.isNotEmpty)
+            ProcessViewer(
+              router: selectedRouter,
+              width: deviceWidth,
+              height: deviceHeight,
+              color: 1,
+            ),
           ]
         )
       )
