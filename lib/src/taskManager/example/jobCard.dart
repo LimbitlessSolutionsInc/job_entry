@@ -109,18 +109,12 @@ class JobCard extends StatelessWidget {
               uids: jobData.workers,
               colors: [Colors.teal[200]!, Colors.teal[600]!],
               iconSize: 25,
-              viewidth: width - 55,
+              viewidth: width - 60,
               //usersProfile: users,
             ),
         ],
       );
-
     }
-
-    // bool to change border color and activate dragging
-    // bool isApproved() {
-
-    // }
 
     return Transform.rotate(
         angle: (rotate) ? 0.174533 : 0,
@@ -130,6 +124,10 @@ class JobCard extends StatelessWidget {
             height: height,
             width: width,
             decoration: BoxDecoration(
+                border: Border.all(
+                  color: (jobData.isApproved == false) ? Colors.red : Colors.green,
+                  width: 2.0,
+                ),
                 borderRadius: const BorderRadius.all(Radius.circular(10)),
                 color: Theme.of(context).cardColor,
                 boxShadow: [

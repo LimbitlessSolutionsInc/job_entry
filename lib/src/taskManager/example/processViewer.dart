@@ -45,7 +45,8 @@ class _ProcessViewerState extends State<ProcessViewer> {
   String child = '';
   bool update = false;
   bool hasStarted = false;
-  List<DropDownItems> dropDownNames = [];
+  List<DropDownItems> dropDownWorkers = [];
+  List<DropDownItems> dropDownApprovers = [];
 
   double startingWidth = deviceWidth;
 
@@ -84,7 +85,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
     currentJobData = {};
     hasStarted = false;
 
-    completedJobs = null;
+    //completedJobs = null;
     update = true;
 
     processAdded?.cancel();
@@ -101,8 +102,12 @@ class _ProcessViewerState extends State<ProcessViewer> {
     // fill this with the correct route to the selected project
     child = "management/$selectedRouter";
 
-    dropDownNames = [DropDownItems(value: '', text: 'Pick a Person')];
-    // populate the drop down items based on who can edit this router
+    dropDownWorkers = [DropDownItems(value: '', text: 'Pick Workers')];
+    // populate the drop down items based on who can edit this router (students)
+
+    dropDownApprovers = [DropDownItems(value: '', text: 'Pick Approvers')];
+    // populate the drop down items based on who can approve this router
+
 
     listenToFirebase();
     setState(() {
@@ -164,13 +169,6 @@ class _ProcessViewerState extends State<ProcessViewer> {
           }
         }
 
-        List<String> jobs = [];
-        if(routerJobData[key]['data']['jobs'] != null){
-          for(int i = 0; i < routerJobData[key]['data']['jobs'].length;i++){
-            jobs.add(routerJobData[key]['data']['jobs'][i]);
-          }
-        }
-
         data[key] = JobData(
           id: key,
           title: routerJobData[key]['data']['title'],
@@ -188,7 +186,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
           isApproved: routerJobData[key]['data']['isApproved'],
           // should be false unless this board is an archive board
           isArchive: routerJobData[key]['data']['isArchive'],
-          jobs: jobs,
+          prevJobs: routerJobData[key]['data']['prevJob'],
         );
       }
     }
@@ -196,7 +194,130 @@ class _ProcessViewerState extends State<ProcessViewer> {
   }
 
   Widget processInfo() {
-    return SizedBox();
+    return ProcessManager(
+      update: update,
+      callback: callback,
+      workers: dropDownWorkers,
+      approvers: dropDownApprovers,
+      height: widget.height,
+      width: widget.width,
+      screenOffset: Offset(0, appBarHeight),
+      allowEditing: allowEditing(),
+      routerId: selectedRouter,
+      onSubmit: (title, notify) {
+        DateFormat dayFormatter = DateFormat('y-MM-dd hh:mm:ss');
+        String date = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
+        Database.push(
+          'team', 
+          children: '$child/boards', 
+          data: {
+            'createdBy': currentUser.uid,
+            'dateCreated': date,
+            'title': title,
+            'notify': notify
+          }
+        );
+      },
+      onEdit: (data, id) {
+        Database.update(
+          'team',
+          children: '$child/boards/',
+          location: id,
+          data: data
+        );
+      },
+      onCreateJob: (data) {
+        if (data['data']['workers'] != null) {
+          List<String> sendTo = [];
+          for(int i = 0; i < data['data']['workers'].length; i++){
+            if(data['data']['workers'][i] != currentUser.uid){
+              sendTo.add(data['data']['workers'][i]);
+            }
+          }
+          if(sendTo.isNotEmpty){
+            Messaging.sendPushMessage(
+              sendTo,
+              'LSI Task Manager',
+              '${currentUser.displayName} assigned you to a new task!'
+            );
+          }
+        }
+        Database.push('team', children: '$child/cards', data: data);
+      },
+      onEditJob: (data, loc, newWorkers) {
+        List<String> uids = [];
+        int currentCards = 0;
+
+        for (String i in currentJobData.keys) {
+          if (currentJobData[i]!.id == loc) {
+            currentCards = (currentJobData[i]!.notes == null)? 0:currentJobData[i]!.notes!.length;
+          }
+        }
+        if (data['workers'] != null && !data['workers'].toString().contains(currentUser.uid)) {
+          for(int i = 0; i < data['workers'].length; i++){
+            uids.add(data['workers'][i]);
+          }
+        }
+        if (data['notes'] != null) {
+          if (currentCards != data['notes'].length) {
+            for (String key in data['notes'].keys) {
+              if(data['notes'][key]['createdBy'] != currentUser.uid){
+                uids.add(data['notes'][key]['createdBy']);
+              }
+            }
+          }
+        }
+        if (data['workers'] != null && newWorkers.isNotEmpty) {
+          List<String> sendTo = [];
+          for(int i = 0; i < data['workers'].length; i++){
+            if(data['workers'][i] != currentUser.uid && newWorkers.contains(data['workers'][i])){
+              uids.add(data['workers'][i]);
+            }
+          }
+          sendTo = uids.toSet().toList();
+
+          if(sendTo.isNotEmpty){
+            Messaging.sendPushMessage(
+              sendTo,
+              'LSI Task Manager',
+              '${currentUser.displayName} assigned you to a new task!'
+            );
+          }
+        }
+        Database.update(
+          'team',
+          children:  '$child/cards/$loc', 
+          location: 'data', 
+          data: data
+        );
+      },
+      // onEditProcess -> change of index
+      // onDateChange -> change priority
+      onJobDelete: (id) {
+        Database.update(
+          'team',
+          children: '$child/cards/', 
+          location: id
+        );
+      },
+      onProcessDelete: (id) {
+        Database.update(
+          'team',
+          children: '$child/boards/', 
+          location: id, 
+        );
+      },
+      onTitleChange: (id, title) {
+        Database.update(
+          'team',
+          children: '$child/boards/$id', 
+          location: 'title', 
+          data: title
+        );
+      },
+      processData: currentProcessData,
+      jobs: currentJobData,
+    );
   }
 
   @override

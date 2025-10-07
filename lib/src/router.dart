@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:job_entry/src/taskManager/data/jobData.dart';
+import 'package:job_entry/src/taskManager/data/processData.dart';
 import 'package:job_entry/src/taskManager/example/jobCard.dart';
 import 'package:job_entry/src/taskManager/example/processViewer.dart';
+import 'package:job_entry/src/task_master.dart';
 import 'package:job_entry/styles/globals.dart';
-
-// TODO: Test with testing user, make router and task project
-// TODO: make the library only need the current user as input?
 
 class RouterScreen extends StatefulWidget {
   RouterScreen({
@@ -25,6 +24,8 @@ class _RouterScreenState extends State<RouterScreen> {
   bool testing = true;
   String selectedProcess = '';
   List<JobData>? list;
+
+  String selectedRouter = '';
   
   @override
   void initState() {
@@ -44,24 +45,8 @@ class _RouterScreenState extends State<RouterScreen> {
     list = <JobData> [];
     try{
       if(testing){
-        JobData test1 = JobData(
-          title: "Task 1",
-          dateCreated: "09/09",
-          createdBy: "User 1",
-        );
-        list?.add(test1);
-        JobData test2 = JobData(
-          title: "Router 1",
-          status: "In progress", 
-          dateCreated: "09/09/25",
-          dueDate: DateFormat('MM/dd/yy').format(DateTime.now()),
-          good: 140, 
-          bad: 10, 
-          isApproved: false,
-        );        
-        list?.add(test2);
-      }
-      else {
+
+      } else {
 
       }
     }
@@ -80,11 +65,13 @@ class _RouterScreenState extends State<RouterScreen> {
       body: SizedBox(
         height: deviceHeight,
         width: deviceWidth,
-        child: Stack(
+        child: Column(
           children: [
             //align the board viewer of routes/jobs and assemblies in the center right
             //project viewer of the processes on the left
-            JobCard(jobData: list!.last, height: 150, width: 550, context: context)
+            JobCard(jobData: list!.first, height: 150, width: 550, context: context),
+            JobCard(jobData: list!.last, height: 150, width: 550, context: context),
+            ProcessViewer(router: "test", width: 250, height: 500, color: 1)
           ]
         )
       )

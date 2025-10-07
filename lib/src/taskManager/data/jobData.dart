@@ -1,3 +1,9 @@
+enum JobStatus {
+  notStarted,
+  inProgress,
+  completed,
+}
+
 class JobData {
   JobData({
     this.id,
@@ -12,26 +18,41 @@ class JobData {
     this.status,
     this.good,
     this.bad,
-    this.isApproved,
-    this.isArchive,
-    this.approvers,
-    this.jobs,
+    this.isApproved = false,
+    this.isArchive = false,
+    this.approvers = const [],
+    this.prevJobs,
   });
+
+  factory JobData.fromPrevious(JobData oldJob) {
+    return JobData(
+      title: oldJob.title,
+      dateCreated: DateTime.now().toIso8601String(),
+      createdBy: oldJob.createdBy,
+      processId: oldJob.processId,
+      notes: oldJob.notes,
+      status: JobStatus.notStarted,
+      isApproved: false,
+      isArchive: false,
+      prevJobs: oldJob.prevJobs,
+    );
+  }
 
   String? title;
   String? dateCreated;
   String? createdBy;
   String? id;
+  String? description;
   List<String> workers;
-  List<String>? approvers;
+  List<String> approvers;
   String? dueDate;
   Map<String, dynamic>? notes;
   String? processId;
   String? completeDate;
-  String? status;
+  JobStatus? status;
   int? good;
   int? bad;
-  bool? isApproved;
-  bool? isArchive; // if archived, should be added to the list of assembilies of this router
-  List<String>? jobs; // list of assembilies for job packet but id of the job
+  bool isApproved;
+  bool isArchive;
+  Map<String, dynamic>? prevJobs;
 }

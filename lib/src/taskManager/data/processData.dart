@@ -5,7 +5,9 @@ class ProcessData {
     this.createdBy,
     this.id,
     this.isArchive = false,
-    required this.index,
+    this.index,
+    this.color,
+    this.notify = false
   });
 
   String? title;
@@ -13,5 +15,7 @@ class ProcessData {
   final String? createdBy;
   final String? id;
   bool isArchive;
-  int index;
+  int? index;
+  final bool notify;
+  final int? color;
 }

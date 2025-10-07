@@ -30,6 +30,7 @@ class RouterViewer extends StatefulWidget {
 }
 
 class _RouterViewerState extends State<RouterViewer> {
+  bool testing = true;
   dynamic managementData = {};
   String currentEpic = '';
   String child = '';
@@ -54,11 +55,30 @@ class _RouterViewerState extends State<RouterViewer> {
   }
 
   void listenToFirebase() async {
+    if(testing) {
 
+    } else {
+
+    }
   }
 
   List<RouterData> routerData() {
-    return [];
+    List<RouterData> data = [];
+    if (managementData != {}) {
+      for (String key in managementData.keys) {
+        if (key != 'title') {
+          data.add(RouterData(
+            color: managementData[key]['color'],
+            title: managementData[key]['title'],
+            id: key,
+            createdBy: usersProfile[managementData[key]['createdBy']]
+              ['displayName'],
+            dateCreated: managementData[key]['dateCreated'],
+          ));
+        }
+      }
+    }
+    return data;
   }
 
   bool allowEdition() {
@@ -67,6 +87,106 @@ class _RouterViewerState extends State<RouterViewer> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.epic != currentEpic) {
+        setState(() {
+          start();
+          listenToFirebase();
+        });
+      }
+    });
+    
     return SizedBox();
+    // return Container(
+    //     height: widget.height,
+    //     width: widget.width,
+    //     decoration:
+    //         BoxDecoration(color: Theme.of(context).canvasColor, boxShadow: [
+    //       BoxShadow(
+    //         color: Theme.of(context).shadowColor,
+    //         blurRadius: 5,
+    //         offset: const Offset(5, 3),
+    //       ),
+    //     ]),
+    //     child: ProjectManager(
+    //       labels: widget.labels,
+    //       epic: widget.epic,
+    //       startProject: widget.startProject,
+    //       cardWidth: CSS.responsive(width: widget.width),
+    //       width: widget.width,
+    //       height: widget.height,
+    //       allowEditing: allowEditing(),
+    //       onProjectTap: (val) {
+    //         if (widget.callback != null) {
+    //           widget.callback!(
+    //             call: LSICallbacks.ChangeTheme,
+    //             info: {
+    //               'color':managemntData[val]['color'],
+    //               'data': managemntData,
+    //               'complete': timeLineDataComplete
+    //             }
+    //           );
+    //         }
+    //         if (widget.onTap != null) {
+    //           widget.onTap!(val);
+    //         }
+    //       },
+    //       onSubmit: (title, image, date, color) {
+    //         DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
+    //         String createdDate =
+    //             dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
+    //         Database.push('team', children: child + '/', data: {
+    //           'department': widget.epic,
+    //           'createdBy': currentUser.uid,
+    //           'dateCreated': createdDate,
+    //           'dueDate': (date != '') ? date : null,
+    //           'title': title,
+    //           'image': (image == '') ? 'temp' : image,
+    //           'color': color,
+    //         });
+    //       },
+    //       onUpdate: (title, image, date, color, project) {
+    //         Database.update('team',
+    //             children: child + '/',
+    //             location: project,
+    //             data: {
+    //               'department': widget.epic,
+    //               'createdBy': managemntData[project]
+    //                   ['createdBy'], //currentUser['displayName'],
+    //               'dateCreated': managemntData[project]
+    //                   ['dateCreated'], //createdDate,
+    //               'dueDate': (date != '') ? date : null,
+    //               'title': title,
+    //               'image': (image == '') ? 'temp' : image,
+    //               'color': color,
+    //             });
+    //       },
+    //       onLabelsAdded: () {
+    //         if (widget.onLabelAdded != null) {
+    //           widget.onLabelAdded!();
+    //         }
+    //       },
+    //       onComplete: (project) {
+    //         DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
+    //         String createdDate =
+    //             dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
+    //         Database.update('team',
+    //                 children: child + '/' + project + '/',
+    //                 location: 'complete',
+    //                 data: {'markedBy': currentUser.uid, 'date': createdDate})
+    //             .then((value) {
+    //           Database.update('team',
+    //               children: 'managment/Cus/', location: project, data: null);
+    //         });
+    //       },
+    //       onProjectDelete: (id) {
+    //         Database.update('team', children: child, location: id, data: null);
+    //       },
+    //       onTitleChange: (id, title) {
+    //         Database.update('team',
+    //             children: child + '/' + id, location: 'title', data: title);
+    //       },
+    //       projectData: projectData(),
+    //     ));
   }
 }
