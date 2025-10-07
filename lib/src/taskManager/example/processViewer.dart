@@ -49,6 +49,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
   bool hasStarted = false;
   List<DropDownItems> dropDownWorkers = [];
   List<DropDownItems> dropDownApprovers = [];
+  int index = 0;
 
   double startingWidth = deviceWidth;
 
@@ -125,13 +126,12 @@ class _ProcessViewerState extends State<ProcessViewer> {
         imageUrl: null,
         status: OrgStatus.admin,
       );
-      // Load and parse the test JSON
+
       final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
       final Map<String, dynamic> testData = json.decode(jsonString);
 
       usersProfile = {};
 
-      // Helper to add a user if not already present
       void addUser(String uid, {String? displayName, String? imageUrl, OrgStatus? status, bool? canRemoteWork}) {
         if (!usersProfile.containsKey(uid)) {
           usersProfile[uid] = {
@@ -143,16 +143,13 @@ class _ProcessViewerState extends State<ProcessViewer> {
         }
       }
 
-      // Add router creator
       final router = testData['router'];
       addUser(router['createdBy'], displayName: 'Test User', imageUrl: 'https://example.com/image.png', status: OrgStatus.admin, canRemoteWork: true);
 
-      // Add process creators
       for (var p in testData['processes']) {
         addUser(p['createdBy']);
       }
 
-      // Add job creators, workers, approvers, note creators
       for (var j in testData['jobs']) {
         addUser(j['createdBy']);
         for (var w in j['workers']) {
@@ -170,7 +167,6 @@ class _ProcessViewerState extends State<ProcessViewer> {
         }
       }
 
-      // Processes
       currentProcessData = {};
       final processes = testData['processes'] as List;
       for (var p in processes) {
@@ -183,7 +179,6 @@ class _ProcessViewerState extends State<ProcessViewer> {
         );
       }
 
-      // Jobs
       currentJobData = {};
       final jobs = testData['jobs'] as List;
       for (var j in jobs) {
@@ -233,10 +228,13 @@ class _ProcessViewerState extends State<ProcessViewer> {
           isArchive: (routerProcessData[key]['isArchive'] == null)
             ? false
             : routerProcessData[key]['isArchive'],
-          index: routerProcessData[key]['index'],
+          index: (routerProcessData[key]['index'] == null)
+            ? index++
+            : routerProcessData[key]['index'],
         );
       }
     }
+    index = 0;
     return data;
   }
 
@@ -294,7 +292,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
       allowEditing: allowEditing(),
       routerId: selectedRouter,
       onSubmit: (title, notify) {
-        DateFormat dayFormatter = DateFormat('y-MM-dd hh:mm:ss');
+        DateFormat dayFormatter = DateFormat('MM-dd-y hh:mm:ss');
         String date = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
         Database.push(
           'team', 
@@ -406,6 +404,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
       },
       processData: currentProcessData,
       jobs: currentJobData,
+      index: currentProcessData['data']?.index ?? 0,
     );
   }
 

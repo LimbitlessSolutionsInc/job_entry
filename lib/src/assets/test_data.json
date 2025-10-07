@@ -12,14 +12,16 @@
       "title": "Process 1",
       "dateCreated": "2025-10-07",
       "createdBy": "test_user",
-      "color": 11184810
+      "color": 11184810,
+      "index": 0
     },
     {
       "id": "process_2",
       "title": "Process 2",
       "dateCreated": "2025-10-07",
       "createdBy": "test_user",
-      "color": 11185810
+      "color": 11185810,
+      "index": 1
     }
   ],
   "jobs": [
@@ -35,7 +37,7 @@
       "status": "notStarted",
       "good": 1,
       "bad": 0,
-      "isApproved": false,
+      "isApproved": true,
       "isArchive": false,
       "notes": {
         "note_0": {
@@ -57,7 +59,7 @@
       "status": "notStarted",
       "good": 2,
       "bad": 0,
-      "isApproved": false,
+      "isApproved": true,
       "isArchive": false,
       "notes": {
         "note_0": {

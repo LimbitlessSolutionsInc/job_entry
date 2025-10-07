@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../data/jobData.dart';
 import 'taskWidgets.dart';
 import '../../../styles/savedWidgets.dart';
@@ -42,6 +43,14 @@ class JobCard extends StatelessWidget {
     // created date, due date, complete date
     Widget jobDates() {
       Widget dateText(String introText, String date) {
+        String formattedDate = '--/--/----';
+        if (date != '--/--/----' && date.isNotEmpty) {
+          try {
+            formattedDate = DateFormat('MM-dd-y').format(DateTime.parse(date.replaceAll('T', ' ')));
+          } catch (_) {
+            formattedDate = date;
+          }
+        }
         return Row(
           children: [
             Text(introText, 
@@ -53,7 +62,7 @@ class JobCard extends StatelessWidget {
                 decoration: TextDecoration.none
               )
             ),
-            Text(date,
+            Text(formattedDate,
               style: TextStyle(
                 color: Theme.of(context).secondaryHeaderColor,
                 fontSize: 12,
@@ -119,7 +128,7 @@ class JobCard extends StatelessWidget {
     return Transform.rotate(
         angle: (rotate) ? 0.174533 : 0,
         child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            padding: const EdgeInsets.fromLTRB(10, 5, 10, 10),
             margin: const EdgeInsets.only(bottom: 10),
             height: height,
             width: width,

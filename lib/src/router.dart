@@ -5,6 +5,7 @@ import 'package:job_entry/src/taskManager/data/jobData.dart';
 import 'package:job_entry/src/taskManager/data/processData.dart';
 import 'package:job_entry/src/taskManager/example/jobCard.dart';
 import 'package:job_entry/src/taskManager/example/processViewer.dart';
+import 'package:job_entry/src/taskManager/example/routerViewer.dart';
 import 'package:job_entry/src/task_master.dart';
 import 'package:job_entry/styles/globals.dart';
 
@@ -45,10 +46,9 @@ class _RouterScreenState extends State<RouterScreen> {
     super.dispose();
   }
 
-  Future<void> listenToFirebase() async {
+  void listenToFirebase() async {
     list = <JobData>[];
-    try {
-      if (testing) {
+    if (testing) {
         final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
         final Map<String, dynamic> testData = json.decode(jsonString);
 
@@ -91,10 +91,6 @@ class _RouterScreenState extends State<RouterScreen> {
       } else {
 
       }
-    }
-    catch(e){
-      print('Exception (listentoFirebase): $e');
-    }
   }
 
   @override
@@ -109,13 +105,25 @@ class _RouterScreenState extends State<RouterScreen> {
         width: deviceWidth,
         child: Row(
           children: [
-          if (testProcessList.isNotEmpty)
-            ProcessViewer(
-              router: selectedRouter,
-              width: deviceWidth,
+            SizedBox(
+              width: deviceWidth * 0.20,
               height: deviceHeight,
-              color: 1,
+              child: RouterViewer(
+                epic: selectedRouter,
+                width: deviceWidth * 0.20,
+                height: deviceHeight,
+              ),
             ),
+            SizedBox(
+              width: deviceWidth * 0.80,
+              height: deviceHeight,
+              child: ProcessViewer(
+                router: selectedRouter,
+                width: deviceWidth * 0.80,
+                height: deviceHeight,
+                color: 1,
+              ),
+            )
           ]
         )
       )

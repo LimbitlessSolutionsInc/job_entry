@@ -439,7 +439,7 @@ class _RouterManagerState extends State<RouterManager> {
         );
         if (picked != null && picked != selectedDate) {
           setState(() {
-            var formatter = DateFormat('MM-dd-yy');
+            var formatter = DateFormat('MM-dd-y');
             assignedDate = formatter.format(picked);
             selectedDate = picked;
           });
@@ -527,7 +527,7 @@ class _RouterManagerState extends State<RouterManager> {
                           child: SizedBox(
                             child: Text(
                               (assignedDate == '')
-                                  ? DateFormat('MM-dd-yy').format(DateTime.now())
+                                  ? DateFormat('MM-dd-y').format(DateTime.now())
                                   : assignedDate,
                               style: TextStyle(
                                   color: Theme.of(context)
@@ -696,19 +696,6 @@ class _RouterManagerState extends State<RouterManager> {
                   width: width,
                   color: Theme.of(context).canvasColor,
                 ),
-          LSIFloatingActionButton(
-              size: 35,
-              iconSize: 25,
-              offset: Offset(width - 35 - 20, 30),
-              allowed: widget.allowEditing,
-              color: Theme.of(context).cardColor,
-              iconColor: Theme.of(context).primaryTextTheme.labelMedium!.color!,
-              icon: Icons.label,
-              onTap: () {
-                setState(() {
-                  isNewRouter = true;
-                });
-              }),
           LSIFloatingActionButton(
               allowed: widget.allowEditing,
               color: Theme.of(context).secondaryHeaderColor,

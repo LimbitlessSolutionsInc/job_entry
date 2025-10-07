@@ -13,8 +13,6 @@ import 'package:job_entry/src/taskManager/data/jobData.dart';
 import 'package:job_entry/src/taskManager/data/processData.dart';
 import 'package:job_entry/src/exporting/pdfGeneration.dart';
 
-// TODO: have timeline modal (complete timeline of assemblies)
-
 class ProcessManager extends StatefulWidget {
   const ProcessManager({
     Key? key,
@@ -39,6 +37,7 @@ class ProcessManager extends StatefulWidget {
     this.screenOffset = const Offset(0,0),
     required this.workers,
     required this.approvers,
+    this.index,
   }):super(key: key);
 
   /// Callback for process submission/creation
@@ -97,6 +96,8 @@ class ProcessManager extends StatefulWidget {
   /// Value to indicate if there has been an update
   final bool update;
 
+  final int? index;
+
   @override
   _ProcessManagerState createState() => _ProcessManagerState();
 }
@@ -104,7 +105,7 @@ class ProcessManager extends StatefulWidget {
 class _ProcessManagerState extends State<ProcessManager> {
   double width = 100;
   double height = 100;
-  double jobHeight = 115;
+  double jobHeight = 120;
   double processWidth = 240;
 
   final ScrollController _scrollController = ScrollController();
@@ -133,9 +134,15 @@ class _ProcessManagerState extends State<ProcessManager> {
     SpellCheckController(),
     SpellCheckController(),
   ]; 
+  List<DropDownItems> jobStatus = [
+    DropDownItems(value: 'notStarted', text: 'Not Started'),
+    DropDownItems(value: 'inProgress', text: 'In Progress'),
+    DropDownItems(value: 'completed', text: 'Completed'),
+  ];
   List<int> boardJobs = [];
   List<DropdownMenuItem<dynamic>> workerDropDown = [];
   List<DropdownMenuItem<dynamic>> approverDropDown = [];
+  List<DropdownMenuItem<dynamic>> jobStatusDropDown = [];
   List<ProcessData> processData = [];
   List<JobData> jobData = [];
   Map<String, List<String>>? jobNotes;
@@ -149,6 +156,9 @@ class _ProcessManagerState extends State<ProcessManager> {
   String assignedDate = '';
   String completeDate = '';
   JobStatus status = JobStatus.notStarted;
+  bool isApproved = false;
+  bool isArchive = false;
+
   String processIdCardDragged = '';
   String processStartIdCardDragged = '';
   String jobBeingDragged = '';
@@ -177,7 +187,7 @@ class _ProcessManagerState extends State<ProcessManager> {
     super.dispose();
   }
 
-  // Initializes default state of boardManager
+  // Initializes default state of processManager
   void start() {
     height = (widget.height == null)
       ? MediaQuery.of(context).size.height
@@ -190,7 +200,8 @@ class _ProcessManagerState extends State<ProcessManager> {
     processData = widget.processData.entries.map((e) => e.value).whereType<ProcessData>().toList();
     workerDropDown = LSIFunctions.setDropDownItems(widget.workers);
     approverDropDown = LSIFunctions.setDropDownItems(widget.approvers);
-
+    jobStatusDropDown = LSIFunctions.setDropDownItems(jobStatus);
+    
     jobReset();
     processReset();
     sortByDueDate();
@@ -218,6 +229,8 @@ class _ProcessManagerState extends State<ProcessManager> {
     bad = 0;
     status = JobStatus.notStarted;
     selectedDate = DateTime.now();
+    isApproved = false;
+    isArchive = false;
   }
 
   /// Gets card data from selected card [i] and populates their respective fields
@@ -252,7 +265,7 @@ class _ProcessManagerState extends State<ProcessManager> {
         selectedDate = DateTime.parse(jobData[i].dueDate!.replaceAll('T', ' '));
       }
       if (jobData[i].completeDate != null) {
-        completeDate = jobData[i].completeDate!.split('T')[0];
+        completeDate = DateTime.parse(jobData[i].completeDate!.replaceAll('T', ' ')).toString().split(' ')[0];
       }
       if (jobData[i].status != null) {
         status = jobData[i].status!;
@@ -269,6 +282,9 @@ class _ProcessManagerState extends State<ProcessManager> {
       } else if (jobData[i].bad == null) {
         bad = 0;
       }
+      isApproved = jobData[i].isApproved;
+      isArchive = jobData[i].isArchive;
+    
       if (jobData[i].notes != null) {
         List<String> names = [];
         List<String> dates = [];
@@ -312,7 +328,8 @@ class _ProcessManagerState extends State<ProcessManager> {
 
   /// Prepares job data into JSON format to be sent to database
   void submitJobData() {
-    DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
+    // TODO: check what format the date has to go in the database
+    DateFormat dayFormatter = DateFormat('MM-dd-y hh:mm:ss');
     String dueDate = '';
     if (assignedDate != '') {
       dueDate = dayFormatter.format(selectedDate).replaceAll(' ', 'T');
@@ -361,8 +378,8 @@ class _ProcessManagerState extends State<ProcessManager> {
       'status': status,
       'good': good,
       'bad': bad,
-      //'isApproved':
-      //'isArchive':
+      'isApproved': isApproved,
+      'isArchive': isArchive,
       //'prevJobs':
     };
 
@@ -413,7 +430,7 @@ class _ProcessManagerState extends State<ProcessManager> {
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
-        var formatter = DateFormat('MM-dd-yy');
+        var formatter = DateFormat('MM-dd-y');
         assignedDate = formatter.format(picked);
         selectedDate = picked;
       });
@@ -438,57 +455,65 @@ class _ProcessManagerState extends State<ProcessManager> {
 
   /// Widget for draggable cards
   Widget dragCard(String id, int index, int jobToUse) {
-    return Stack(
-      children: [
-        (jobBeingDragged != jobData[jobToUse].id)
-          ? JobCard(
-            context: context,
-            jobData: jobData[jobToUse],
-            height: jobHeight,
-            width: processWidth - 40.0)
-          : Container(),
-        Draggable(
-          data: 1,
-          feedback: JobCard(
-            context: context,
-            jobData: jobData[jobToUse],
-            height: jobHeight,
-            rotate: true,
-            width: processWidth - 40.0),
-          child: const Padding(
-            padding: EdgeInsets.only(top: 2, left: 2),
-            child: Icon(Icons.drag_indicator)),
-          onDragStarted: () {
-            setState(() {
-              processStartIdCardDragged = jobData[jobToUse].processId!;
-              processIdCardDragged = jobData[jobToUse].processId!;
-              jobBeingDragged = jobData[jobToUse].id!;
-            });
-          },
-          onDragEnd: (val) {
-            setState(() {
-              dueDateJobChange();
-              jobBeingDragged = '';
-              processIdCardDragged = '';
-            });
-          },
-          onDragCompleted: () {
-            setState(() {
-              dueDateJobChange();
-              jobBeingDragged = '';
-              processIdCardDragged = '';
-            });
-          },
-          onDraggableCanceled: (vel, off) {
-            setState(() {
-              dueDateJobChange();
-              jobBeingDragged = '';
-              processIdCardDragged = '';
-            });
-          },
-        )
-      ],
-    );
+    if (jobData[jobToUse].isApproved == true) {
+        return Stack(
+        children: [
+            (jobBeingDragged != jobData[jobToUse].id)
+              ? JobCard(
+                context: context,
+                jobData: jobData[jobToUse],
+                height: jobHeight,
+                width: processWidth - 40.0)
+              : Container(),
+            Draggable(
+              data: 1,
+              feedback: JobCard(
+                context: context,
+                jobData: jobData[jobToUse],
+                height: jobHeight,
+                rotate: true,
+                width: processWidth - 40.0),
+              child: const Padding(
+                padding: EdgeInsets.only(top: 2, left: 2),
+                child: Icon(Icons.drag_indicator)),
+              onDragStarted: () {
+                setState(() {
+                  processStartIdCardDragged = jobData[jobToUse].processId!;
+                  processIdCardDragged = jobData[jobToUse].processId!;
+                  jobBeingDragged = jobData[jobToUse].id!;
+                });
+              },
+              onDragEnd: (val) {
+                setState(() {
+                  dueDateJobChange();
+                  jobBeingDragged = '';
+                  processIdCardDragged = '';
+                });
+              },
+              onDragCompleted: () {
+                setState(() {
+                  dueDateJobChange();
+                  jobBeingDragged = '';
+                  processIdCardDragged = '';
+                });
+              },
+              onDraggableCanceled: (vel, off) {
+                setState(() {
+                  dueDateJobChange();
+                  jobBeingDragged = '';
+                  processIdCardDragged = '';
+                });
+              },
+            )
+          ],
+      );
+     } else {
+       return JobCard(
+        context: context,
+        jobData: jobData[jobToUse],
+        height: jobHeight,
+        width: processWidth - 40.0);
+     }
   }
 
   /// Opens dialog menu with editable card information of [jobToUse] if [jobToUse] is null, assuming creating a new card, edited by current user
@@ -527,75 +552,387 @@ class _ProcessManagerState extends State<ProcessManager> {
       bool isApprover() {
         return true;
       }
-      Widget createActivityList() {
-        Widget section(int i){
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: Row(children: [
-                  Text(
-                    usersProfile[jobNotes!['names']![i]]
-                        ['displayName'],
-                    style: TextStyle(
-                      color: Theme.of(context)
-                          .primaryTextTheme
-                          .labelSmall!
-                          .color,
-                      fontSize: 14,
-                      fontFamily: 'Klavika Bold',
-                      package: 'css',
-                      decoration: TextDecoration.none
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    jobNotes!['dates']![i],
-                    style: TextStyle(
-                      color: Theme.of(context)
-                          .primaryTextTheme
-                          .labelSmall!
-                          .color,
-                      fontSize: 12,
-                      fontFamily: 'MuseoSans',
-                      decoration: TextDecoration.none
-                    )
-                  ),
-                ])
+      Widget textField(String name, String label, dynamic controller) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              name,
+              style: TextStyle(
+                color: Theme.of(context)
+                    .primaryTextTheme
+                    .labelSmall!
+                    .color,
+                fontSize: 14,
+                fontFamily: 'Klavika Bold',
+                package: 'css',
+                decoration: TextDecoration.none
               ),
-              EnterTextFormField(
-                width: width,
+            ),
+            SizedBox(
+              width: 300,
+              child: EnterTextFormField(
+                width: 300,
                 color: Theme.of(context).canvasColor,
-                maxLines: null,
-                label: 'Write a Note',
-                controller: activityControllers[i],
+                maxLines: 1,
+                label: label,
+                controller: controller,
                 onEditingComplete: () {},
                 onSubmitted: (val) {},
                 onTap: widget.onFocusNode
               ),
-            ],
-          );
-        }
-
-        if (activityControllers.isNotEmpty) {
-          List<Widget> rows = [];
-          for (int i = 0; i < activityControllers.length; i++) {
-            rows.add(section(i));
-            rows.add(const SizedBox(height: 5));
-          }
-          return SizedBox(
-            height: (activityControllers.length < 3 || expandNotes)
-              ? activityControllers.length * 57.0
-              : 57.0 * 3,
-            child: ListView(
-              padding: const EdgeInsets.all(0),
-              children: rows,
+            ),
+          ],
+        );
+      }
+      Widget calendarField(String name, String text) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              name,
+              style: TextStyle(
+                color: Theme.of(context)
+                    .primaryTextTheme
+                    .labelSmall!
+                    .color,
+                fontSize: 14,
+                fontFamily: 'Klavika Bold',
+                package: 'css',
+                decoration: TextDecoration.none
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 120,
+              child: FocusedInkWell(
+              onTap: () {
+                if(widget.allowEditing || isNewJob) {
+                  _selectDate(context);
+                }
+              },
+              child: TaskWidgets.iconNote(
+                Icons.insert_invitation_outlined,
+                (text == '')
+                  ? DateFormat('MM-dd-y').format(DateTime.now())
+                  : text,
+                TextStyle(
+                  color: Theme.of(context)
+                      .primaryTextTheme
+                      .bodyMedium!
+                      .color,
+                  fontFamily: 'Klavika',
+                  package: 'css',
+                  fontSize: 16,
+                  decoration: TextDecoration.none,
+                ),
+              20),
+            ),
+          )]
+        );
+      }
+      Widget fieldList() {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            textField('Job Title:', 'Enter Job Title', cardNameControllers[0]),
+            calendarField('Start Date:', assignedDate),
+            calendarField('End Date:', completeDate),
+            calendarField('Required Date:', assignedDate),
+            SizedBox(height: 10),
+            textField('Good:', 'number', TextEditingController(text: good.toString())),
+            SizedBox(height: 10),
+            textField('Bad:', 'number', TextEditingController(text: bad.toString())),
+            SizedBox(height: 10),
+        ]);
+      }
+      Widget statusField() {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Status:',
+              style: TextStyle(
+                color: Theme.of(context)
+                    .primaryTextTheme
+                    .labelSmall!
+                    .color,
+                fontSize: 14,
+                fontFamily: 'Klavika Bold',
+                package: 'css',
+                decoration: TextDecoration.none
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: FocusedDropDown(
+                itemVal: jobStatusDropDown,
+                value: status.name,
+                radius: 5, 
+                width: 115,
+                color: Theme.of(context)
+                    .canvasColor,
+                onchange: (val) {
+                  if(widget.allowEditing || isNewJob) {
+                    setState(() {
+                      status = JobStatus.values.byName(val);
+                    });
+                  }
+                },
+                style: TextStyle(
+                  color: Theme.of(context)
+                      .primaryTextTheme
+                      .bodyMedium!
+                      .color,
+                  fontSize: 12
+                ),
+              ),
             )
-          );
-        } else  {
-          return const SizedBox();
-        }
+          ],
+        );
+      }
+      Widget workerDropDownWidget() {
+        return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 15),
+                TaskWidgets.iconNote(
+                  Icons.assignment,
+                    "Workers:",
+                    TextStyle(
+                      color: Theme.of(context)
+                          .primaryTextTheme
+                          .bodyMedium!
+                          .color,
+                      fontFamily: 'Klavika',
+                      package: 'css',
+                      decoration: TextDecoration.none
+                    ),
+                20),
+                SizedBox(
+                  width: 150,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      FocusedDropDown(
+                        itemVal: workerDropDown,
+                        value: tempWorker,
+                        radius: 5, 
+                        width: 115,
+                        color: Theme.of(context)
+                            .canvasColor,
+                        onchange: (val) {
+                          setState(() {
+                            tempWorker = val;
+                          });
+                        },
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .primaryTextTheme
+                              .bodyMedium!
+                              .color,
+                          fontSize: 12
+                        ),
+                      ),
+                      FocusedInkWell(
+                        onTap: () {
+                          if(isWorker()) {
+                            bool allowedAdded = true;
+                            if(workers.isNotEmpty && tempWorker != '') {
+                              for (int i = 0; i < workers.length; i++) {
+                                if (tempWorker == workers[i]) {
+                                  allowedAdded = false;
+                                }
+                                break;
+                              }
+                            }
+                            setState(() {
+                              if (allowedAdded && tempWorker != '') {
+                                workers.add(tempWorker);
+                                if(!isNewJob) { newWorkers.add(tempWorker); }
+                              }
+                            });
+                          }
+                        },
+                        child: Icon(
+                          Icons.add_box,
+                          size: 30,
+                          color: Theme.of(context)
+                              .primaryTextTheme
+                              .bodyMedium!
+                              .color,
+                        )
+                      )
+                    ],
+                  )
+                )
+              ],
+            ),]
+          ),
+          Row(children: [
+          workers.isNotEmpty
+            ? Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.assignment_ind,
+                      size: 35,
+                    ),
+                    LSIUserIcon(
+                      remove: (loc) {
+                      setState(() {
+                        workers.removeAt(loc);
+                      });
+                      },
+                      viewidth: 100,
+                      uids: workers,
+                      colors: [
+                        Colors.teal[200]!,
+                        Colors.teal[600]!
+                      ],
+                    )
+                  ],
+                )
+              )
+          : Container()
+        ],)
+        ]);                   
+      }
+      Widget approverDropDownWidget() {
+        return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 15),
+                TaskWidgets.iconNote(
+                  Icons.assignment,
+                    "Approvers:",
+                    TextStyle(
+                      color: Theme.of(context)
+                          .primaryTextTheme
+                          .bodyMedium!
+                          .color,
+                      fontFamily: 'Klavika',
+                      package: 'css',
+                      decoration: TextDecoration.none
+                    ),
+                20),
+                SizedBox(
+                  width: 150,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      FocusedDropDown(
+                        itemVal: approverDropDown,
+                        value: tempApprover,
+                        radius: 5, 
+                        width: 115,
+                        color: Theme.of(context)
+                            .canvasColor,
+                        onchange: (val) {
+                          setState(() {
+                            tempApprover = val;
+                          });
+                        },
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .primaryTextTheme
+                              .bodyMedium!
+                              .color,
+                          fontSize: 12
+                        ),
+                      ),
+                      FocusedInkWell(
+                        onTap: () {
+                          if(isApprover()) {
+                            bool allowedAdded = true;
+                            if(approvers.isNotEmpty && tempApprover != '') {
+                              for (int i = 0; i < approvers.length; i++) {
+                                if (tempApprover == approvers[i]) {
+                                  allowedAdded = false;
+                                }
+                                break;
+                              }
+                            }
+                            setState(() {
+                              if (allowedAdded && tempApprover != '') {
+                                approvers.add(tempApprover);
+                                if(!isNewJob) { approvers.add(tempApprover); } // edit
+                              }
+                            });
+                          }
+                        },
+                        child: Icon(
+                          Icons.add_box,
+                          size: 30,
+                          color: Theme.of(context)
+                              .primaryTextTheme
+                              .bodyMedium!
+                              .color,
+                        )
+                      )
+                    ],
+                  )
+                )
+              ],
+            ),]
+          ),
+          Row(children: [
+          approvers.isNotEmpty
+            ? Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.assignment_ind,
+                      size: 35,
+                    ),
+                    LSIUserIcon(
+                      remove: (loc) {
+                      setState(() {
+                        approvers.removeAt(loc);
+                      });
+                      },
+                      viewidth: 100,
+                      uids: approvers,
+                      colors: [
+                        Colors.teal[200]!,
+                        Colors.teal[600]!
+                      ],
+                    )
+                  ],
+                )
+              )
+          : Container()
+        ],)
+        ]);                   
+      }
+      Widget assembly() {
+        return SizedBox();
+      }
+      Widget assemblyList() {
+        return SizedBox();
+      }
+      Widget button() {
+        return SizedBox();
+      }
+      Widget exportButton() {
+        return SizedBox();
+      }
+      Widget notes() {
+        return SizedBox();
       }
 
       return Dialog(
@@ -624,380 +961,500 @@ class _ProcessManagerState extends State<ProcessManager> {
                 ? Column (
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(
-                        height: height - 65 - 40,
-                        child: ListView(
-                          padding: const EdgeInsets.all(0),
-                          children: [
-                            Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.title_rounded,
-                                      size: 20,
-                                    ),
-                                    SizedBox(
-                                      width: width,
-                                      child: EnterTextFormField(
-                                        margin: const EdgeInsets.only(left: 5),
-                                        height: 35,
-                                        color: Theme.of(context).canvasColor,
-                                        maxLines: 1,
-                                        label: 'Title',
-                                        controller: cardNameControllers[0],
-                                        onTap: widget.onFocusNode,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(top: 12),
-                                  width: 120,
-                                  child: FocusedInkWell(
-                                    onTap: () {
-                                      if(widget.allowEditing || isNewJob) {
-                                        _selectDate(context);
-                                      }
-                                    },
-                                    child: TaskWidgets.iconNote(
-                                      Icons.insert_invitation_outlined,
-                                      (assignedDate == '')
-                                        ? DateFormat('MM-dd-y').format(DateTime.now())
-                                        : assignedDate,
-                                      TextStyle(
-                                        color: Theme.of(context)
-                                            .primaryTextTheme
-                                            .bodyMedium!
-                                            .color,
-                                        fontFamily: 'Klavika',
-                                        package: 'css',
-                                        fontSize: 16,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    20),
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(top: 10),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.assignment_late_outlined,
-                                        size: 20,
-                                      ),
-                                      LSIUserIcon(
-                                        remove: (loc) {
-                                          setState(() {
-                                            workers.removeAt(loc);
-                                          });
-                                        },
-                                        viewidth: width,
-                                        uids: workers, 
-                                        colors: [
-                                          Colors.teal[200]!,
-                                          Colors.teal[600]!
-                                        ], 
-                                      )
-                                    ],
-                                  )
-                                ),
-                                workers.isNotEmpty
-                                  ? Container(
-                                    margin: const EdgeInsets.only(top: 10),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.assignment_ind,
-                                          size: 20,
-                                        ),
-                                        LSIUserIcon(
-                                          remove: (loc) {
-                                            setState(() {
-                                              workers.removeAt(loc);
-                                            });
-                                          },
-                                          viewidth: width,
-                                          uids: workers,
-                                          colors: [
-                                            Colors.teal[200]!,
-                                            Colors.teal[600]!
-                                          ],
-                                        )
-                                      ],
-                                    )
-                                  )
-                                : Container()
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    TaskWidgets.iconNote(
-                                      Icons.assignment,
-                                      "Assign",
-                                      TextStyle(
-                                        color: Theme.of(context)
-                                            .primaryTextTheme
-                                            .bodyMedium!
-                                            .color,
-                                        fontFamily: 'Klavika',
-                                        package: 'css',
-                                        decoration: TextDecoration.none
-                                      ),
-                                    20),
-                                    SizedBox(
-                                      width: 150,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          FocusedDropDown(
-                                            itemVal: workerDropDown,
-                                            value: tempWorker,
-                                            radius: 5, 
-                                            width: 115,
-                                            color: Theme.of(context)
-                                                .canvasColor,
-                                            onchange: (val) {
-                                              setState(() {
-                                                tempWorker = val;
-                                              });
-                                            },
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .primaryTextTheme
-                                                  .bodyMedium!
-                                                  .color,
-                                              fontSize: 12
-                                            ),
-                                          ),
-                                          FocusedInkWell(
-                                            onTap: () {
-                                              if(isWorker()) {
-                                                bool allowedAdded = true;
-                                                if(workers.isNotEmpty && tempWorker != '') {
-                                                  for (int i = 0; i < workers.length; i++) {
-                                                    if (tempWorker == workers[i]) {
-                                                      allowedAdded = false;
-                                                    }
-                                                    break;
-                                                  }
-                                                }
-                                                setState(() {
-                                                  if (allowedAdded && tempWorker != '') {
-                                                    workers.add(tempWorker);
-                                                    if(!isNewJob) { newWorkers.add(tempWorker); }
-                                                  }
-                                                });
-                                              }
-                                            },
-                                            child: Icon(
-                                              Icons.add_box,
-                                              size: 30,
-                                              color: Theme.of(context)
-                                                  .primaryTextTheme
-                                                  .bodyMedium!
-                                                  .color,
-                                            )
-                                          )
-                                        ],
-                                      )
-                                    )
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    TaskWidgets.iconNote(
-                                      Icons.edit_note_rounded,
-                                      "Approver",
-                                      TextStyle(
-                                        color: Theme.of(context)
-                                            .primaryTextTheme
-                                            .bodyMedium!
-                                            .color,
-                                        fontFamily: 'Klavika',
-                                        package: 'css',
-                                        fontSize: 20,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    20),
-                                    SizedBox(
-                                      width: 150,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          FocusedDropDown(
-                                            itemVal: approverDropDown,
-                                            value: tempApprover,
-                                            radius: 5,
-                                            width: 114, 
-                                            color: Theme.of(context).canvasColor,
-                                            onchange: (val) {
-                                              setState(() {
-                                                tempApprover = val;
-                                              });
-                                            },
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .primaryTextTheme
-                                                  .bodyMedium!
-                                                  .color,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          FocusedInkWell(
-                                            onTap: () {
-                                              if (isApprover()) {
-                                                bool allowedEdit = true;
-                                                if (approvers.isNotEmpty && tempApprover != '') {
-                                                  for (int i = 0; i < approvers.length; i++) {
-                                                    if (tempApprover == approvers[i]) {
-                                                      allowedEdit = false;
-                                                      break;
-                                                    }
-                                                  }
-                                                }
-                                                setState(() {
-                                                  if (allowedEdit && tempApprover != '') {
-                                                    approvers.add(tempApprover);
-                                                  }
-                                                });
-                                              }
-                                            },
-                                            child: Icon(
-                                              Icons.add_box,
-                                              size: 30,
-                                              color: Theme.of(context)
-                                                  .primaryTextTheme
-                                                  .bodyMedium!
-                                                  .color,
-                                            ),
-                                          )
-                                        ],
-                                      )
-                                    )
-                                  ],
-                                )
-                              ],
-                            ),
-                           const SizedBox(height: 20),
-                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  FocusedInkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        expandNotes = !expandNotes;
-                                      });
-                                    },
-                                    child: Icon(
-                                      (!expandNotes)
-                                        ? Icons.expand
-                                        : Icons.clear_outlined,
-                                      color: Theme.of(context)
-                                          .primaryTextTheme
-                                          .bodyMedium!
-                                          .color,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  TaskWidgets.iconNote(
-                                    Icons.list_rounded,
-                                    "Notes",
-                                    TextStyle(
-                                      color: Theme.of(context)
-                                          .primaryTextTheme
-                                          .bodyMedium!
-                                          .color,
-                                      fontFamily: 'Klavika',
-                                      package: 'css',
-                                      fontSize: 20,
-                                      decoration: TextDecoration.none
-                                    ),
-                                  20),
-                                ],
-                              ),
-                              FocusedInkWell(
-                                onTap: () {
-                                  setState(() {
-                                    activityControllers.add(SpellCheckController());
-                                    DateFormat dayFormatter = DateFormat('MM-dd-y');
-                                    String createdDate = dayFormatter.format(DateTime.now());
-                                    if (jobNotes == null) {
-                                      jobNotes = {
-                                        'names': [currentUser.uid],
-                                        'dates': [createdDate],
-                                      };
-                                    } else {
-                                      jobNotes!['names']!.add(currentUser.uid);
-                                      jobNotes!['dates']!.add(createdDate);
-                                    }
-                                  });
-                                },
-                                child: Icon(
-                                  Icons.add_box,
-                                  size: 30,
-                                  color: Theme.of(context)
-                                      .primaryTextTheme
-                                      .bodyMedium!
-                                      .color,
-                                ),
-                              )
-                            ],
-                           ),
-                            Container(
-                              color: CSS.lighten(Theme.of(context).canvasColor, 0.2),
-                              child: createActivityList(),
-                            ),
-                          ],
-                        )
-                      ),
+                      fieldList(),
+                      statusField(),
+                      workerDropDownWidget(),
+                      approverDropDownWidget(),
+                      assemblyList(),
+                      notes(),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          (!isNewJob && (isWorker() || isApprover()))
-                            ? LSIWidgets.squareButton(
-                              text: 'delete',
-                              onTap: () {
-                                setState(() {
-                                  if(widget.onJobDelete != null) {
-                                    widget.onJobDelete!(jobData[selectedJob!].id!);
-                                  }
-                                });
-                                Navigator.of(context).pop();
-                              },
-                              buttonColor: Colors.transparent,
-                              borderColor: Theme.of(context)
-                                  .primaryTextTheme
-                                  .bodyMedium!
-                                  .color,
-                              height: 45,
-                              radius: 45 / 2,
-                              width: width / 3 - 15,
-                            )
-                          : Container(),
+                          button(), // approve
+                          button(), // save / submit
+                          button(), // cancel
+                          exportButton(),
                         ],
-                      )
-                    ],
+                      ),
+                      button() // delete
+                    ]
                   )
-                  : LSILoadingWheel(),
-            ],
+                : LSILoadingWheel()
+            ]
           )
         )
       );
+      // Widget createActivityList() {
+      //   Widget section(int i){
+      //     return Column(
+      //       crossAxisAlignment: CrossAxisAlignment.start,
+      //       children: [
+      //         Padding(
+      //           padding: const EdgeInsets.only(left: 10),
+      //           child: Row(children: [
+      //             Text(
+      //               usersProfile[jobNotes!['names']![i]]
+      //                   ['displayName'],
+      //               style: TextStyle(
+      //                 color: Theme.of(context)
+      //                     .primaryTextTheme
+      //                     .labelSmall!
+      //                     .color,
+      //                 fontSize: 14,
+      //                 fontFamily: 'Klavika Bold',
+      //                 package: 'css',
+      //                 decoration: TextDecoration.none
+      //               ),
+      //             ),
+      //             const SizedBox(width: 10),
+      //             Text(
+      //               DateFormat('MM-dd-y').format(DateTime.parse(jobNotes!['dates']![i].replaceAll('T', ' '))),
+      //               style: TextStyle(
+      //                 color: Theme.of(context)
+      //                     .primaryTextTheme
+      //                     .labelSmall!
+      //                     .color,
+      //                 fontSize: 12,
+      //                 fontFamily: 'MuseoSans',
+      //                 decoration: TextDecoration.none
+      //               )
+      //             ),
+      //           ])
+      //         ),
+      //         EnterTextFormField(
+      //           width: width,
+      //           color: Theme.of(context).canvasColor,
+      //           maxLines: null,
+      //           label: 'Write a Note',
+      //           controller: activityControllers[i],
+      //           onEditingComplete: () {},
+      //           onSubmitted: (val) {},
+      //           onTap: widget.onFocusNode
+      //         ),
+      //       ],
+      //     );
+      //   }
+
+      //   if (activityControllers.isNotEmpty) {
+      //     List<Widget> rows = [];
+      //     for (int i = 0; i < activityControllers.length; i++) {
+      //       rows.add(section(i));
+      //       rows.add(const SizedBox(height: 5));
+      //     }
+      //     return SizedBox(
+      //       height: (activityControllers.length < 3 || expandNotes)
+      //         ? activityControllers.length * 57.0
+      //         : 57.0 * 3,
+      //       child: ListView(
+      //         padding: const EdgeInsets.all(0),
+      //         children: rows,
+      //       )
+      //     );
+      //   } else  {
+      //     return const SizedBox();
+      //   }
+      // }
+
+      // return Dialog(
+      //   backgroundColor: Colors.transparent,
+      //   insetPadding: const EdgeInsets.only(left: 1, right: 1),
+      //   child: Container(
+      //     padding: const EdgeInsets.all(20),
+      //     height: 650,
+      //     width: 500,
+      //     alignment: Alignment.center,
+      //     decoration: BoxDecoration(
+      //       color: Theme.of(context).cardColor,
+      //       borderRadius: const BorderRadius.all(Radius.circular(20)),
+      //       boxShadow: [
+      //         BoxShadow(
+      //           color: Theme.of(context).shadowColor,
+      //           blurRadius: 5,
+      //           offset: const Offset(2,2),
+      //         ),
+      //       ],
+      //     ),
+      //     child: ListView(
+      //       padding: const EdgeInsets.all(0),
+      //       children: [
+      //         cardUpdateReady
+      //           ? Column (
+      //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //               children: [
+      //                 SizedBox(
+      //                   height: height - 65 - 40,
+      //                   child: ListView(
+      //                     padding: const EdgeInsets.all(0),
+      //                     children: [
+      //                       Wrap(
+      //                         alignment: WrapAlignment.spaceBetween,
+      //                         children: [
+      //                           Row(
+      //                             crossAxisAlignment: CrossAxisAlignment.center,
+      //                             children: [
+      //                               const Icon(
+      //                                 Icons.title_rounded,
+      //                                 size: 20,
+      //                               ),
+      //                               SizedBox(
+      //                                 width: width,
+      //                                 child: EnterTextFormField(
+      //                                   margin: const EdgeInsets.only(left: 5),
+      //                                   height: 35,
+      //                                   color: Theme.of(context).canvasColor,
+      //                                   maxLines: 1,
+      //                                   label: 'Title',
+      //                                   controller: cardNameControllers[0],
+      //                                   onTap: widget.onFocusNode,
+      //                                 ),
+      //                               ),
+      //                             ],
+      //                           ),
+      //                           Container(
+      //                             margin: const EdgeInsets.only(top: 12),
+      //                             width: 120,
+      //                             child: FocusedInkWell(
+      //                               onTap: () {
+      //                                 if(widget.allowEditing || isNewJob) {
+      //                                   _selectDate(context);
+      //                                 }
+      //                               },
+      //                               child: TaskWidgets.iconNote(
+      //                                 Icons.insert_invitation_outlined,
+      //                                 (assignedDate == '')
+      //                                   ? DateFormat('MM-dd-y').format(DateTime.now())
+      //                                   : assignedDate,
+      //                                 TextStyle(
+      //                                   color: Theme.of(context)
+      //                                       .primaryTextTheme
+      //                                       .bodyMedium!
+      //                                       .color,
+      //                                   fontFamily: 'Klavika',
+      //                                   package: 'css',
+      //                                   fontSize: 16,
+      //                                   decoration: TextDecoration.none,
+      //                                 ),
+      //                               20),
+      //                             ),
+      //                           ),
+      //                           Container(
+      //                             margin: const EdgeInsets.only(top: 10),
+      //                             child: Row(
+      //                               crossAxisAlignment: CrossAxisAlignment.center,
+      //                               children: [
+      //                                 const Icon(
+      //                                   Icons.assignment_late_outlined,
+      //                                   size: 20,
+      //                                 ),
+      //                                 LSIUserIcon(
+      //                                   remove: (loc) {
+      //                                     setState(() {
+      //                                       workers.removeAt(loc);
+      //                                     });
+      //                                   },
+      //                                   viewidth: width,
+      //                                   uids: workers, 
+      //                                   colors: [
+      //                                     Colors.teal[200]!,
+      //                                     Colors.teal[600]!
+      //                                   ], 
+      //                                 )
+      //                               ],
+      //                             )
+      //                           ),
+      //                           workers.isNotEmpty
+      //                             ? Container(
+      //                               margin: const EdgeInsets.only(top: 10),
+      //                               child: Row(
+      //                                 crossAxisAlignment: CrossAxisAlignment.center,
+      //                                 children: [
+      //                                   const Icon(
+      //                                     Icons.assignment_ind,
+      //                                     size: 20,
+      //                                   ),
+      //                                   LSIUserIcon(
+      //                                     remove: (loc) {
+      //                                       setState(() {
+      //                                         workers.removeAt(loc);
+      //                                       });
+      //                                     },
+      //                                     viewidth: width,
+      //                                     uids: workers,
+      //                                     colors: [
+      //                                       Colors.teal[200]!,
+      //                                       Colors.teal[600]!
+      //                                     ],
+      //                                   )
+      //                                 ],
+      //                               )
+      //                             )
+      //                           : Container()
+      //                         ],
+      //                       ),
+      //                       const SizedBox(height: 20),
+      //                       Row(
+      //                         crossAxisAlignment: CrossAxisAlignment.start,
+      //                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                         children: [
+      //                           Column(
+      //                             crossAxisAlignment: CrossAxisAlignment.start,
+      //                             children: [
+      //                               TaskWidgets.iconNote(
+      //                                 Icons.assignment,
+      //                                 "Assign",
+      //                                 TextStyle(
+      //                                   color: Theme.of(context)
+      //                                       .primaryTextTheme
+      //                                       .bodyMedium!
+      //                                       .color,
+      //                                   fontFamily: 'Klavika',
+      //                                   package: 'css',
+      //                                   decoration: TextDecoration.none
+      //                                 ),
+      //                               20),
+      //                               SizedBox(
+      //                                 width: 150,
+      //                                 child: Row(
+      //                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                                   children: [
+      //                                     FocusedDropDown(
+      //                                       itemVal: workerDropDown,
+      //                                       value: tempWorker,
+      //                                       radius: 5, 
+      //                                       width: 115,
+      //                                       color: Theme.of(context)
+      //                                           .canvasColor,
+      //                                       onchange: (val) {
+      //                                         setState(() {
+      //                                           tempWorker = val;
+      //                                         });
+      //                                       },
+      //                                       style: TextStyle(
+      //                                         color: Theme.of(context)
+      //                                             .primaryTextTheme
+      //                                             .bodyMedium!
+      //                                             .color,
+      //                                         fontSize: 12
+      //                                       ),
+      //                                     ),
+      //                                     FocusedInkWell(
+      //                                       onTap: () {
+      //                                         if(isWorker()) {
+      //                                           bool allowedAdded = true;
+      //                                           if(workers.isNotEmpty && tempWorker != '') {
+      //                                             for (int i = 0; i < workers.length; i++) {
+      //                                               if (tempWorker == workers[i]) {
+      //                                                 allowedAdded = false;
+      //                                               }
+      //                                               break;
+      //                                             }
+      //                                           }
+      //                                           setState(() {
+      //                                             if (allowedAdded && tempWorker != '') {
+      //                                               workers.add(tempWorker);
+      //                                               if(!isNewJob) { newWorkers.add(tempWorker); }
+      //                                             }
+      //                                           });
+      //                                         }
+      //                                       },
+      //                                       child: Icon(
+      //                                         Icons.add_box,
+      //                                         size: 30,
+      //                                         color: Theme.of(context)
+      //                                             .primaryTextTheme
+      //                                             .bodyMedium!
+      //                                             .color,
+      //                                       )
+      //                                     )
+      //                                   ],
+      //                                 )
+      //                               )
+      //                             ],
+      //                           ),
+      //                           Column(
+      //                             crossAxisAlignment: CrossAxisAlignment.start,
+      //                             children: [
+      //                               TaskWidgets.iconNote(
+      //                                 Icons.edit_note_rounded,
+      //                                 "Approver",
+      //                                 TextStyle(
+      //                                   color: Theme.of(context)
+      //                                       .primaryTextTheme
+      //                                       .bodyMedium!
+      //                                       .color,
+      //                                   fontFamily: 'Klavika',
+      //                                   package: 'css',
+      //                                   fontSize: 20,
+      //                                   decoration: TextDecoration.none,
+      //                                 ),
+      //                               20),
+      //                               SizedBox(
+      //                                 width: 150,
+      //                                 child: Row(
+      //                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                                   children: [
+      //                                     FocusedDropDown(
+      //                                       itemVal: approverDropDown,
+      //                                       value: tempApprover,
+      //                                       radius: 5,
+      //                                       width: 114, 
+      //                                       color: Theme.of(context).canvasColor,
+      //                                       onchange: (val) {
+      //                                         setState(() {
+      //                                           tempApprover = val;
+      //                                         });
+      //                                       },
+      //                                       style: TextStyle(
+      //                                         color: Theme.of(context)
+      //                                             .primaryTextTheme
+      //                                             .bodyMedium!
+      //                                             .color,
+      //                                         fontSize: 12,
+      //                                       ),
+      //                                     ),
+      //                                     FocusedInkWell(
+      //                                       onTap: () {
+      //                                         if (isApprover()) {
+      //                                           bool allowedEdit = true;
+      //                                           if (approvers.isNotEmpty && tempApprover != '') {
+      //                                             for (int i = 0; i < approvers.length; i++) {
+      //                                               if (tempApprover == approvers[i]) {
+      //                                                 allowedEdit = false;
+      //                                                 break;
+      //                                               }
+      //                                             }
+      //                                           }
+      //                                           setState(() {
+      //                                             if (allowedEdit && tempApprover != '') {
+      //                                               approvers.add(tempApprover);
+      //                                             }
+      //                                           });
+      //                                         }
+      //                                       },
+      //                                       child: Icon(
+      //                                         Icons.add_box,
+      //                                         size: 30,
+      //                                         color: Theme.of(context)
+      //                                             .primaryTextTheme
+      //                                             .bodyMedium!
+      //                                             .color,
+      //                                       ),
+      //                                     )
+      //                                   ],
+      //                                 )
+      //                               )
+      //                             ],
+      //                           )
+      //                         ],
+      //                       ),
+      //                      const SizedBox(height: 20),
+      //                      Row(
+      //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //                       children: [
+      //                         Row(
+      //                           children: [
+      //                             FocusedInkWell(
+      //                               onTap: () {
+      //                                 setState(() {
+      //                                   expandNotes = !expandNotes;
+      //                                 });
+      //                               },
+      //                               child: Icon(
+      //                                 (!expandNotes)
+      //                                   ? Icons.expand
+      //                                   : Icons.clear_outlined,
+      //                                 color: Theme.of(context)
+      //                                     .primaryTextTheme
+      //                                     .bodyMedium!
+      //                                     .color,
+      //                                 size: 20,
+      //                               ),
+      //                             ),
+      //                             const SizedBox(width: 10),
+      //                             TaskWidgets.iconNote(
+      //                               Icons.list_rounded,
+      //                               "Notes",
+      //                               TextStyle(
+      //                                 color: Theme.of(context)
+      //                                     .primaryTextTheme
+      //                                     .bodyMedium!
+      //                                     .color,
+      //                                 fontFamily: 'Klavika',
+      //                                 package: 'css',
+      //                                 fontSize: 20,
+      //                                 decoration: TextDecoration.none
+      //                               ),
+      //                             20),
+      //                           ],
+      //                         ),
+      //                         FocusedInkWell(
+      //                           onTap: () {
+      //                             setState(() {
+      //                               activityControllers.add(SpellCheckController());
+      //                               DateFormat dayFormatter = DateFormat('MM-dd-y');
+      //                               String createdDate = dayFormatter.format(DateTime.now());
+      //                               if (jobNotes == null) {
+      //                                 jobNotes = {
+      //                                   'names': [currentUser.uid],
+      //                                   'dates': [createdDate],
+      //                                 };
+      //                               } else {
+      //                                 jobNotes!['names']!.add(currentUser.uid);
+      //                                 jobNotes!['dates']!.add(createdDate);
+      //                               }
+      //                             });
+      //                           },
+      //                           child: Icon(
+      //                             Icons.add_box,
+      //                             size: 30,
+      //                             color: Theme.of(context)
+      //                                 .primaryTextTheme
+      //                                 .bodyMedium!
+      //                                 .color,
+      //                           ),
+      //                         )
+      //                       ],
+      //                      ),
+      //                       Container(
+      //                         color: CSS.lighten(Theme.of(context).canvasColor, 0.2),
+      //                         child: createActivityList(),
+      //                       ),
+      //                     ],
+      //                   )
+      //                 ),
+      //                 Row(
+      //                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+      //                   children: [
+      //                     (!isNewJob && (isWorker() || isApprover()))
+      //                       ? LSIWidgets.squareButton(
+      //                         text: 'delete',
+      //                         onTap: () {
+      //                           setState(() {
+      //                             if(widget.onJobDelete != null) {
+      //                               widget.onJobDelete!(jobData[selectedJob!].id!);
+      //                             }
+      //                           });
+      //                           Navigator.of(context).pop();
+      //                         },
+      //                         buttonColor: Colors.transparent,
+      //                         borderColor: Theme.of(context)
+      //                             .primaryTextTheme
+      //                             .bodyMedium!
+      //                             .color,
+      //                         height: 45,
+      //                         radius: 45 / 2,
+      //                         width: width / 3 - 15,
+      //                       )
+      //                     : Container(),
+      //                   ],
+      //                 )
+      //               ],
+      //             )
+      //             : LSILoadingWheel(),
+      //       ],
+      //     )
+      //   )
+      // );
     });
   }
 
@@ -1087,31 +1544,37 @@ class _ProcessManagerState extends State<ProcessManager> {
     });
   }
 
-  Widget info(bool drag, String id) {
-    return (!drag)
-      ? Stack(alignment: AlignmentDirectional.bottomEnd,
+  Widget info(String id) {
+    int? processIndex;
+    for (var p in processData) {
+      if (p.id == id) {
+        processIndex = processData.indexOf(p);
+        break;
+      }
+    }
+    return Stack(alignment: AlignmentDirectional.bottomEnd,
       children: [
         infoContainer(id),
-        LSIFloatingActionButton(
-          allowed: true,
-          color: Theme.of(context).secondaryHeaderColor,
-          icon: Icons.add,
-          size: 40,
-          onTap: () {
-            setState(() {
-              jobReset();
-              processId = id;
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return jobName(null);
-                }
-              );
-            },);
-          },
-        ),
-      ])
-      : infoContainer(id);
+        if (processIndex == 0)
+          LSIFloatingActionButton(
+            allowed: true,
+            color: Theme.of(context).secondaryHeaderColor,
+            icon: Icons.add,
+            size: 40,
+            onTap: () {
+              setState(() {
+                jobReset();
+                processId = id;
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return jobName(null);
+                  }
+                );
+              },);
+            },
+          ),
+      ]);
   }
 
   /// Widget that displays all the cards in the board [id]
@@ -1170,7 +1633,7 @@ class _ProcessManagerState extends State<ProcessManager> {
   }
 
   /// Displays title of the process
-  Widget title(String title, String subtitle, TextEditingController controller, Color color, bool dragged) {
+  Widget title(String title, String subtitle, TextEditingController controller, Color color) {
         controller.text = subtitle;
     return Container(
       width: processWidth,
@@ -1198,35 +1661,21 @@ class _ProcessManagerState extends State<ProcessManager> {
               alignment: Alignment.centerLeft,
               margin: const EdgeInsets.only(bottom: 10),
               color: Theme.of(context).splashColor,
-              child: (!dragged)
-                  ? Row(
+              child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                          EnterTextFormField(
-                            height: 25,
-                            width: processWidth - 65.0,
-                            maxLines: 1,
-                            padding: const EdgeInsets.fromLTRB(
-                                10.0, 10.0, 10.0, 10.0),
-                            textStyle: TextStyle(
-                                color: color,
-                                fontFamily: Theme.of(context)
-                                    .primaryTextTheme
-                                    .bodyMedium!
-                                    .fontFamily,
-                                decoration: TextDecoration.none),
-                            controller: controller,
-                            onEditingComplete: () {
-                              if (widget.onTitleChange != null) {
-                                widget.onTitleChange!(title, controller.text);
-                              }
-                            },
-                            onSubmitted: (val) {
-                              if (widget.onTitleChange != null) {
-                                widget.onTitleChange!(title, controller.text);
-                              }
-                            },
-                            onTap: widget.onFocusNode,
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .primaryTextTheme
+                                  .bodyMedium!
+                                  .color,
+                              fontFamily: 'Klavika',
+                              package: 'css',
+                              fontSize: 16,
+                              decoration: TextDecoration.none,
+                            ),
                           ),
                           FocusedInkWell(
                             onLongPress: () {
@@ -1244,16 +1693,6 @@ class _ProcessManagerState extends State<ProcessManager> {
                             ),
                           )
                         ])
-                  : Container(
-                      alignment: Alignment.centerLeft,
-                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                      height: 45,
-                      width: width - 20,
-                      child: Text(
-                        subtitle,
-                        style: Theme.of(context).primaryTextTheme.bodyMedium,
-                      ),
-                    ),
             )
           ]),
     );
@@ -1285,53 +1724,11 @@ class _ProcessManagerState extends State<ProcessManager> {
                 nameChangeController[i],
                 Theme.of(context).primaryColor,
                 //Color(processData[i].color!),
-                rotate
               ),
-              info(rotate, processData[i].id!)
+              info(processData[i].id!)
             ],
           ),
         ));
-  }
-
-  /// Widget that replaces process [i] with container while it is being dragged, also determines behavior of process when dragged
-  Widget dragProcess(int i) {
-    return Stack(
-      children: [
-        (processBeingDragged != processData[i].id) ? process(i, false) : Container(),
-        Draggable(
-          data: 0,
-          feedback: process(i, true),
-          onDragStarted: () {
-            setState(() {
-              draggedLoc = i;
-              processBeingDragged = processData[i].id!;
-            });
-          },
-          onDragEnd: (val) {
-            setState(() {
-              processBeingDragged = '';
-              dueDateJobChange();
-            });
-          },
-          onDragCompleted: () {
-            setState(() {
-              processBeingDragged = '';
-              dueDateJobChange();
-            });
-          },
-          onDraggableCanceled: (vel, off) {
-            setState(() {
-              processBeingDragged = '';
-              dueDateJobChange();
-            });
-          },
-          child: const Padding(
-            padding: EdgeInsets.only(top: 10, left: 10),
-            child: Icon(Icons.drag_indicator)
-          ),
-        )
-      ],
-    );
   }
 
   /// Displays the list of boards
@@ -1346,7 +1743,7 @@ class _ProcessManagerState extends State<ProcessManager> {
           onDoubleTap: () {
             processSet(i);
           },
-          child: dragProcess(i)
+          child: process(i, false)
         ));
       } else {
         routers.add(Container(width: processWidth));
