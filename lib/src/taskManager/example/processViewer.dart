@@ -42,6 +42,7 @@ class ProcessViewer extends StatefulWidget {
 }
 
 class _ProcessViewerState extends State<ProcessViewer> {
+  dynamic router;
   bool testing = true;
   String selectedRouter = '';
   String child = '';
@@ -128,7 +129,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
       );
 
       final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
-      final Map<String, dynamic> testData = json.decode(jsonString);
+      dynamic testData = json.decode(jsonString);
 
       usersProfile = {};
 
@@ -143,14 +144,23 @@ class _ProcessViewerState extends State<ProcessViewer> {
         }
       }
 
-      final router = testData['router'];
-      addUser(router['createdBy'], displayName: 'Test User', imageUrl: 'https://example.com/image.png', status: OrgStatus.admin, canRemoteWork: true);
+      router = testData['router'][selectedRouter];
+      addUser(
+        router['details']['createdBy'],
+        displayName: 'Test User',
+        imageUrl: 'https://example.com/image.png',
+        status: OrgStatus.admin,
+        canRemoteWork: false
+      );
 
-      for (var p in testData['processes']) {
-        addUser(p['createdBy']);
+      for (var process_id in router['processes'].keys) {
+        for (var creator in router['processes'][process_id]['details']['createdBy']) {
+          addUser(creator);
+        }
       }
 
-      for (var j in testData['jobs']) {
+      for (var job_id in router['jobs'].keys) {
+        var j = router['jobs'][job_id];
         addUser(j['createdBy']);
         for (var w in j['workers']) {
           addUser(w);
@@ -166,45 +176,46 @@ class _ProcessViewerState extends State<ProcessViewer> {
           });
         }
       }
-
-      currentProcessData = {};
-      final processes = testData['processes'] as List;
-      for (var p in processes) {
-        currentProcessData[p['id']] = ProcessData(
-          id: p['id'],
-          title: p['title'],
-          dateCreated: p['dateCreated'],
-          createdBy: p['createdBy'],
-          color: p['color'],
-        );
-      }
-
-      currentJobData = {};
-      final jobs = testData['jobs'] as List;
-      for (var j in jobs) {
-        currentJobData[j['id']] = JobData(
-          id: j['id'],
-          title: j['title'],
-          dateCreated: j['dateCreated'],
-          createdBy: j['createdBy'],
-          processId: j['processId'],
-          dueDate: j['dueDate'],
-          workers: List<String>.from(j['workers']),
-          approvers: List<String>.from(j['approvers']),
-          status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
-          good: j['good'],
-          bad: j['bad'],
-          isApproved: j['isApproved'],
-          isArchive: j['isArchive'],
-          notes: j['notes'] as Map<String, dynamic>?,
-        );
-      }
-
-      hasStarted = true;
-      setState(() {});
     } else {
-
+      //call firebase to get the router data
     }
+
+    currentProcessData = {};
+    final processes = router['processes'];
+    for (var process_id in processes.keys) {
+      currentProcessData[process_id] = ProcessData(
+        id: process_id,
+        title: processes[process_id]['title'],
+        dateCreated: processes[process_id]['dateCreated'],
+        createdBy: processes[process_id]['createdBy'],
+        color: processes[process_id]['color'],
+      );
+    }
+
+    currentJobData = {};
+    final jobs = router['jobs'];
+    for (var job_id in jobs.keys) {
+      var j = jobs[job_id];
+      currentJobData[job_id] = JobData(
+        id: job_id,
+        title: j['title'],
+        dateCreated: j['dateCreated'],
+        createdBy: j['createdBy'],
+        processId: j['processId'],
+        dueDate: j['dueDate'],
+        workers: List<String>.from(j['workers']),
+        approvers: List<String>.from(j['approvers']),
+        status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
+        good: j['good'],
+        bad: j['bad'],
+        isApproved: j['isApproved'],
+        isArchive: j['isArchive'],
+        notes: j['notes'] as Map<String, dynamic>?,
+      );
+    }
+
+    hasStarted = true;
+    setState(() {});
   }
 
   // TODO: add editing and viewing perms
@@ -410,24 +421,26 @@ class _ProcessViewerState extends State<ProcessViewer> {
 
   @override
   Widget build(BuildContext context) {
-        return hasStarted?!widget.isMobile?SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [processInfo(), Container()],
-        )
-      ):SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: Stack(
-          children: [
-            processInfo(),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container()
-            )
-          ],
+      return hasStarted?(
+        !widget.isMobile?SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [processInfo(), Container()],
+          )
+        ):SizedBox(
+          width: widget.width,
+          height: widget.height,
+          child: Stack(
+            children: [
+              processInfo(),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Container()
+              )
+            ]
+          )
         )
       ):SizedBox(
         width: widget.width,
