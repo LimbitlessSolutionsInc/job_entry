@@ -439,7 +439,7 @@ class _RouterManagerState extends State<RouterManager> {
         );
         if (picked != null && picked != selectedDate) {
           setState(() {
-            var formatter = DateFormat('MM-dd-y');
+            var formatter = DateFormat('MM-dd-yyyy');
             assignedDate = formatter.format(picked);
             selectedDate = picked;
           });
@@ -527,7 +527,7 @@ class _RouterManagerState extends State<RouterManager> {
                           child: SizedBox(
                             child: Text(
                               (assignedDate == '')
-                                  ? DateFormat('MM-dd-y').format(DateTime.now())
+                                  ? DateFormat('MM-dd-yyyy').format(DateTime.now())
                                   : assignedDate,
                               style: TextStyle(
                                   color: Theme.of(context)

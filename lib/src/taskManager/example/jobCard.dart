@@ -43,14 +43,12 @@ class JobCard extends StatelessWidget {
     // created date, due date, complete date
     Widget jobDates() {
       Widget dateText(String introText, String date) {
-        String formattedDate = '--/--/----';
-        if (date != '--/--/----' && date.isNotEmpty) {
-          try {
-            formattedDate = DateFormat('MM-dd-y').format(DateTime.parse(date.replaceAll('T', ' ')));
-          } catch (_) {
-            formattedDate = date;
-          }
+        String formattedDate = '';
+        if(date != 'N/A') {
+          formattedDate = DateFormat('MM-dd-yyyy').format(DateTime.parse(date.replaceAll('T', ' ')));
         }
+        formattedDate = date;
+        
         return Row(
           children: [
             Text(introText, 
@@ -78,9 +76,9 @@ class JobCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          jobData.dateCreated != null ? dateText('Start Date: ', jobData.dateCreated!) : dateText('Start Date: ', '--/--/----'),
-          jobData.dueDate != null ? dateText('Required Date: ', jobData.dueDate!) : dateText('Required Date: ', '--/--/----'),
-          jobData.completeDate != null ? dateText('End Date: ', jobData.completeDate!) : dateText('End Date: ', '--/--/----')
+          jobData.dateCreated != null ? dateText('Start Date: ', jobData.dateCreated!) : dateText('Start Date: ', 'N/A'),
+          jobData.dueDate != null ? dateText('Required Date: ', jobData.dueDate!) : dateText('Required Date: ', 'N/A'),
+          jobData.completeDate != null ? dateText('End Date: ', jobData.completeDate!) : dateText('End Date: ', 'N/A')
         ],
       );
     }
@@ -101,7 +99,8 @@ class JobCard extends StatelessWidget {
       return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
+            (jobData.status == JobStatus.completed)
+            ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -113,7 +112,7 @@ class JobCard extends StatelessWidget {
                 ),
                 colorText(Theme.of(context).secondaryHeaderColor, jobData.good.toString())
               ]
-            ),
+            ) : Container(),
             LSIUserIcon(
               uids: jobData.workers,
               colors: [Colors.teal[200]!, Colors.teal[600]!],

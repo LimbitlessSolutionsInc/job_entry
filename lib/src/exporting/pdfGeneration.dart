@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
+import 'package:job_entry/src/taskManager/data/jobData.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-Future<Uint8List> generatePdf(Map<String, dynamic> data) async {
+Future<Uint8List> generatePdf(JobData data) async {
     final pdf = pw.Document();
     
     pdf.addPage(

@@ -60,23 +60,26 @@ class _RouterViewerState extends State<RouterViewer> {
     if (testing) {
       final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
       final Map<String, dynamic> testData = json.decode(jsonString);
-      final router = testData['router'];
+
+      final routerMap = testData['router'] as Map<String, dynamic>;
+      final routerKey = routerMap.keys.first;
+      final router = routerMap[routerKey];
 
       usersProfile ??= {};
-      usersProfile[router['createdBy']] = {
+      usersProfile[router['details']['createdBy']] = {
         'displayName': 'Test User',
-        'imageUrl': null,
+        'imageUrl': 'https://example.com/image.png',
         'status': OrgStatus.admin,
         'canRemoteWork': true
       };
-      
+
       managementData = {
-        router['id']: {
-          'color': router['color'],
-          'title': router['title'],
-          'id': router['id'],
-          'createdBy': router['createdBy'],
-          'dateCreated': router['dateCreated'],
+        routerKey: {
+          'color': router['details']['color'],
+          'title': router['details']['title'],
+          'id': routerKey,
+          'createdBy': router['details']['createdBy'],
+          'dateCreated': router['details']['dateCreated'],
         }
       };
       setState(() {});
@@ -87,19 +90,18 @@ class _RouterViewerState extends State<RouterViewer> {
 
   List<RouterData> routerData() {
     List<RouterData> data = [];
-    if (managementData != {}) {
+    if (managementData != null && managementData.isNotEmpty) {
       for (String key in managementData.keys) {
-        if (key != 'title') {
-            final createdById = managementData[key]['createdBy'];
-            final createdByName = usersProfile['createdById']?['displayName'] ?? createdById;
-            data.add(RouterData(
-              color: managementData[key]['color'],
-              title: managementData[key]['title'],
-              id: key,
-              createdBy: createdByName,
-              dateCreated: managementData[key]['dateCreated'],
-            ));
-        }
+        final routerInfo = managementData[key];
+        final createdById = routerInfo['createdBy'];
+        final createdByName = usersProfile[createdById]?['displayName'] ?? createdById;
+        data.add(RouterData(
+          color: routerInfo['color'],
+          title: routerInfo['title'],
+          id: key,
+          createdBy: createdByName,
+          dateCreated: routerInfo['dateCreated'],
+        ));
       }
     }
     return data;
@@ -153,7 +155,7 @@ class _RouterViewerState extends State<RouterViewer> {
             }
           },
           onSubmit: (title, image, date, color) {
-            DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
+            DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
             String createdDate =
                 dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
             Database.push('team', children: child + '/', data: {
@@ -183,7 +185,7 @@ class _RouterViewerState extends State<RouterViewer> {
                 });
           },
           onComplete: (project) {
-            DateFormat dayFormatter = DateFormat('MM-dd-yy hh:mm:ss');
+            DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
             String createdDate =
                 dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
             Database.update('team',

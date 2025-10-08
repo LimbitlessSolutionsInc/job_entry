@@ -137,7 +137,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
         if (!usersProfile.containsKey(uid)) {
           usersProfile[uid] = {
             'displayName': displayName ?? uid,
-            'imageUrl': imageUrl ?? 'https://example.com/$uid.png',
+            'imageUrl': imageUrl ?? 'https://example.com/image.png',
             'status': status ?? OrgStatus.admin,
             'canRemoteWork': canRemoteWork ?? false,
           };
@@ -154,9 +154,8 @@ class _ProcessViewerState extends State<ProcessViewer> {
       );
 
       for (var process_id in router['processes'].keys) {
-        for (var creator in router['processes'][process_id]['details']['createdBy']) {
-          addUser(creator);
-        }
+        var creator = router['processes'][process_id]['details']['createdBy'];
+        addUser(creator);
       }
 
       for (var job_id in router['jobs'].keys) {
@@ -170,52 +169,50 @@ class _ProcessViewerState extends State<ProcessViewer> {
         }
         if (j['notes'] != null) {
           (j['notes'] as Map<String, dynamic>).forEach((_, note) {
-            if (note['createdBy'] != null) {
-              addUser(note['createdBy']);
-            }
+            addUser(note['createdBy']);
           });
         }
       }
+
+      currentProcessData = {};
+      final processes = router['processes'];
+      for (var process_id in processes.keys) {
+        final details = processes[process_id]['details'];
+        currentProcessData[process_id] = ProcessData(
+          id: process_id,
+          title: details['title'],
+          dateCreated: details['dateCreated'],
+          createdBy: details['createdBy'],
+          color: details['color'],
+        );
+      }
+
+      currentJobData = {};
+      final jobs = router['jobs'];
+      for (var job_id in jobs.keys) {
+        var j = jobs[job_id];
+        currentJobData[job_id] = JobData(
+          id: job_id,
+          title: j['title'],
+          dateCreated: j['dateCreated'],
+          createdBy: j['createdBy'],
+          processId: j['processId'],
+          dueDate: j['dueDate'],
+          workers: List<String>.from(j['workers']),
+          approvers: List<String>.from(j['approvers']),
+          status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
+          good: j['good'],
+          bad: j['bad'],
+          isApproved: j['isApproved'],
+          notes: j['notes'] as Map<String, dynamic>?,
+        );
+      }
+
+      hasStarted = true;
+      setState(() {});
     } else {
       //call firebase to get the router data
     }
-
-    currentProcessData = {};
-    final processes = router['processes'];
-    for (var process_id in processes.keys) {
-      currentProcessData[process_id] = ProcessData(
-        id: process_id,
-        title: processes[process_id]['title'],
-        dateCreated: processes[process_id]['dateCreated'],
-        createdBy: processes[process_id]['createdBy'],
-        color: processes[process_id]['color'],
-      );
-    }
-
-    currentJobData = {};
-    final jobs = router['jobs'];
-    for (var job_id in jobs.keys) {
-      var j = jobs[job_id];
-      currentJobData[job_id] = JobData(
-        id: job_id,
-        title: j['title'],
-        dateCreated: j['dateCreated'],
-        createdBy: j['createdBy'],
-        processId: j['processId'],
-        dueDate: j['dueDate'],
-        workers: List<String>.from(j['workers']),
-        approvers: List<String>.from(j['approvers']),
-        status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
-        good: j['good'],
-        bad: j['bad'],
-        isApproved: j['isApproved'],
-        isArchive: j['isArchive'],
-        notes: j['notes'] as Map<String, dynamic>?,
-      );
-    }
-
-    hasStarted = true;
-    setState(() {});
   }
 
   // TODO: add editing and viewing perms
@@ -236,9 +233,6 @@ class _ProcessViewerState extends State<ProcessViewer> {
           title: routerProcessData[key]['title'],
           createdBy: routerProcessData[key]['createdBy'],
           dateCreated: routerProcessData[key]['dateCreated'],
-          isArchive: (routerProcessData[key]['isArchive'] == null)
-            ? false
-            : routerProcessData[key]['isArchive'],
           index: (routerProcessData[key]['index'] == null)
             ? index++
             : routerProcessData[key]['index'],
@@ -303,7 +297,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
       allowEditing: allowEditing(),
       routerId: selectedRouter,
       onSubmit: (title, notify) {
-        DateFormat dayFormatter = DateFormat('MM-dd-y hh:mm:ss');
+        DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
         String date = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
         Database.push(
           'team', 

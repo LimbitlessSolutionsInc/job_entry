@@ -18,6 +18,7 @@ class JobData {
     this.status,
     this.good,
     this.bad,
+    this.numApprovals = 2, // default to 2 approvals needed
     this.isApproved = false,
     this.isArchive = false,
     this.approvers = const [],
@@ -32,6 +33,10 @@ class JobData {
       processId: oldJob.processId,
       notes: oldJob.notes,
       status: JobStatus.notStarted,
+      good: oldJob.good,
+      bad: 0,
+      workers: oldJob.workers,
+      approvers: oldJob.approvers,
       isApproved: false,
       isArchive: false,
       prevJobs: oldJob.prevJobs,
@@ -52,6 +57,7 @@ class JobData {
   JobStatus? status;
   int? good;
   int? bad;
+  int numApprovals;
   bool isApproved;
   bool isArchive;
   Map<String, dynamic>? prevJobs;

@@ -4,7 +4,6 @@ class ProcessData {
     this.dateCreated,
     this.createdBy,
     this.id,
-    this.isArchive = false,
     this.index,
     this.color,
     this.notify = false
@@ -14,7 +13,6 @@ class ProcessData {
   final String? dateCreated;
   final String? createdBy;
   final String? id;
-  bool isArchive;
   int? index;
   final bool notify;
   final int? color;

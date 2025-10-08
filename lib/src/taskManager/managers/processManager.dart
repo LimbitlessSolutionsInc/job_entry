@@ -261,11 +261,11 @@ class _ProcessManagerState extends State<ProcessManager> {
         }
       }
       if (jobData[i].dueDate != null) {
-        assignedDate = jobData[i].dueDate!.split('T')[0];
+        assignedDate = DateFormat('MM-dd-yyyy').format(DateTime.parse(jobData[i].dueDate!.split('T')[0]));
         selectedDate = DateTime.parse(jobData[i].dueDate!.replaceAll('T', ' '));
       }
       if (jobData[i].completeDate != null) {
-        completeDate = DateTime.parse(jobData[i].completeDate!.replaceAll('T', ' ')).toString().split(' ')[0];
+        completeDate = DateFormat('MM-dd-yyyy').format(DateTime.parse(jobData[i].completeDate!.replaceAll('T', ' ')[0]));
       }
       if (jobData[i].status != null) {
         status = jobData[i].status!;
@@ -331,10 +331,10 @@ class _ProcessManagerState extends State<ProcessManager> {
     // TODO: check what format the date has to go in the database
     String dueDate = '';
     if (assignedDate != '') {
-      dueDate = DateFormat('MM-dd-y').format(selectedDate).replaceAll(' ', 'T');
+      dueDate = DateFormat('MM-dd-yyyy').format(selectedDate).replaceAll(' ', 'T');
     }
     dynamic activities;
-    String createdDate = DateFormat('MM-dd-y').format(selectedDate).replaceAll(' ', 'T');
+    String createdDate = DateFormat('MM-dd-yyyy').format(selectedDate).replaceAll(' ', 'T');
     if(activityControllers.isNotEmpty) {
       for (int i = 0; i < activityControllers.length; i++) {
         String st = 'note_$i';
@@ -429,7 +429,7 @@ class _ProcessManagerState extends State<ProcessManager> {
     );
     if (picked != null && picked != selectedDate) {
       setState(() {
-        var formatter = DateFormat('MM-dd-y');
+        var formatter = DateFormat('MM-dd-yyyy');
         assignedDate = formatter.format(picked);
         selectedDate = picked;
       });
@@ -440,7 +440,7 @@ class _ProcessManagerState extends State<ProcessManager> {
   // TODO: See if we need a different format like csv
   // Saves the job and any archived assembilies to PDF format
   // filename: name of the file, data: data to be saved (the current job plus the prev assembilies hopefully combined?)
-  void exportJob(String filename, Map<String, dynamic> data) async {
+  void exportJob(String filename, JobData data) async {
     if (selectedJob != null || !isNewJob) {
       final bytes = await generatePdf(data);
 
@@ -551,7 +551,7 @@ class _ProcessManagerState extends State<ProcessManager> {
       bool isApprover() {
         return true;
       }
-      Widget textField(String name, String label, dynamic controller) {
+      Widget textField(String name, int width, String label, dynamic controller) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -569,7 +569,7 @@ class _ProcessManagerState extends State<ProcessManager> {
               ),
             ),
             SizedBox(
-              width: 300,
+              width: width.toDouble(),
               child: EnterTextFormField(
                 width: 300,
                 color: Theme.of(context).canvasColor,
@@ -582,6 +582,49 @@ class _ProcessManagerState extends State<ProcessManager> {
               ),
             ),
           ],
+        );
+      }
+      Widget descriptionField() {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Description:',
+              style: TextStyle(
+                color: Theme.of(context)
+                    .primaryTextTheme
+                    .labelSmall!
+                    .color,
+                fontSize: 14,
+                fontFamily: 'Klavika Bold',
+                package: 'css',
+                decoration: TextDecoration.none
+              ),
+            ),
+            SizedBox(
+              width: 300,
+              child: EnterTextFormField(
+                width: 300,
+                color: Theme.of(context).canvasColor,
+                maxLines: 4,
+                label: 'Enter Description',
+                controller: cardNameControllers[1],
+                onEditingComplete: () {},
+                onSubmitted: (val) {},
+                onTap: widget.onFocusNode,
+                textStyle: TextStyle(
+                  color: Theme.of(context)
+                      .primaryTextTheme
+                      .bodyMedium!
+                      .color,
+                  fontFamily: 'Klavika',
+                  package: 'css',
+                  fontSize: 14,
+                  decoration: TextDecoration.none,
+                )
+              ),
+            ),
+          ]
         );
       }
       Widget calendarField(String name, String text) {
@@ -613,7 +656,7 @@ class _ProcessManagerState extends State<ProcessManager> {
               child: TaskWidgets.iconNote(
                 Icons.insert_invitation_outlined,
                 (text == '')
-                  ? DateFormat('MM-dd-y').format(DateTime.now())
+                  ? DateFormat('MM-dd-yyyy').format(DateTime.now())
                   : text,
                 TextStyle(
                   color: Theme.of(context)
@@ -630,20 +673,36 @@ class _ProcessManagerState extends State<ProcessManager> {
           )]
         );
       }
-      Widget fieldList() {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+      Widget approveCheckbox() {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            textField('Job Title:', 'Enter Job Title', cardNameControllers[0]),
-            calendarField('Start Date:', assignedDate),
-            calendarField('End Date:', completeDate),
-            calendarField('Required Date:', assignedDate),
-            SizedBox(height: 10),
-            textField('Good:', 'number', TextEditingController(text: good.toString())),
-            SizedBox(height: 10),
-            textField('Bad:', 'number', TextEditingController(text: bad.toString())),
-            SizedBox(height: 10),
-        ]);
+            Text(
+              "Approvals:",
+              style: TextStyle(
+                color: Theme.of(context)
+                    .primaryTextTheme
+                    .labelSmall!
+                    .color,
+                fontSize: 14,
+                fontFamily: 'Klavika Bold',
+                package: 'css',
+                decoration: TextDecoration.none
+              ),
+            ),
+            Checkbox(
+              activeColor: Theme.of(context).secondaryHeaderColor,
+              value: isApproved,
+              onChanged: (val) {
+                setState(() {
+                  if (isApprover()) {
+                    isApproved = val!;
+                  }
+                });
+              },
+            )
+          ]
+        );
       }
       Widget statusField() {
         return Row(
@@ -689,6 +748,32 @@ class _ProcessManagerState extends State<ProcessManager> {
             )
           ],
         );
+      }
+      Widget fieldList() {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            textField('Job Title:', 300, 'Enter Job Title', cardNameControllers[0]),
+            SizedBox(height: 10),
+            descriptionField(),
+            SizedBox(height: 10),
+            calendarField('Start Date:', assignedDate),
+            calendarField('End Date:', completeDate),
+            calendarField('Required Date:', assignedDate),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                textField('Good:', 180, 'number', TextEditingController(text: good.toString())),
+                SizedBox(width: 35),
+                textField('Bad:', 180, 'number', TextEditingController(text: bad.toString())),
+              ],
+            ),
+            SizedBox(height: 10),
+            statusField(),
+            SizedBox(height: 10),
+            approveCheckbox(),
+        ]);
       }
       Widget workerDropDownWidget() {
         return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -919,7 +1004,83 @@ class _ProcessManagerState extends State<ProcessManager> {
         ]);                   
       }
       Widget assemblyList() {
-        return SizedBox();
+        Widget createAssemblyCards() {
+          List<Widget> assemblyCards = [];
+          for (int i = 0; i < jobData[jobToUse!].prevJobs!.length; i++) {
+            print("${jobData[jobToUse!].title} prev job: ${jobData[jobToUse!].prevJobs![i].title}");
+            assemblyCards.add(
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: JobCard(
+                  context: context,
+                  jobData: jobData[jobToUse].prevJobs![i],
+                  height: 57,
+                  width: processWidth - 40.0)
+              )
+            );
+          }
+          return Column(
+            children: assemblyCards
+          );
+        }
+        return Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    FocusedInkWell(
+                      onTap: () {
+                        setState(() {
+                          expandAssembilies = !expandAssembilies;
+                        });
+                      },
+                      child: Icon(
+                        (!expandAssembilies)
+                          ? Icons.expand
+                          : Icons.clear_outlined,
+                        color: Theme.of(context)
+                            .primaryTextTheme
+                            .bodyMedium!
+                            .color,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    TaskWidgets.iconNote(
+                      Icons.list_rounded,
+                      "Assembilies",
+                      TextStyle(
+                        color: Theme.of(context)
+                            .primaryTextTheme
+                            .bodyMedium!
+                            .color,
+                        fontFamily: 'Klavika',
+                        package: 'css',
+                        fontSize: 20,
+                        decoration: TextDecoration.none
+                      ),
+                    20),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
+            expandAssembilies
+              ? SizedBox(
+                  height: (activityControllers.length < 3 || expandAssembilies)
+                    ? activityControllers.length * 57.0
+                    : 57.0 * 3,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(0),
+                    itemCount: activityControllers.length,
+                    itemBuilder: (context, i) {
+                      return createAssemblyCards();
+                    }))
+              : const SizedBox()
+          ],
+        );
       }
       Widget notes() {
         return Column(
@@ -971,11 +1132,11 @@ class _ProcessManagerState extends State<ProcessManager> {
                         if (jobNotes == null) {
                           jobNotes = {
                             'names': [currentUser.uid],
-                            'dates': [DateFormat('MM-dd-y').format(DateTime.now())],
+                            'dates': [DateFormat('MM-dd-yyyy').format(DateTime.now())],
                           };
                         } else {
                           jobNotes!['names']!.add(currentUser.uid);
-                          jobNotes!['dates']!.add(DateFormat('MM-dd-y').format(DateTime.now()));
+                          jobNotes!['dates']!.add(DateFormat('MM-dd-yyyy').format(DateTime.now()));
                         }
                       });
                     }
@@ -1023,7 +1184,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                DateFormat('MM-dd-y').format(DateTime.parse(jobNotes!['dates']![i].replaceAll('T', ' '))),
+                                DateFormat('MM-dd-yyyy').format(DateTime.parse(jobNotes!['dates']![i].replaceAll('T', ' '))),
                                 style: TextStyle(
                                   color: Theme.of(context)
                                       .primaryTextTheme
@@ -1052,11 +1213,73 @@ class _ProcessManagerState extends State<ProcessManager> {
           ],
         );
       }
-      Widget button() {
-        return SizedBox();
-      }
-      Widget exportButton() {
-        return SizedBox();
+      Widget buttons() {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            (isWorker() || isApprover())
+            ? LSIWidgets.squareButton(
+              text: 'save',
+              textColor: Theme.of(context).secondaryHeaderColor,
+              onTap: () {
+                setState(() {
+                  jobReset();
+                });
+                error = false;
+                Navigator.of(context).pop();
+              },
+              buttonColor: Colors.transparent,
+              borderColor: Theme.of(context)
+                  .primaryTextTheme
+                  .bodyMedium!
+                  .color,
+              height: 45,
+              radius: 45 / 2,
+              width: width / 3 - 15,
+            )
+            : Container(),
+            (isWorker() || isApprover())
+            ? LSIWidgets.squareButton(
+              text: 'export',
+              textColor: Theme.of(context).secondaryHeaderColor,
+              onTap: () {
+                setState(() {
+                  JobData data = jobData[jobToUse!];
+                  exportJob(jobData[jobToUse!].title!, data);
+                });
+                error = false;
+              },
+              buttonColor: Colors.transparent,
+              borderColor: Theme.of(context)
+                  .primaryTextTheme
+                  .bodyMedium!
+                  .color,
+              height: 45,
+              radius: 45 / 2,
+              width: width / 3 - 15,
+            )
+            : Container(),
+            (!isNewJob && (isWorker() || isApprover()))
+            ? LSIWidgets.squareButton(
+              text: 'delete',
+              textColor: Colors.red,
+              onTap: () {
+                setState(() {
+                  if(widget.onJobDelete != null) {
+                    widget.onJobDelete!(jobData[selectedJob!].id!);
+                    jobReset();
+                  }
+                });
+                Navigator.of(context).pop();
+              },
+              buttonColor: Colors.transparent,
+              borderColor: Colors.red,
+              height: 45,
+              radius: 45 / 2,
+              width: width / 3 - 15,
+            )
+            : Container(),
+        ]);
       }
 
       return Dialog(
@@ -1086,21 +1309,14 @@ class _ProcessManagerState extends State<ProcessManager> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       fieldList(),
-                      statusField(),
                       workerDropDownWidget(),
                       approverDropDownWidget(),
+                      SizedBox(height: 10),
                       assemblyList(),
+                      SizedBox(height: 10),
                       notes(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          button(), // approve
-                          button(), // save / submit
-                          button(), // cancel
-                          exportButton(),
-                        ],
-                      ),
-                      button() // delete
+                      SizedBox(height: 10),
+                      buttons()
                     ]
                   )
                 : LSILoadingWheel()
@@ -1108,31 +1324,6 @@ class _ProcessManagerState extends State<ProcessManager> {
           )
         )
       );
-      //                 Row(
-      //                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-      //                   children: [
-      //                     (!isNewJob && (isWorker() || isApprover()))
-      //                       ? LSIWidgets.squareButton(
-      //                         text: 'delete',
-      //                         onTap: () {
-      //                           setState(() {
-      //                             if(widget.onJobDelete != null) {
-      //                               widget.onJobDelete!(jobData[selectedJob!].id!);
-      //                             }
-      //                           });
-      //                           Navigator.of(context).pop();
-      //                         },
-      //                         buttonColor: Colors.transparent,
-      //                         borderColor: Theme.of(context)
-      //                             .primaryTextTheme
-      //                             .bodyMedium!
-      //                             .color,
-      //                         height: 45,
-      //                         radius: 45 / 2,
-      //                         width: width / 3 - 15,
-      //                       )
-      //                     : Container(),
-      //                   ],
     });
   }
 
