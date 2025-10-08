@@ -1260,23 +1260,48 @@ class _ProcessManagerState extends State<ProcessManager> {
             )
             : Container(),
             (!isNewJob && (isWorker() || isApprover()))
-            ? LSIWidgets.squareButton(
-              text: 'delete',
-              textColor: Colors.red,
-              onTap: () {
-                setState(() {
-                  if(widget.onJobDelete != null) {
-                    widget.onJobDelete!(jobData[selectedJob!].id!);
-                    jobReset();
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-              buttonColor: Colors.transparent,
-              borderColor: Colors.red,
-              height: 45,
-              radius: 45 / 2,
-              width: width / 3 - 15,
+            ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                LSIWidgets.squareButton(
+                  text: 'delete',
+                  textColor: Colors.red,
+                  onTap: () {
+                    setState(() {
+                      if(widget.onJobDelete != null) {
+                        widget.onJobDelete!(jobData[selectedJob!].id!);
+                        jobReset();
+                        // TODO: add the prev job in the prev process
+                      }
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  buttonColor: Colors.transparent,
+                  borderColor: Colors.red,
+                  height: 45,
+                  radius: 45 / 2,
+                  width: width / 6 - 30,
+                ),
+                LSIWidgets.squareButton(
+                  text: 'delete all',
+                  textColor: Colors.red,
+                  onTap: () {
+                    setState(() {
+                      if(widget.onJobDelete != null) {
+                        widget.onJobDelete!(jobData[selectedJob!].id!);
+                        jobReset();
+                        // TODO: make sure this deletes all prev jobs
+                      }
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  buttonColor: Colors.transparent,
+                  borderColor: Colors.red,
+                  height: 45,
+                  radius: 45 / 2,
+                  width: width / 6 - 30,
+                ),
+              ]
             )
             : Container(),
         ]);
