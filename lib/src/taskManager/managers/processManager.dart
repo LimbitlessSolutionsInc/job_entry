@@ -1086,7 +1086,48 @@ class _ProcessManagerState extends State<ProcessManager> {
                   fontSize: 12,
                   textColor: Theme.of(context).secondaryHeaderColor,
                   onTap: () {
-                    // open dialog of all assembilies
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                      return Dialog(
+                        backgroundColor: Colors.transparent,
+                        insetPadding: const EdgeInsets.only(left: 1, right: 1),
+                        child: Container(
+                          padding: const EdgeInsets.all(20.0),
+                          height: 220,
+                          width: 500, // edit to num of assembilies
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: const BorderRadius.all(Radius.circular(20)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).shadowColor,
+                                blurRadius: 5,
+                                offset: const Offset(2,2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Text("Assembly Timeline:",
+                                style: TextStyle(
+                                  color: Theme.of(context)
+                                      .primaryTextTheme
+                                      .bodyMedium!
+                                      .color,
+                                  fontFamily: 'Klavika Bold',
+                                  package: 'css',
+                                  fontSize: 20,
+                                  decoration: TextDecoration.none
+                                )
+                              ),
+                              SizedBox(height: 10),
+                              Row(children: [createAssemblyCards()])
+                            ]
+                          )
+                     ));}
+                    );
                   },
                   buttonColor: Colors.transparent,
                   borderColor: Theme.of(context)
