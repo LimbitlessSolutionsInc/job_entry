@@ -38,6 +38,7 @@ class ProcessManager extends StatefulWidget {
     required this.workers,
     required this.approvers,
     this.index,
+    this.prevJobs,
   }):super(key: key);
 
   /// Callback for process submission/creation
@@ -97,6 +98,8 @@ class ProcessManager extends StatefulWidget {
   final bool update;
 
   final int? index;
+
+  final Map<String, dynamic>? prevJobs;
 
   @override
   _ProcessManagerState createState() => _ProcessManagerState();
@@ -174,6 +177,8 @@ class _ProcessManagerState extends State<ProcessManager> {
   int routerClickedColor = 7;
   int nextIndex = 0;
   int updateProcessId = 0;
+  
+  get prevJobs => null;
 
   @override
   void initState() {
@@ -265,22 +270,20 @@ class _ProcessManagerState extends State<ProcessManager> {
         selectedDate = DateTime.parse(jobData[i].dueDate!.replaceAll('T', ' '));
       }
       if (jobData[i].completeDate != null) {
-        completeDate = DateFormat('MM-dd-yyyy').format(DateTime.parse(jobData[i].completeDate!.replaceAll('T', ' ')[0]));
+        if (jobData[i].completeDate == 'N/A' || jobData[i].completeDate == '') {
+          completeDate = 'N/A';
+        } else {
+          completeDate = DateFormat('MM-dd-yyyy').format(DateTime.parse(jobData[i].completeDate!.split('T')[0]));
+        }
       }
       if (jobData[i].status != null) {
         status = jobData[i].status!;
-      } else if (jobData[i].status == null) {
-        status = JobStatus.notStarted;
       }
       if (jobData[i].good != null) {
         good = jobData[i].good!;
-      } else if (jobData[i].good == null) {
-        good = 0;
       }
       if (jobData[i].bad != null) {
         bad = jobData[i].bad!;
-      } else if (jobData[i].bad == null) {
-        bad = 0;
       }
       isApproved = jobData[i].isApproved;
       isArchive = jobData[i].isArchive;
@@ -328,7 +331,6 @@ class _ProcessManagerState extends State<ProcessManager> {
 
   /// Prepares job data into JSON format to be sent to database
   void submitJobData() {
-    // TODO: check what format the date has to go in the database
     String dueDate = '';
     if (assignedDate != '') {
       dueDate = DateFormat('MM-dd-yyyy').format(selectedDate).replaceAll(' ', 'T');
@@ -379,7 +381,7 @@ class _ProcessManagerState extends State<ProcessManager> {
       'bad': bad,
       'isApproved': isApproved,
       'isArchive': isArchive,
-      //'prevJobs':
+      'prevJobs': prevJobs,
     };
 
     Map<String, dynamic> toSend = {
@@ -1006,24 +1008,39 @@ class _ProcessManagerState extends State<ProcessManager> {
       Widget assemblyList() {
         Widget createAssemblyCards() {
           List<Widget> assemblyCards = [];
-          for (int i = 0; i < jobData[jobToUse!].prevJobs!.length; i++) {
-            print("${jobData[jobToUse!].title} prev job: ${jobData[jobToUse!].prevJobs![i].title}");
-            assemblyCards.add(
-              Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: JobCard(
-                  context: context,
-                  jobData: jobData[jobToUse].prevJobs![i],
-                  height: 57,
-                  width: processWidth - 40.0)
-              )
-            );
+          for (String key in jobData[jobToUse!].prevJobs!.keys) {
+              print("PrevJobs data: ${jobData[jobToUse!].prevJobs?.length}");
+              assemblyCards.add(
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: JobCard(
+                    context: context,
+                    jobData: JobData(
+                      title: jobData[jobToUse].prevJobs![key]['title'],
+                      createdBy: jobData[jobToUse].prevJobs![key]['createdBy'],
+                      dateCreated: jobData[jobToUse].prevJobs![key]['dateCreated'],
+                      dueDate: jobData[jobToUse].prevJobs![key]['dueDate'],
+                      completeDate: jobData[jobToUse].prevJobs![key]['completeDate'],
+                      workers: List<String>.from(jobData[jobToUse].prevJobs![key]['workers'] ?? []),
+                      approvers: List<String>.from(jobData[jobToUse].prevJobs![key]['approvers'] ?? []),
+                      status: JobStatus.values.byName(jobData[jobToUse].prevJobs![key]['status']),
+                      isApproved: jobData[jobToUse].prevJobs![key]['isApproved'],
+                      good: jobData[jobToUse].prevJobs![key]['good'],
+                      bad: jobData[jobToUse].prevJobs![key]['bad'],
+                    ),
+                    height: 120,
+                    width: 200)
+                )
+              );
           }
-          return Column(
+          return Row(
             children: assemblyCards
           );
         }
-        return Column(
+        return 
+        (jobData[jobToUse!].prevJobs == null || jobData[jobToUse].prevJobs!.isEmpty)
+          ? const SizedBox()
+          : Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1064,14 +1081,30 @@ class _ProcessManagerState extends State<ProcessManager> {
                     20),
                   ],
                 ),
+                LSIWidgets.squareButton(
+                  text: 'View all',
+                  fontSize: 12,
+                  textColor: Theme.of(context).secondaryHeaderColor,
+                  onTap: () {
+                    // open dialog of all assembilies
+                  },
+                  buttonColor: Colors.transparent,
+                  borderColor: Theme.of(context)
+                      .primaryTextTheme
+                      .bodyMedium!
+                      .color,
+                  height: 30,
+                  radius: 30 / 2,
+                ),
               ],
             ),
             SizedBox(height: 10),
             expandAssembilies
               ? SizedBox(
-                  height: (activityControllers.length < 3 || expandAssembilies)
-                    ? activityControllers.length * 57.0
-                    : 57.0 * 3,
+                  height: 140.0,
+                  width: (activityControllers.length < 3 || expandAssembilies)
+                    ? activityControllers.length * 220.0
+                    : 220.0 * 3,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(0),
                     itemCount: activityControllers.length,

@@ -99,8 +99,7 @@ class JobCard extends StatelessWidget {
       return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            (jobData.status == JobStatus.completed)
-            ? Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -112,7 +111,7 @@ class JobCard extends StatelessWidget {
                 ),
                 colorText(Theme.of(context).secondaryHeaderColor, jobData.good.toString())
               ]
-            ) : Container(),
+            ),
             LSIUserIcon(
               uids: jobData.workers,
               colors: [Colors.teal[200]!, Colors.teal[600]!],

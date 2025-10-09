@@ -54,7 +54,6 @@ class _RouterScreenState extends State<RouterScreen> {
       selectedRouter = routerKey;
 
       final processesMap = router['processes'] as Map<String, dynamic>;
-      // processesMap.addAll(testData['archived']['processes'] as Map<String, dynamic>);
       testProcessList = processesMap.entries.map((entry) {
         final details = entry.value['details'];
         return ProcessData(
@@ -77,6 +76,7 @@ class _RouterScreenState extends State<RouterScreen> {
           createdBy: j['createdBy'],
           processId: j['processId'],
           dueDate: j['dueDate'],
+          completeDate: j['completeDate'],
           workers: List<String>.from(j['workers']),
           approvers: List<String>.from(j['approvers']),
           status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
@@ -84,7 +84,8 @@ class _RouterScreenState extends State<RouterScreen> {
           bad: j['bad'],
           isApproved: j['isApproved'],
           isArchive: j['isArchive'],
-          notes: j['notes'] as Map<String, dynamic>?,
+          notes: (j['notes'] != null) ? Map<String, dynamic>.from(j['notes']) : null, // Correct casting
+          prevJobs: (j['prevJobs'] != null) ? Map<String, dynamic>.from(j['prevJobs']) : null, // Correct casting
         );
       }).toList();
 

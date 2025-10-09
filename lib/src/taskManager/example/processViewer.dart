@@ -198,6 +198,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
           createdBy: j['createdBy'],
           processId: j['processId'],
           dueDate: j['dueDate'],
+          completeDate: j['completeDate'],
           workers: List<String>.from(j['workers']),
           approvers: List<String>.from(j['approvers']),
           status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
@@ -205,6 +206,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
           bad: j['bad'],
           isApproved: j['isApproved'],
           notes: j['notes'] as Map<String, dynamic>?,
+          prevJobs: j['prevJobs'] as Map<String, dynamic>?,
         );
       }
 
@@ -410,6 +412,7 @@ class _ProcessViewerState extends State<ProcessViewer> {
       processData: currentProcessData,
       jobs: currentJobData,
       index: currentProcessData['data']?.index ?? 0,
+      prevJobs: currentJobData['data']?.prevJobs ?? {}
     );
   }
 
