@@ -1009,8 +1009,8 @@ class _ProcessManagerState extends State<ProcessManager> {
         Widget createAssemblyCards() {
           List<Widget> assemblyCards = [];
           for (String key in jobData[jobToUse!].prevJobs!.keys) {
-              print("PrevJobs data: ${jobData[jobToUse!].prevJobs?.length}");
-              assemblyCards.add(
+            (key == jobData[jobToUse].prevJobs!.keys.last)
+            ? assemblyCards.add(
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   child: JobCard(
@@ -1030,8 +1030,36 @@ class _ProcessManagerState extends State<ProcessManager> {
                     ),
                     height: 120,
                     width: 200)
-                )
-              );
+                ), 
+            )
+            : assemblyCards.add(
+                Row(
+                  children: [
+                  Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: JobCard(
+                    context: context,
+                    jobData: JobData(
+                      title: jobData[jobToUse].prevJobs![key]['title'],
+                      createdBy: jobData[jobToUse].prevJobs![key]['createdBy'],
+                      dateCreated: jobData[jobToUse].prevJobs![key]['dateCreated'],
+                      dueDate: jobData[jobToUse].prevJobs![key]['dueDate'],
+                      completeDate: jobData[jobToUse].prevJobs![key]['completeDate'],
+                      workers: List<String>.from(jobData[jobToUse].prevJobs![key]['workers'] ?? []),
+                      approvers: List<String>.from(jobData[jobToUse].prevJobs![key]['approvers'] ?? []),
+                      status: JobStatus.values.byName(jobData[jobToUse].prevJobs![key]['status']),
+                      isApproved: jobData[jobToUse].prevJobs![key]['isApproved'],
+                      good: jobData[jobToUse].prevJobs![key]['good'],
+                      bad: jobData[jobToUse].prevJobs![key]['bad'],
+                    ),
+                    height: 120,
+                    width: 200)
+                ), 
+                const SizedBox(width: 10),
+                Icon(Icons.arrow_forward, color: Theme.of(context).secondaryHeaderColor, size: 30),
+                const SizedBox(width: 10),
+                ]
+              ));
           }
           return Row(
             children: assemblyCards
@@ -1095,7 +1123,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                         child: Container(
                           padding: const EdgeInsets.all(20.0),
                           height: 220,
-                          width: 500, // edit to num of assembilies
+                          width: jobData[jobToUse].prevJobs!.length * 250,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
@@ -1143,15 +1171,17 @@ class _ProcessManagerState extends State<ProcessManager> {
             expandAssembilies
               ? SizedBox(
                   height: 140.0,
-                  width: (activityControllers.length < 3 || expandAssembilies)
-                    ? activityControllers.length * 220.0
-                    : 220.0 * 3,
+                  width: 480.0,
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(0),
-                    itemCount: activityControllers.length,
-                    itemBuilder: (context, i) {
-                      return createAssemblyCards();
-                    }))
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 1,
+                  itemBuilder: (context, index) {
+                  return Padding(
+                        padding: const EdgeInsets.all(0),
+                        child: createAssemblyCards()
+                  );
+                })
+              )
               : const SizedBox()
           ],
         );

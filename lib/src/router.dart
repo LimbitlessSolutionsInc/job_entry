@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:job_entry/src/organization/organization.dart';
 import 'package:job_entry/src/taskManager/example/processViewer.dart';
 import 'package:job_entry/src/taskManager/example/routerViewer.dart';
 import 'package:job_entry/src/task_master.dart';
@@ -44,6 +45,13 @@ class _RouterScreenState extends State<RouterScreen> {
   void listenToFirebase() async {
     list = <JobData>[];
     if (testing) {
+      currentUser = UsersProfile(
+        uid: 'testUser',
+        displayName: 'Test User',
+        imageUrl: null,
+        status: OrgStatus.admin,
+      );
+
       final String jsonString = await rootBundle.loadString('lib/src/assets/test_data.json');
       final Map<String, dynamic> testData = json.decode(jsonString);
 
@@ -84,8 +92,8 @@ class _RouterScreenState extends State<RouterScreen> {
           bad: j['bad'],
           isApproved: j['isApproved'],
           isArchive: j['isArchive'],
-          notes: (j['notes'] != null) ? Map<String, dynamic>.from(j['notes']) : null, // Correct casting
-          prevJobs: (j['prevJobs'] != null) ? Map<String, dynamic>.from(j['prevJobs']) : null, // Correct casting
+          notes: (j['notes'] != null) ? Map<String, dynamic>.from(j['notes']) : null,
+          prevJobs: (j['prevJobs'] != null) ? Map<String, dynamic>.from(j['prevJobs']) : null,
         );
       }).toList();
 

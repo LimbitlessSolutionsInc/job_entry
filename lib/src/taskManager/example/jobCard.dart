@@ -109,7 +109,7 @@ class JobCard extends StatelessWidget {
                     jobData.bad != null ? colorText(Colors.red, jobData.bad.toString()) : colorText(Colors.red, '---')
                   ]
                 ),
-                colorText(Theme.of(context).secondaryHeaderColor, jobData.good.toString())
+                jobData.good != null ? colorText(Theme.of(context).secondaryHeaderColor, jobData.good.toString()) : colorText(Theme.of(context).secondaryHeaderColor, '---')
               ]
             ),
             LSIUserIcon(
