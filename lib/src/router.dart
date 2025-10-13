@@ -22,7 +22,7 @@ class RouterScreen extends StatefulWidget {
 
 class _RouterScreenState extends State<RouterScreen> {
   Size currentSize = Size(0, 0);
-  bool testing = true;
+  bool testing = false;
   String selectedProcess = '';
   String selectedRouter = '';
   List<ProcessData> testProcessList = [];

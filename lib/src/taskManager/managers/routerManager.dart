@@ -140,12 +140,14 @@ class _RouterManagerState extends State<RouterManager> {
   }
 
   void listenToFirebase() {
-
+    // try {
+    //   DatabaseReference cardRef = Database.reference('managment/label/$epic/', 'team');
+    // } catch (e) {}
   }
 
-  void carryCardFunction(event) {
+  // void carryCardFunction(event) {
 
-  }
+  // }
 
   // Sets up data to be displayed in update dialog for a router
   void setUpdateData(int i) {

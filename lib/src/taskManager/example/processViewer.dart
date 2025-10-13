@@ -43,7 +43,7 @@ class ProcessViewer extends StatefulWidget {
 
 class _ProcessViewerState extends State<ProcessViewer> {
   dynamic router;
-  bool testing = true;
+  bool testing = false;
   String selectedRouter = '';
   String child = '';
   bool update = false;
@@ -107,11 +107,22 @@ class _ProcessViewerState extends State<ProcessViewer> {
     child = "management/$selectedRouter";
 
     dropDownWorkers = [DropDownItems(value: '', text: 'Pick Workers')];
-    // populate the drop down items based on who can edit this router (students)
+    for (String key in allUsersData.keys) {
+      if(usersProfile?[key]?['displayName'] != null){
+        dropDownWorkers.add(
+        DropDownItems(value: key, text: usersProfile[key]['displayName'])
+        );
+      }
+    }
 
     dropDownApprovers = [DropDownItems(value: '', text: 'Pick Approvers')];
-    // populate the drop down items based on who can approve this router
-
+    for (String key in allUsersData.keys) {
+      if(usersProfile?[key]?['displayName'] != null){
+        dropDownWorkers.add(
+        DropDownItems(value: key, text: usersProfile[key]['displayName'])
+        );
+      }
+    }
 
     listenToFirebase();
     setState(() {
@@ -213,7 +224,20 @@ class _ProcessViewerState extends State<ProcessViewer> {
       hasStarted = true;
       setState(() {});
     } else {
-      //call firebase to get the router data
+      processAdded = Database.onValue('$child/boards', 'team').listen((event) {
+        setState(() {
+          currentProcessData = processData(event.snapshot.value);
+          update = true;
+        });
+      });
+      jobAdded = Database.onValue('$child/cards', 'team').listen((event) {
+        setState(() {
+          currentJobData = jobData(event.snapshot.value);
+          update = true;
+          if(!hasStarted){ hasStarted = true; }
+        });
+        
+      });
     }
   }
 
@@ -385,8 +409,6 @@ class _ProcessViewerState extends State<ProcessViewer> {
           data: data
         );
       },
-      // onEditProcess -> change of index
-      // onDateChange -> change priority
       onJobDelete: (id) {
         Database.update(
           'team',

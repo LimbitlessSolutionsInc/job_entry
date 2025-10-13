@@ -19,7 +19,6 @@ class ProcessManager extends StatefulWidget {
     required this.update,
     this.onSubmit,
     this.onEdit,
-    //this.onEditIndex, // might need this
     this.onTitleChange,
     this.onFocusNode,
     this.callback,
@@ -417,8 +416,7 @@ class _ProcessManagerState extends State<ProcessManager> {
   }
 
   /// Reorders processData based on oldLoc and newLoc
-  void reorder() {
-
+  void reorder(int oldLoc, int newLoc) {
   }
 
   /// Builds date picker and updates [assignedDate] and [selectedDate] accordingly
@@ -564,7 +562,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                     .primaryTextTheme
                     .labelSmall!
                     .color,
-                fontSize: 14,
+                fontSize: 18,
                 fontFamily: 'Klavika Bold',
                 package: 'css',
                 decoration: TextDecoration.none
@@ -597,7 +595,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                     .primaryTextTheme
                     .labelSmall!
                     .color,
-                fontSize: 14,
+                fontSize: 18,
                 fontFamily: 'Klavika Bold',
                 package: 'css',
                 decoration: TextDecoration.none
@@ -640,7 +638,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                     .primaryTextTheme
                     .labelSmall!
                     .color,
-                fontSize: 14,
+                fontSize: 18,
                 fontFamily: 'Klavika Bold',
                 package: 'css',
                 decoration: TextDecoration.none
@@ -686,13 +684,38 @@ class _ProcessManagerState extends State<ProcessManager> {
                     .primaryTextTheme
                     .labelSmall!
                     .color,
-                fontSize: 14,
+                fontSize: 18,
                 fontFamily: 'Klavika Bold',
                 package: 'css',
                 decoration: TextDecoration.none
               ),
             ),
-            Checkbox(
+            (jobData[jobToUse!].numApprovals > 1)
+            ? Row(
+              children: [
+                SizedBox(
+                  width: 80,
+                  height: 20,
+                  child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: jobData[jobToUse!].numApprovals,
+                  itemBuilder: (context, index) {
+                    return Checkbox(
+                      activeColor: Theme.of(context).secondaryHeaderColor,
+                      value: isApproved,
+                      onChanged: (val) {
+                        setState(() {
+                          if (isApprover()) {
+                            isApproved = val!;
+                          }
+                        });
+                      },
+                    );
+                  })
+                  )
+                  ]
+                )
+            : Checkbox(
               activeColor: Theme.of(context).secondaryHeaderColor,
               value: isApproved,
               onChanged: (val) {
@@ -717,7 +740,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                     .primaryTextTheme
                     .labelSmall!
                     .color,
-                fontSize: 14,
+                fontSize: 18,
                 fontFamily: 'Klavika Bold',
                 package: 'css',
                 decoration: TextDecoration.none
@@ -763,14 +786,9 @@ class _ProcessManagerState extends State<ProcessManager> {
             calendarField('End Date:', completeDate),
             calendarField('Required Date:', assignedDate),
             SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                textField('Good:', 180, 'number', TextEditingController(text: good.toString())),
-                SizedBox(width: 35),
-                textField('Bad:', 180, 'number', TextEditingController(text: bad.toString())),
-              ],
-            ),
+            textField('Good:', 180, 'number', TextEditingController(text: good.toString())),
+            SizedBox(height: 10),
+            textField('Bad:', 180, 'number', TextEditingController(text: bad.toString())),
             SizedBox(height: 10),
             statusField(),
             SizedBox(height: 10),
@@ -779,6 +797,35 @@ class _ProcessManagerState extends State<ProcessManager> {
       }
       Widget workerDropDownWidget() {
         return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Row(children: [
+          workers.isNotEmpty
+            ? Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.assignment_ind,
+                      size: 35,
+                    ),
+                    LSIUserIcon(
+                      remove: (loc) {
+                      setState(() {
+                        workers.removeAt(loc);
+                      });
+                      },
+                      viewidth: 100,
+                      uids: workers,
+                      colors: [
+                        Colors.teal[200]!,
+                        Colors.teal[600]!
+                      ],
+                    )
+                  ],
+                )
+              )
+          : Container()
+        ],),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -860,8 +907,12 @@ class _ProcessManagerState extends State<ProcessManager> {
               ],
             ),]
           ),
-          Row(children: [
-          workers.isNotEmpty
+        ]);                   
+      }
+      Widget approverDropDownWidget() {
+        return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Row(children: [
+          approvers.isNotEmpty
             ? Container(
                 margin: const EdgeInsets.only(top: 10),
                 child: Row(
@@ -874,11 +925,11 @@ class _ProcessManagerState extends State<ProcessManager> {
                     LSIUserIcon(
                       remove: (loc) {
                       setState(() {
-                        workers.removeAt(loc);
+                        approvers.removeAt(loc);
                       });
                       },
                       viewidth: 100,
-                      uids: workers,
+                      uids: approvers,
                       colors: [
                         Colors.teal[200]!,
                         Colors.teal[600]!
@@ -888,11 +939,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                 )
               )
           : Container()
-        ],)
-        ]);                   
-      }
-      Widget approverDropDownWidget() {
-        return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          ],),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -974,35 +1021,6 @@ class _ProcessManagerState extends State<ProcessManager> {
               ],
             ),]
           ),
-          Row(children: [
-          approvers.isNotEmpty
-            ? Container(
-                margin: const EdgeInsets.only(top: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.assignment_ind,
-                      size: 35,
-                    ),
-                    LSIUserIcon(
-                      remove: (loc) {
-                      setState(() {
-                        approvers.removeAt(loc);
-                      });
-                      },
-                      viewidth: 100,
-                      uids: approvers,
-                      colors: [
-                        Colors.teal[200]!,
-                        Colors.teal[600]!
-                      ],
-                    )
-                  ],
-                )
-              )
-          : Container()
-          ],)
         ]);                   
       }
       Widget assemblyList() {
@@ -1339,30 +1357,30 @@ class _ProcessManagerState extends State<ProcessManager> {
                   .color,
               height: 45,
               radius: 45 / 2,
-              width: width / 3 - 15,
+              width: width / 3,
             )
             : Container(),
-            (isWorker() || isApprover())
-            ? LSIWidgets.squareButton(
-              text: 'export',
-              textColor: Theme.of(context).secondaryHeaderColor,
-              onTap: () {
-                setState(() {
-                  JobData data = jobData[jobToUse!];
-                  exportJob(jobData[jobToUse!].title!, data);
-                });
-                error = false;
-              },
-              buttonColor: Colors.transparent,
-              borderColor: Theme.of(context)
-                  .primaryTextTheme
-                  .bodyMedium!
-                  .color,
-              height: 45,
-              radius: 45 / 2,
-              width: width / 3 - 15,
-            )
-            : Container(),
+            // (isWorker() || isApprover())
+            // ? LSIWidgets.squareButton(
+            //   text: 'export',
+            //   textColor: Theme.of(context).secondaryHeaderColor,
+            //   onTap: () {
+            //     setState(() {
+            //       JobData data = jobData[jobToUse!];
+            //       exportJob(jobData[jobToUse!].title!, data);
+            //     });
+            //     error = false;
+            //   },
+            //   buttonColor: Colors.transparent,
+            //   borderColor: Theme.of(context)
+            //       .primaryTextTheme
+            //       .bodyMedium!
+            //       .color,
+            //   height: 45,
+            //   radius: 45 / 2,
+            //   width: width / 3 - 15,
+            // )
+            // : Container(),
             (!isNewJob && (isWorker() || isApprover()))
             ? Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1384,7 +1402,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                   borderColor: Colors.red,
                   height: 45,
                   radius: 45 / 2,
-                  width: width / 6 - 30,
+                  width: width / 5 - 30,
                 ),
                 LSIWidgets.squareButton(
                   text: 'delete all',
@@ -1403,7 +1421,7 @@ class _ProcessManagerState extends State<ProcessManager> {
                   borderColor: Colors.red,
                   height: 45,
                   radius: 45 / 2,
-                  width: width / 6 - 30,
+                  width: width / 5 - 30,
                 ),
               ]
             )

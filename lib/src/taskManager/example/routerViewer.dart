@@ -32,10 +32,12 @@ class RouterViewer extends StatefulWidget {
 }
 
 class _RouterViewerState extends State<RouterViewer> {
-  bool testing = true;
+  bool testing = false;
   dynamic managementData = {};
   String currentEpic = '';
   String child = '';
+
+  StreamSubscription<DatabaseEvent>? fbadded;
   StreamSubscription<DatabaseEvent>? completeAdded;
 
   @override
@@ -47,11 +49,13 @@ class _RouterViewerState extends State<RouterViewer> {
 
   @override
   void dispose() {
+    fbadded?.cancel();
     completeAdded?.cancel();
     super.dispose();
   }
 
   void start() {
+    managementData = {};
     currentEpic = widget.epic;
     child = "managment/Epic/" + currentEpic;
   }
@@ -84,7 +88,17 @@ class _RouterViewerState extends State<RouterViewer> {
       };
       setState(() {});
     } else {
-
+        fbadded?.cancel();
+        Database.once(child, 'team').then((value){
+          setState(() {
+            managementData = value ?? {};
+          });
+        });
+        fbadded = Database.onValue(child, 'team').listen((event) {
+          setState(() {
+            managementData = event.snapshot.value ?? {};
+          });
+        });
     }
   }
 
