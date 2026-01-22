@@ -1,0 +1,174 @@
+{
+  "router": {
+    "router_1": {
+      "details": {
+        "title": "Router 1",
+        "color": "0xFF42A5F5",
+        "dateCreated": "2026-01 -01T12:00:00Z",
+        "createdBy": "testUser"
+      },
+      "processes": {
+        "process_1": {
+          "createdBy": "testUser",
+          "dateCreated": "2024-06-01T12:30:00Z",
+          "notify": true,
+          "order": 1,
+          "routerId": "router_1",
+          "title": "Process 1",
+          "jobs": {
+            "job_1": {
+              "approvers": [
+                "approver_1",
+                "approver_2"
+              ],
+              "bad": 3,
+              "completeDate": "2024-06-12T12:00:00Z",
+              "description": "This is the first job.",
+              "dueDate": "2024-06-10T12:00:00Z",
+              "good": 7,
+              "isApproved": true,
+              "isArchive": false,
+              "notes": {
+                "note_1": {
+                  "comment": "This is a note for job 1.",
+                  "createdBy": "worker_1",
+                  "dateCreated": "2024-06-05T12:00:00Z"
+                }
+              },
+              "priority": "high",
+              "processId": "process_1",
+              "startDate": "2024-06-09T12:00:00Z",
+              "status": "in_progress",
+              "title": "Job 1",
+              "workers": [
+                "worker_1",
+                "worker_2"
+              ]
+            },
+            "job_2": {
+              "approvers": [
+                "approver_3"
+              ],
+              "bad": 0,
+              "completeDate": "2024-06-15T12:00:00Z",
+              "description": "This is the second job.",
+              "dueDate": "2024-06-14T12:00:00Z",
+              "good": 10,
+              "isApproved": false,
+              "isArchive": false,
+              "notes": {},
+              "priority": "medium",
+              "processId": "process_1",
+              "startDate": "2024-06-13T12:00:00Z",
+              "status": "completed",
+              "title": "Job 2",
+              "workers": [
+                "worker_3"
+              ]
+            }
+          }
+        },
+        "process_2": {
+          "createdBy": "testUser",
+          "dateCreated": "2024-06-01T13:00:00Z",
+          "notify": false,
+          "order": 2,
+          "routerId": "router_1",
+          "title": "Process 2",
+          "jobs": {
+            "job_3": {
+              "approvers": [
+                "approver_4"
+              ],
+              "bad": 1,
+              "completeDate": "2024-06-20T12:00:00Z",
+              "description": "This is the third job.",
+              "dueDate": "2024-06-18T12:00:00Z",
+              "good": 9,
+              "isApproved": true,
+              "isArchive": false,
+              "notes": {
+                "note_2": {
+                  "comment": "This is a note for job 3.",
+                  "createdBy": "worker_4",
+                  "dateCreated": "2024-06-10T12:00:00Z"
+                }
+              },
+              "priority": "low",
+              "processId": "process_2",
+              "startDate": "2024-06-17T12:00:00Z",
+              "status": "completed",
+              "title": "Job 3",
+              "workers": [
+                "worker_4",
+                "worker_5"
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "router_2": {
+      "details": {
+        "title": "Router 2",
+        "color": "0xFF66BB6A",
+        "dateCreated": "2024-06-02T12:00:00Z",
+        "createdBy": "testUser"
+      },
+      "processes": {
+        "process_3": {
+          "createdBy": "testUser",
+          "dateCreated": "2024-06-02T12:30:00Z",
+          "notify": true,
+          "order": 1,
+          "routerId": "router_2",
+          "title": "Process 3",
+          "jobs": {
+            "job_4": {
+              "approvers": [
+                "approver_5"
+              ],
+              "bad": 2,
+              "completeDate": "2024-06-25T12:00:00Z",
+              "description": "This is the fourth job.",
+              "dueDate": "2024-06-23T12:00:00Z",
+              "endDate": "2024-06-24T12:00:00Z",
+              "good": 8,
+              "isApproved": false,
+              "isArchive": false,
+              "notes": {},
+              "priority": "high",
+              "process_id": "process_3",
+              "router_id": "router_2",
+              "startDate": "2024-06-22T12:00:00Z",
+              "status": "in_progress",
+              "title": "Job 4",
+              "workers": [
+                "worker_6"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "archive": {
+    "archived_routers": [
+      {
+        "routerId": "router_0",
+        "archivedBy": "adminUser",
+        "dateArchived": "2024-05-01T12:00:00Z",
+        "reason": "Sample reason"
+      },
+
+      {
+        "routerId": "router_2",
+        "archivedBy": "adminUser",
+        "dateArchived": "2024-05-15T12:00:00Z",
+        "reason": "Error"
+      }
+    ]
+  }
+}
