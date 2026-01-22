@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:job_entry/job_screen.dart';
+import 'package:job_entry/router.dart';
+import 'package:css/css.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: CSS.pinkTheme,
-      home: JobScreen(
+      home: RouterScreen(
         size: MediaQuery.sizeOf(context)
       ),
     );
