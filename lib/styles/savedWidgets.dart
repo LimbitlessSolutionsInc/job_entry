@@ -68,27 +68,30 @@ class _FocusedInkWellState extends State<FocusedInkWell> {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      focusNode: _focusNode,
-      mouseCursor: widget.mouseCursor,
-      hoverColor: widget.hoverColor,
-      onTap: widget.onTap,
-      onDoubleTap: widget.onDoubleTap,
-      onLongPress: widget.onLongPress,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isFocused?widget.bgColor: Colors.transparent,
-          border: Border.all(
-            color: isFocused?lightBlueBG:Colors.transparent,
-            width: 2
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        focusNode: _focusNode,
+        mouseCursor: widget.mouseCursor,
+        hoverColor: widget.hoverColor,
+        onTap: widget.onTap,
+        onDoubleTap: widget.onDoubleTap,
+        onLongPress: widget.onLongPress,
+        child: Container(
+          decoration: BoxDecoration(
+            color: isFocused?widget.bgColor: Colors.transparent,
+            border: Border.all(
+              color: isFocused?lightBlueBG:Colors.transparent,
+              width: 2
+            ),
+            boxShadow: [BoxShadow(
+              color: isFocused?lightBlue:Colors.transparent,
+              blurRadius: 2,
+              offset: const Offset(2,2)
+            )]
           ),
-          boxShadow: [BoxShadow(
-            color: isFocused?lightBlue:Colors.transparent,
-            blurRadius: 2,
-            offset: const Offset(2,2)
-          )]
-        ),
-        child: widget.child
+          child: widget.child
+        )
       )
     );
   }
@@ -650,68 +653,71 @@ class IndicatorBlocks extends StatelessWidget{
         }
       }
       list.add(
-        InkWell(
-          onTap: (){
-            if(onTap != null){
-              onTap!(i);
-            }
-          },
-          focusNode: FocusNode(skipTraversal: (onTap == null)),
-          child: isDynamic?Stack(
-            alignment: Alignment.center,
-            children:[
-              SizedBox(
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: (){
+              if(onTap != null){
+                onTap!(i);
+              }
+            },
+            focusNode: FocusNode(skipTraversal: (onTap == null)),
+            child: isDynamic?Stack(
+              alignment: Alignment.center,
+              children:[
+                SizedBox(
+                  height: height,
+                  width: CSS.responsive()/colors.length/3.2,
+                ),
+                Container(
+                  height: height/2.5,    
+                  width:  CSS.responsive()/colors.length/2.6,
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(10),
+                    ),
+                    color: colors[i],
+                  ),
+                ),
+              ]
+            ):Stack(
+              alignment: Alignment.center,
+              children:[
+              (active == i)?Container(
                 height: height,
-                width: CSS.responsive()/colors.length/3.2,
+                width: CSS.responsive()/colors.length,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular((height)/2)),
+                  border: Border.all(
+                    width: 2.0,
+                    color: activeColor
+                  )
+                ),
+              ):SizedBox(
+                height: height,
+                width: CSS.responsive()/colors.length,
               ),
               Container(
-                height: height/2.5,    
-                width:  CSS.responsive()/colors.length/2.6,
+                height: height-10,
+                width: CSS.responsive()/colors.length-10,
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(10),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular((height-10)/2)),
                   color: colors[i],
                 ),
-              ),
-            ]
-          ):Stack(
-            alignment: Alignment.center,
-            children:[
-            (active == i)?Container(
-              height: height,
-              width: CSS.responsive()/colors.length,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular((height)/2)),
-                border: Border.all(
-                  width: 2.0,
-                  color: activeColor
-                )
-              ),
-            ):SizedBox(
-              height: height,
-              width: CSS.responsive()/colors.length,
-            ),
-            Container(
-              height: height-10,
-              width: CSS.responsive()/colors.length-10,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular((height-10)/2)),
-                color: colors[i],
-              ),
-              child: (highlight)?ClipPath(
-                  child: 
-                  CustomPaint(
-                    size: Size(CSS.responsive()/colors.length-10, height-10),
-                    painter: BarsPainter(
-                      barHeight: height,
-                      strokeWidth: 10,
-                      colors: [const Color(0x9906A7E2),const Color(0x99222222)]
-                    ),
-                  )
-              ):Container(),
-            )
-          ])
+                child: (highlight)?ClipPath(
+                    child: 
+                    CustomPaint(
+                      size: Size(CSS.responsive()/colors.length-10, height-10),
+                      painter: BarsPainter(
+                        barHeight: height,
+                        strokeWidth: 10,
+                        colors: [const Color(0x9906A7E2),const Color(0x99222222)]
+                      ),
+                    )
+                ):Container(),
+              )
+            ])
+          )
         )
       );
     }

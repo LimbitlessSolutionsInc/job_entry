@@ -2323,15 +2323,17 @@ class _ProcessManagerState extends State<ProcessManager> {
       }
     });
 
-    return InkWell(
-      mouseCursor: MouseCursor.defer,
-      onTap: () {
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
-      child: Stack(
-        alignment: AlignmentDirectional.bottomEnd, 
-        children: [
-          (processData.isNotEmpty) ? DragTarget<int>(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        mouseCursor: MouseCursor.defer,
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Stack(
+          alignment: AlignmentDirectional.bottomEnd, 
+          children: [
+            (processData.isNotEmpty) ? DragTarget<int>(
             onMove: (details) {
               if (details.offset.dx > deviceWidth - 140) {
                 _scrollController.jumpTo(_scrollController.offset + 5);
@@ -2386,6 +2388,7 @@ class _ProcessManagerState extends State<ProcessManager> {
             }
           ),
         ]
+      )
       )
     );
   }

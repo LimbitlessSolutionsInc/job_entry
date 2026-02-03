@@ -684,7 +684,9 @@ class _RouterManagerState extends State<RouterManager> {
         ? MediaQuery.of(context).size.width
         : widget.width!;
     height = (widget.height == null)?MediaQuery.of(context).size.height: widget.height!;
-    return InkWell(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         mouseCursor: MouseCursor.defer,
         onTap: () {
           setState(() {
@@ -728,6 +730,8 @@ class _RouterManagerState extends State<RouterManager> {
               }
             ),
           ]
-        ));
+        )
+      )
+    );
   }
 }
