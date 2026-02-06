@@ -5,6 +5,7 @@ class RouterData {
     required this.dateCreated,
     required this.createdBy,
     required this.id,
+    required this.processId,
     this.dateArchived = '',
     this.archivedBy = '',
   });
@@ -14,6 +15,9 @@ class RouterData {
   final String dateCreated;
   final String createdBy;
   final String id;
+  final String processId;
   String dateArchived;
   String archivedBy;
+
+  copyWith({required String title}) {}
 }

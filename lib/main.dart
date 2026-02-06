@@ -1,23 +1,49 @@
 // TODO Implement this library.
 
 import 'package:flutter/material.dart';
-import 'package:job_entry/router.dart';
-import 'package:css/css.dart';
+import '../router.dart';
+import 'package:css/css.dart' as css;
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: CSS.pinkTheme,
-      home: RouterScreen(
-        size: MediaQuery.sizeOf(context)
+      theme: css.CSS.lsiTheme,
+      home: const TabBarWidget(),
+    );
+  }
+}
+
+class TabBarWidget extends StatelessWidget {
+  const TabBarWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Tasks'),
+          bottom: const TabBar(
+            tabs: <Widget>[
+              Tab(text: 'Routers'),
+              Tab(text: 'Archive'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: <Widget>[
+            RouterPage(),
+            Center(child: Text('Archive View')),
+          ],
+        ),
       ),
     );
   }
