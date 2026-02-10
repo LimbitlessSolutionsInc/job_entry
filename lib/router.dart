@@ -896,12 +896,12 @@ class RouterPage extends StatefulWidget {
 
 class _RouterPageState extends State<RouterPage> {
   bool showRouterList = true;
+  String? selectedRouterId;
+  RouterData? selectedRouter;
 
   final List<RouterData> routers = [
     // Sample data can be added here for demo
   ];
-
-  String? selectedRouterId;
 
   @override
   void initState() {
@@ -922,6 +922,16 @@ class _RouterPageState extends State<RouterPage> {
 
   void _togglePane() {
     setState(() => showRouterList = !showRouterList);
+  }
+
+  void _onRouterSelected(String routerId, List<RouterData> routersList) {
+    setState(() {
+      selectedRouterId = routerId;
+      selectedRouter = routersList.firstWhere(
+        (r) => r.id == routerId,
+        orElse: () => routersList.first,
+      );
+    });
   }
 
   // void selectRouter(String routerId) {
@@ -966,8 +976,10 @@ class _RouterPageState extends State<RouterPage> {
 
         final isWide = width >= 900;
 
-        final leftPane = const RouterManager();
-        final rightPane = const RouterWorkspace();
+        final leftPane = RouterManager(
+          onRouterSelected: _onRouterSelected,
+        );
+        final rightPane = RouterWorkspace(selectedRouter: selectedRouter);
 
         const SizedBox(width: 12);
         Alignment.centerLeft;
@@ -986,13 +998,19 @@ class _RouterPageState extends State<RouterPage> {
             child: Card(
               child: Row(
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 320,
-                    child: RouterSidebarFrame(child: RouterManager()),
+                    child: RouterSidebarFrame(
+                      child: RouterManager(
+                        onRouterSelected: _onRouterSelected,
+                      ),
+                    ),
                   ),
                   const VerticalDivider(width: 1),
-                  const Expanded(
-                    child: RouterProcessFrame(child: RouterWorkspace()),
+                  Expanded(
+                    child: RouterProcessFrame(
+                      child: RouterWorkspace(selectedRouter: selectedRouter),
+                    ),
                   ),
                 ],
               ),
@@ -1007,8 +1025,14 @@ class _RouterPageState extends State<RouterPage> {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: Card(
                 child: showRouterList
-                    ? const RouterSidebarFrame(child: RouterManager())
-                    : const RouterProcessFrame(child: RouterWorkspace()),
+                    ? RouterSidebarFrame(
+                        child: RouterManager(
+                          onRouterSelected: _onRouterSelected,
+                        ),
+                      )
+                    : RouterProcessFrame(
+                        child: RouterWorkspace(selectedRouter: selectedRouter),
+                      ),
               ),
             ),
             Positioned(
@@ -1058,19 +1082,42 @@ class RouterProcessFrame extends StatelessWidget {
 
 /// Process timeline area
 class RouterWorkspace extends StatelessWidget {
-  const RouterWorkspace({super.key});
+  const RouterWorkspace({super.key, this.selectedRouter});
+
+  final RouterData? selectedRouter;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        Expanded(
-          child: _SectionCard(
-            title: 'Core Parts', //hard coded for demo
-            child: _Job(),
-          ),
+    if (selectedRouter == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'No router selected',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Select a router from the list to view details',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
         ),
-      ],
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: ViewDetailsWidget(routerData: selectedRouter!),
     );
   }
 }

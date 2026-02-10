@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../router.dart';
+import '../archive.dart';
 import 'package:css/css.dart' as css;
 
 void main() {
@@ -41,7 +42,7 @@ class TabBarWidget extends StatelessWidget {
         body: const TabBarView(
           children: <Widget>[
             RouterPage(),
-            Center(child: Text('Archive View')),
+            ArchivePage(),
           ],
         ),
       ),
