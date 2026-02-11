@@ -6,6 +6,7 @@ class RouterData {
     required this.createdBy,
     required this.id,
     required this.processId,
+    this.connectedRouters = const [],
     this.dateArchived = '',
     this.archivedBy = '',
   });
@@ -16,6 +17,7 @@ class RouterData {
   final String createdBy;
   final String id;
   final String processId;
+  List<String> connectedRouters;
   String dateArchived;
   String archivedBy;
 

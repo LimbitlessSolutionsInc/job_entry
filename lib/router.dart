@@ -882,8 +882,11 @@ import 'package:flutter/material.dart';
 import '../src/organization/organization.dart';
 import '../src/managers/routerManager.dart';
 import '../src/data/routerData.dart';
+import '../src/data/jobData.dart';
+import '../src/data/processTemplates.dart';
 import '../styles/globals.dart';
 import 'package:css/css.dart' as css;
+import '../src/example/jobCard.dart';
 
 class RouterPage extends StatefulWidget {
   const RouterPage({super.key});
@@ -1115,9 +1118,131 @@ class RouterWorkspace extends StatelessWidget {
       );
     }
 
+    return ProcessTimelineView(routerId: selectedRouter!.id, processId: selectedRouter!.processId);
+  }
+}
+
+/// Process Timeline View - Shows horizontal timeline of jobs for a router
+class ProcessTimelineView extends StatelessWidget {
+  const ProcessTimelineView({
+    super.key,
+    required this.routerId,
+    required this.processId,
+  });
+
+  final String routerId;
+  final String processId;
+
+  @override
+  Widget build(BuildContext context) {
+    // Get jobs for this router
+    final jobs = RouterManager.routerJobs[routerId] ?? [];
+
+    // Get process type from process ID
+    final processType = RouterManager.processIdToType[processId];
+
+    Text(
+      'Process: $processType',
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
+    // Check if process has a template
+    if (processType == null || !ProcessTemplates.hasTemplate(processType)) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No jobs defined for this process',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Process ID: $processId${processType != null ? " (Type: $processType)" : ""}',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (jobs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.pending_actions,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No jobs available',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: ViewDetailsWidget(routerData: selectedRouter!),
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 3000),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 80),
+              // Horizontal scrollable timeline
+              SizedBox(
+                height: 800,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: jobs.length,
+                  itemBuilder: (context, index) {
+                    final job = jobs[index];
+                    final isFirst = index == 0;
+                    final isLast = index == jobs.length - 1;
+                    
+                    return JobTimelineCard(
+                      job: job,
+                      jobNumber: index + 1,
+                      isFirst: isFirst,
+                      isLast: isLast,
+                      onTap: () {
+                        debugPrint('Tapped job: ${job.title}');
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

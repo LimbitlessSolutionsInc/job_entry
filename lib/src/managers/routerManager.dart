@@ -736,12 +736,15 @@
 //   }
 // }
 
-// Router Manager Screen - Displays list of routers and allows adding new routers
+// Router Manager Screen - Displays list of routers and allows for CRUD operations
 import 'package:flutter/material.dart';
 import '../data/routerData.dart';
+import '../data/jobData.dart';
+import '../data/processTemplates.dart';
 import '../example/routerCard.dart';
 import 'package:css/css.dart' as css;
 import '../models/router_model.dart';
+import '../data/processData.dart';
 
 class RouterManager extends StatefulWidget {
   const RouterManager({
@@ -752,6 +755,10 @@ class RouterManager extends StatefulWidget {
   static List<RouterData> get routers => _RouterManagerState.routers;
 
   final Function(String routerId, List<RouterData> routers)? onRouterSelected;
+
+  static get routerJobs => _RouterManagerState.routerJobs;
+
+  static get processIdToType => _RouterManagerState.processIdToType;
   // final void Function(String title) onAdd;
   // final void Function(String id, String newTitle) onEdit;
   // final void Function(String id) onDelete;
@@ -761,11 +768,16 @@ class RouterManager extends StatefulWidget {
 }
 
 class _RouterManagerState extends State<RouterManager> {
-  // Shared static data storage for routers (accessible by ArchivePage)
   static List<RouterData> routers = [];
 
-  // Counter for generating unique router IDs
+  static Map<String, List<JobData>> routerJobs = {};
+
+  // Map process IDs to process types for job template
+  static Map<String, String> processIdToType = {};
+
+  // Counter for generating unique IDs
   static int _nextRouterId = 1;
+  static int _nextProcessId = 1;
 
   // Track selected router ID
   String? selectedRouterId;
@@ -773,15 +785,15 @@ class _RouterManagerState extends State<RouterManager> {
   @override
   void initState() {
     super.initState();
-    // Initialize with sample data for testing
+    
     _initializeSampleData();
-    // Select first router by default
+
     if (routers.isNotEmpty) {
       selectedRouterId = routers[0].id;
     }
   }
 
-  // Initialize with some sample routers for testing
+  // Initialize with sample routers for testing
   void _initializeSampleData() {
     routers = [
       RouterData(
@@ -832,7 +844,55 @@ class _RouterManagerState extends State<RouterManager> {
         archivedBy: 'testUser',
       ),
     ];
-    _nextRouterId = 6; // Next ID after 5 sample routers
+    _nextRouterId = 6; 
+    _nextProcessId = 6; 
+
+    // Map process IDs to types for initial sample data
+    processIdToType['process_1'] = 'Core Parts';
+    processIdToType['process_2'] = 'Cosmetic Sleeves';
+    processIdToType['process_3'] = 'Magnets/Magnet Holders';
+    processIdToType['process_4'] = 'Core Parts';
+    processIdToType['process_5'] = 'Cosmetic Sleeves';
+
+    // Create jobs for all sample routers
+    for (var router in routers) {
+      final processType = processIdToType[router.processId];
+      if (processType != null) {
+        routerJobs[router.id] = _createJobsFromTemplate(router.processId, processType, router.id);
+      }
+    }
+  }
+
+  // Helper to create jobs from template using process ID and type
+  static List<JobData> _createJobsFromTemplate(String processId, String processType, String routerId) {
+    final template = ProcessTemplates.getTemplate(processType);
+    if (template.isEmpty) {
+      return []; // No template for this process
+    }
+
+    return template.map((jobTemplate) {
+      final order = jobTemplate['order'] as int;
+      return JobData(
+        id: '${routerId}_job_$order',
+        title: jobTemplate['title'] as String,
+        description: jobTemplate['description'] as String? ?? '',
+        processId: processId, // Use unique process instance ID
+        dateCreated: DateTime.now().toIso8601String(),
+        createdBy: 'testUser',
+        status: JobStatus.notStarted,
+        priority: 1,
+        workers: [],
+        approvers: [],
+      );
+    }).toList();
+  }
+
+  // Helper to create a new process instance ID and map it to a process type
+  static String _createProcessInstance(String processType) {
+    final processId = 'process_$_nextProcessId';
+    _nextProcessId++;
+    processIdToType[processId] = processType;
+    return processId;
   }
 
   // Delete a router from the list
@@ -840,7 +900,15 @@ class _RouterManagerState extends State<RouterManager> {
     setState(() {
       final routerTitle = routers[index].title;
       final deletedRouterId = routers[index].id;
+      final deletedProcessId = routers[index].processId;
+      
       routers.removeAt(index);
+
+      // Delete associated process mapping
+      processIdToType.remove(deletedProcessId);
+      
+      // Delete associated jobs
+      routerJobs.remove(deletedRouterId);
 
       // Update selection if deleted router was selected
       if (selectedRouterId == deletedRouterId) {
@@ -890,14 +958,19 @@ class _RouterManagerState extends State<RouterManager> {
 
     if (result != null) {
       setState(() {
+        final routerId = 'router_$_nextRouterId';
+        
+        // Create process instance for this router
+        final processId = _createProcessInstance(result.process);
+        
         final newRouter = RouterData(
-          id: 'router_$_nextRouterId',
+          id: routerId,
           title: result.title,
           color: _colorsList[result.color]
               .value, // Convert color index to color value
           dateCreated: DateTime.now().toIso8601String(),
           createdBy: 'testUser', // Using test user for now
-          processId: result.process,
+          processId: processId, // Reference the unique process instance ID
           dateArchived:
               result.isArchived ? DateTime.now().toIso8601String() : '',
           archivedBy: result.isArchived ? 'testUser' : '',
@@ -905,9 +978,15 @@ class _RouterManagerState extends State<RouterManager> {
 
         routers.add(newRouter);
         _nextRouterId++;
+        
+        // Create template jobs for the new router
+        routerJobs[newRouter.id] = _createJobsFromTemplate(processId, result.process, newRouter.id);
+        
         // Auto-select newly added router
         selectedRouterId = newRouter.id;
         debugPrint('Added new router: ${result.title}');
+        debugPrint('Process ID: $processId (type: ${result.process})');
+        debugPrint('Created ${routerJobs[newRouter.id]?.length ?? 0} template jobs');
       });
     }
   }
@@ -915,6 +994,9 @@ class _RouterManagerState extends State<RouterManager> {
   // Edit an existing router
   Future<void> _editRouter(int index) async {
     final currentRouter = routers[index];
+    
+    // Get current process type
+    final currentProcessType = processIdToType[currentRouter.processId] ?? '';
 
     // Find current color index
     int currentColorIndex = 0;
@@ -958,7 +1040,7 @@ class _RouterManagerState extends State<RouterManager> {
       builder: (BuildContext context) {
         return EditRouterFormWidget(
           initialTitle: currentRouter.title,
-          initialProcess: currentRouter.processId,
+          initialProcess: currentProcessType, // Pass process type, not instance ID
           initialColorIndex: currentColorIndex,
           isCurrentlyArchived: currentRouter.dateArchived.isNotEmpty,
           onArchiveRequest: confirmArchive,
@@ -974,7 +1056,7 @@ class _RouterManagerState extends State<RouterManager> {
           color: _colorsList[result.color].value,
           dateCreated: currentRouter.dateCreated,
           createdBy: currentRouter.createdBy,
-          processId: result.process,
+          processId: currentRouter.processId,
           dateArchived: result.isArchived
               ? (currentRouter.dateArchived.isEmpty
                   ? DateTime.now().toIso8601String()
@@ -1089,6 +1171,7 @@ class _RouterManagerState extends State<RouterManager> {
               ? _buildEmptyState(false)
               : Scrollbar(
                   thumbVisibility: true,
+                  // ignore: sort_child_properties_last
                   child: ListView.separated(
                     padding: const EdgeInsets.only(bottom: 12),
                     itemCount: filteredRouters.length,
