@@ -881,12 +881,14 @@
 import 'package:flutter/material.dart';
 import '../src/organization/organization.dart';
 import '../src/managers/routerManager.dart';
+import '../src/managers/jobManager.dart';
 import '../src/data/routerData.dart';
 import '../src/data/jobData.dart';
 import '../src/data/processTemplates.dart';
 import '../styles/globals.dart';
 import 'package:css/css.dart' as css;
 import '../src/example/jobCard.dart';
+import '../src/managers/processManager.dart';
 
 class RouterPage extends StatefulWidget {
   const RouterPage({super.key});
@@ -1123,7 +1125,7 @@ class RouterWorkspace extends StatelessWidget {
 }
 
 /// Process Timeline View - Shows horizontal timeline of jobs for a router
-class ProcessTimelineView extends StatelessWidget {
+class ProcessTimelineView extends StatefulWidget {
   const ProcessTimelineView({
     super.key,
     required this.routerId,
@@ -1134,12 +1136,79 @@ class ProcessTimelineView extends StatelessWidget {
   final String processId;
 
   @override
+  State<ProcessTimelineView> createState() => _ProcessTimelineViewState();
+}
+
+class _ProcessTimelineViewState extends State<ProcessTimelineView> {
+  
+  /// Handle editing a job
+  Future<void> _handleEdit(JobData job) async {
+    final updatedJob = await showEditJobDialog(context, job);
+    if (updatedJob != null) {
+      setState(() {
+        final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+        final jobIndex = jobList.indexWhere((j) => j.id == job.id);
+        if (jobIndex != -1) {
+          jobList[jobIndex] = updatedJob;
+        }
+      });
+    }
+  }
+
+  /// Handle deleting a job with confirmation
+  Future<void> _handleDelete(JobData job) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Job'),
+        content: Text('Are you sure you want to delete "${job.title}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+        jobList.removeWhere((j) => j.id == job.id);
+      });
+    }
+  }
+
+  /// Handle adding a new job in specific part of timeline
+  Future<void> _handleAdd(int position) async {
+    final newJob = await showCreateJobDialog(
+      context,
+      routerId: widget.routerId,
+      processId: widget.processId,
+    );
+    if (newJob != null) {
+      setState(() {
+        final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+        jobList.insert(position, newJob);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Get jobs for this router
-    final jobs = RouterManager.routerJobs[routerId] ?? [];
+    final jobs = RouterManager.routerJobs[widget.routerId] ?? [];
 
     // Get process type from process ID
-    final processType = RouterManager.processIdToType[processId];
+    final processType = RouterManager.processIdToType[widget.processId];
 
     Text(
       'Process: $processType',
@@ -1172,7 +1241,7 @@ class ProcessTimelineView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Process ID: $processId${processType != null ? " (Type: $processType)" : ""}',
+              'Process ID: ${widget.processId}${processType != null ? " (Type: $processType)" : ""}',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -1211,35 +1280,110 @@ class ProcessTimelineView extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Center(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 3000),
+          constraints: const BoxConstraints(maxWidth: 2000),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 80),
-              // Horizontal scrollable timeline
               SizedBox(
-                height: 800,
-                child: ListView.builder(
+                height: 400,
+                child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  itemCount: jobs.length,
-                  itemBuilder: (context, index) {
-                    final job = jobs[index];
-                    final isFirst = index == 0;
-                    final isLast = index == jobs.length - 1;
-                    
-                    return JobTimelineCard(
-                      job: job,
-                      jobNumber: index + 1,
-                      isFirst: isFirst,
-                      isLast: isLast,
-                      onTap: () {
-                        debugPrint('Tapped job: ${job.title}');
-                      },
-                    );
-                  },
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Add button at the beginning
+                      _HoverAddButton(
+                        onAdd: () => _handleAdd(0),
+                      ),
+                      // Interleave cards and add buttons
+                      for (int i = 0; i < jobs.length; i++) ...[
+                        JobTimelineCard(
+                          job: jobs[i],
+                          jobNumber: i + 1,
+                          isFirst: i == 0,
+                          isLast: i == jobs.length - 1,
+                          onTap: () {
+                            showJobDetailsDialog(
+                              context,
+                              jobs[i],
+                              onEdit: () => _handleEdit(jobs[i]),
+                              onDelete: () => _handleDelete(jobs[i]),
+                            );
+                          },
+                        ),
+                        // Add button after each card
+                        _HoverAddButton(
+                          onAdd: () => _handleAdd(i + 1),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shows '+' button on hover between job cards
+class _HoverAddButton extends StatefulWidget {
+  const _HoverAddButton({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  State<_HoverAddButton> createState() => _HoverAddButtonState();
+}
+
+class _HoverAddButtonState extends State<_HoverAddButton> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: _isHovering ? 80 : 40,
+        height: 400,
+        child: Center(
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: _isHovering ? 1.0 : 0.3,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: _isHovering ? css.CSS.lsiTheme.secondaryHeaderColor : Colors.grey[300],
+                shape: BoxShape.circle,
+                boxShadow: _isHovering
+                    ? [
+                        BoxShadow(
+                          color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.3),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.onAdd,
+                  customBorder: const CircleBorder(),
+                  child: Icon(
+                    Icons.add,
+                    color: _isHovering ? Colors.white : Colors.grey[600],
+                    size: 32,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

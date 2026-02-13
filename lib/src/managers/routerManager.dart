@@ -1,741 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
-// import '../../../../styles/savedWidgets.dart';
-// import '../router_master.dart';
-// import '../../../../styles/globals.dart';
-// import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-
-// class RouterManager extends StatefulWidget {
-//   const RouterManager({
-//     Key? key,
-//     this.onSubmit,
-//     this.onComplete,
-//     this.onTitleChange,
-//     this.onFocusNode,
-//     required this.routerData,
-//     this.onRouterTap,
-//     this.onRouterDelete,
-//     this.canArchiveRouter,
-//     this.onUpdate,
-//     this.width = 320,
-//     this.height = 360,
-//     this.cardWidth = 300,
-//     required this.allowEditing,
-//     this.startRouter,
-//   }) : super(key: key);
-
-//   /// Callback for router creation/submit
-//   final Function(String title, String image, String date, int color)? onSubmit;
-
-//   /// Callback for router updates
-//   final Function(String title, String image, String date, int color,
-//       String selectedRouter)? onUpdate;
-
-//   /// Callback for router completion
-//   final Function(String selectedRouter)? onComplete;
-
-//   final Function? onFocusNode;
-
-//   /// Callback for router deletion
-//   final Function(String id)? onRouterDelete;
-
-//   /// Callback for router title changes
-//   final Function(String id, String title)? onTitleChange;
-
-//   final List<RouterData> routerData;
-
-//   /// Callback for tapping on router
-//   final Function(String routerName)? onRouterTap;
-
-//   final Function(String id)? canArchiveRouter;
-
-//   final double? height;
-//   final double? width;
-
-//   /// Determine if current user is allowed to edit
-//   final bool allowEditing;
-
-//   /// Sets width of cards (in this case cards are processes)
-//   final double cardWidth;
-
-//   /// Router that is selected by default
-//   final String? startRouter;
-
-//   @override
-//   _RouterManagerState createState() => _RouterManagerState();
-// }
-
-// class _RouterManagerState extends State<RouterManager> {
-//   String assignedDate = '';
-//   String selectedRouter = '';
-//   String editRouter = '';
-//   DateTime selectedDate = DateTime.now();
-//   late double width;
-//   late double height;
-
-//   TextEditingController routerNameController = TextEditingController();
-//   TextEditingController routerImageController = TextEditingController();
-//   List<TextEditingController> nameChangeController = [];
-//   bool error = false;
-//   bool isNewRouter = true;
-//   Color routerClickedColor = Colors.white;
-//   List<Color> hexColors = [
-//     Colors.purple,
-//     Colors.pink,
-//     Colors.red,
-//     Colors.deepOrange,
-//     Colors.orange,
-//     Colors.yellow,
-//     Colors.lime,
-//     Colors.lightGreen,
-//     Colors.green,
-//     Colors.lightBlue,
-//     Colors.blue,
-//     Colors.deepPurple,
-//     Colors.blueGrey,
-//     Colors.grey
-//   ];
-//   List<IconData> cbIcon = [
-//     Icons.ac_unit,
-//     Icons.gavel,
-//     Icons.extension,
-//     Icons.settings_input_antenna,
-//     Icons.settings_input_component,
-//     Icons.polymer,
-//     Icons.code_off,
-//     Icons.insights,
-//     Icons.stream,
-//     Icons.gesture,
-//     Icons.grain,
-//     Icons.texture,
-//     Icons.dialpad,
-//     Icons.bubble_chart
-//   ];
-
-//   late String epic;
-
-//   @override
-//   void initState() {
-//     start();
-//     super.initState();
-//   }
-
-//   void start() {
-//     selectedRouter = widget.startRouter ?? '';
-//   }
-
-//   void reset() {
-//     setState(() {});
-//   }
-
-//   @override
-//   void dispose() {
-//     FocusManager.instance.primaryFocus?.unfocus();
-//     super.dispose();
-//   }
-
-//   // Sets up data to be displayed in update dialog for a router
-//   void setUpdateData(int i) {
-//     routerClickedColor = Colors.white;
-//     setState(() {
-//       isNewRouter = false;
-//       routerNameController.text = widget.routerData[i].title;
-//       selectedDate = DateTime.now();
-//       assignedDate = '';
-//       routerClickedColor = Color(widget.routerData[i].color);
-//     });
-//   }
-
-//   // Displays Created By, Creation date, and due date of routers
-//   Widget info(RouterData data, Color color) {
-//     return Container(
-//       padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
-//       margin: const EdgeInsets.only(left: 0, right: 0, bottom: 15),
-//       decoration: BoxDecoration(
-//         borderRadius: const BorderRadius.all(Radius.circular(2)),
-//         color: Theme.of(context).canvasColor,
-//       ),
-//       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-//         Column(
-//           children: [
-//             Row(children: [
-//               Text(
-//                 'Created By: ',
-//                 style: TextStyle(
-//                     color: Theme.of(context).primaryTextTheme.labelSmall!.color,
-//                     fontFamily: 'NotoSans Bold',
-//                     package: 'css',
-//                     fontSize: 14),
-//               ),
-//               Text(
-//                 data.createdBy,
-//                 style: TextStyle(
-//                     color: color,
-//                     fontFamily: 'NotoSans',
-//                     package: 'css',
-//                     fontSize: 14),
-//               )
-//             ]),
-//             Row(children: [
-//               Text(
-//                 'Date Created: ',
-//                 style: TextStyle(
-//                     color: Theme.of(context).primaryTextTheme.labelSmall!.color,
-//                     fontFamily: 'NotoSans Bold',
-//                     package: 'css',
-//                     fontSize: 14),
-//               ),
-//               Text(
-//                 data.dateCreated.split('T')[0],
-//                 style: TextStyle(
-//                     color: color,
-//                     fontFamily: 'NotoSans',
-//                     package: 'css',
-//                     fontSize: 14),
-//               )
-//             ]),
-//             Container(height: 16),
-//           ],
-//         )
-//       ]),
-//     );
-//   }
-
-//   /// Displays the router name
-//   Widget title(String title, String subtitle, Color color) {
-//     return Container(
-//       width: widget.cardWidth,
-//       decoration: BoxDecoration(
-//         borderRadius: const BorderRadius.only(
-//             topRight: Radius.circular(15), topLeft: Radius.circular(15)),
-//         color: Theme.of(context).cardColor,
-//       ),
-//       child: Column(
-//           mainAxisAlignment: MainAxisAlignment.spaceAround,
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Container(
-//                 width: widget.cardWidth,
-//                 alignment: Alignment.centerLeft,
-//                 margin: const EdgeInsets.only(bottom: 10, top: 15),
-//                 padding: const EdgeInsets.only(left: 10),
-//                 color: Theme.of(context).splashColor,
-//                 child: Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     SizedBox(
-//                       width: widget.cardWidth - 40,
-//                       child: Text(
-//                         subtitle,
-//                         style: TextStyle(
-//                             color: color,
-//                             fontFamily: Theme.of(context)
-//                                 .primaryTextTheme
-//                                 .bodyMedium!
-//                                 .fontFamily,
-//                             decoration: TextDecoration.none),
-//                         overflow: TextOverflow.ellipsis,
-//                       ),
-//                     ),
-//                     if(widget.canArchiveRouter != null && widget.canArchiveRouter!(title))FocusedInkWell(
-//                       onTap: () {
-//                         if (widget.onRouterDelete != null &&
-//                             widget.allowEditing) {
-//                           widget.onRouterDelete!(title);
-//                         }
-//                       },
-//                       child: Icon(
-//                         Icons.delete_forever,
-//                         size: 20,
-//                         color: Theme.of(context)
-//                             .primaryTextTheme
-//                             .bodyMedium!
-//                             .color,
-//                       ),
-//                     )
-//                   ],
-//                 )),
-//           ]),
-//     );
-//   }
-
-//   // Function that builds list of routerCard Widgets
-//   List<Widget> routerCards() {
-//     List<Widget> projects = [];
-//     int numOfPro = widget.routerData.length;
-//     for (int i = 0; i < numOfPro; i++) {
-//       projects.add(FocusedInkWell(
-//         onLongPress: () {
-//           editRouter = widget.routerData[i].id;
-//           setUpdateData(i);
-//           showDialog(
-//               context: context,
-//               builder: (BuildContext context) {
-//                 return projectName();
-//               });
-//         },
-//         onDoubleTap: () {
-//           editRouter = widget.routerData[i].id;
-//           setUpdateData(i);
-//           showDialog(
-//               context: context,
-//               builder: (BuildContext context) {
-//                 return projectName();
-//               });
-//         },
-//         onTap: () {
-//           if (widget.onRouterTap != null) {
-//             widget.onRouterTap!(widget.routerData[i].id);
-//           }
-//           setState(() {
-//             selectedRouter = widget.routerData[i].id;
-//           });
-//         },
-//         child: Container(
-//           margin: const EdgeInsets.only(top: 20, right: 5, left: 5),
-//           width: widget.cardWidth,
-//           decoration: BoxDecoration(
-//               borderRadius: const BorderRadius.all(Radius.circular(15)),
-//               color: Theme.of(context).cardColor,
-//               border: Border.all(
-//                 width: 2,
-//                 color: (selectedRouter == widget.routerData[i].id)
-//                     ? Theme.of(context).secondaryHeaderColor
-//                     : Theme.of(context).cardColor,
-//               ),
-//               boxShadow: [
-//                 BoxShadow(
-//                   color: Theme.of(context).shadowColor,
-//                   blurRadius: 5,
-//                   offset: const Offset(0, 2),
-//                 ),
-//               ]),
-//           child: Column(
-//             children: [
-//               title(widget.routerData[i].id, widget.routerData[i].title,
-//                   Color(widget.routerData[i].color)),
-//               info(widget.routerData[i], Color(widget.routerData[i].color))
-//             ],
-//           ),
-//         ),
-//       ));
-//     }
-//     if (numOfPro > 0) {
-//       int allowed = (width / (widget.cardWidth)).floor();
-//       int leftOver = numOfPro - (numOfPro ~/ allowed) * allowed + 1;
-//       for (int i = 0; i < leftOver; i++) {
-//         projects.add(SizedBox(
-//           width: widget.cardWidth,
-//           height: 265 / 2,
-//         ));
-//       }
-//     }
-
-//     return projects;
-//   }
-
-//   /// Creates Color Indicators to select colors for customization
-//   Widget createColorIndicators(void Function() callback) {
-//     List<Widget> colorsWidget = [];
-//     for (int i = 0; i < hexColors.length - 1; i++) {
-//       colorsWidget.add(FocusedInkWell(
-//         onTap: () {
-//           routerClickedColor = hexColors[i];
-//           callback();
-//         },
-//         child: Container(
-//           height: 320 / hexColors.length,
-//           width: 320 / hexColors.length,
-//           decoration: BoxDecoration(
-//               color: hexColors[i],
-//               borderRadius: const BorderRadius.all(Radius.circular(10))),
-//           child: (routerClickedColor.value == hexColors[i].value)
-//               ? Icon(Icons.check,
-//                   size: 320 / hexColors.length, color: Colors.white)
-//               : Container(),
-//         ),
-//       ));
-//     }
-//     colorsWidget.add(FocusedInkWell(
-//       onTap: () {
-//         showDialog(
-//             context: context,
-//             builder: (BuildContext context) {
-//               return AlertDialog(
-//                 title: const Text('Pick a color!'),
-//                 content: SizedBox(
-//                   width: 250,
-//                   height: 260,
-//                   child: ColorPicker(
-//                     pickerColor: routerClickedColor,
-//                     onColorChanged: (color) {
-//                       setState(() {
-//                         routerClickedColor = color;
-//                       });
-//                     },
-//                     colorPickerWidth: 250,
-//                     pickerAreaHeightPercent: 0.7,
-//                     portraitOnly: true,
-//                     enableAlpha: false,
-//                     labelTypes: [],
-//                     pickerAreaBorderRadius: BorderRadius.circular(10),
-//                   ),
-//                 ),
-//                 actions: <Widget>[
-//                   ElevatedButton(
-//                     child: const Text('Got it'),
-//                     onPressed: () {
-//                       callback();
-//                       Navigator.of(context).pop();
-//                     },
-//                   ),
-//                 ],
-//               );
-//             }).then((value) {
-//           callback();
-//         });
-//         callback();
-//       },
-//       child: Container(
-//         height: 320 / hexColors.length,
-//         width: 320 / hexColors.length,
-//         decoration: BoxDecoration(
-//             color: routerClickedColor,
-//             borderRadius: const BorderRadius.all(Radius.circular(10))),
-//         child: Icon(Icons.color_lens,
-//             size: 320 / hexColors.length,
-//             color: CSS.responsiveColor(routerClickedColor, 0.5)),
-//       ),
-//     ));
-//     return Wrap(
-//         //mainAxisAlignment: MainAxisAlignment.spaceAround,
-//         children: colorsWidget);
-//   }
-
-//   // Widget for router creation/editing dialog
-//   Widget projectName() {
-//     return StatefulBuilder(builder: (context, setState) {
-//       // Creates handles the date picker for the project due date
-//       void _selectDate(BuildContext context) async {
-//         final DateTime? picked = await showDatePicker(
-//           context: context,
-//           initialDate: selectedDate.isBefore(DateTime.now())
-//               ? DateTime.now()
-//               : selectedDate,
-//           firstDate: DateTime.now(),
-//           lastDate: DateTime(DateTime.now().year + 5),
-//         );
-//         if (picked != null && picked != selectedDate) {
-//           setState(() {
-//             var formatter = DateFormat('MM-dd-yyyy');
-//             assignedDate = formatter.format(picked);
-//             selectedDate = picked;
-//           });
-//         }
-//       }
-
-//       return Dialog(
-//           backgroundColor: Colors.transparent,
-//           child: Container(
-//             height: 380,
-//             width: CSS.responsive(),
-//             padding: const EdgeInsets.all(10),
-//             decoration: BoxDecoration(
-//               color: Theme.of(context).cardColor,
-//               borderRadius: const BorderRadius.all(Radius.circular(10)),
-//               boxShadow: [
-//                 BoxShadow(
-//                   color: Theme.of(context).shadowColor,
-//                   blurRadius: 5,
-//                   offset: const Offset(2, 2),
-//                 ),
-//               ]
-//             ),
-//             child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-//                 children: [
-//                   Text(
-//                     "Please Enter The Name Of The Router!",
-//                     textAlign: TextAlign.center,
-//                     style: TextStyle(
-//                         color: Theme.of(context)
-//                             .primaryTextTheme
-//                             .bodyMedium!
-//                             .color,
-//                         fontFamily: 'NotoSans',
-//                         package: 'css',
-//                         fontSize: 20),
-//                   ),
-//                   Wrap(
-//                     children: [
-//                       Text(
-//                         "Name: ",
-//                         style: TextStyle(
-//                             color: Theme.of(context)
-//                                 .primaryTextTheme
-//                                 .bodyMedium!
-//                                 .color,
-//                             fontFamily: 'NotoSans',
-//                             package: 'css',
-//                             fontSize: 20),
-//                       ),
-//                       EnterTextFormField(
-//                         width: CSS.responsive() - 120,
-//                         height: 35,
-//                         color: Theme.of(context).canvasColor,
-//                         maxLines: 1,
-//                         label: 'Router Name',
-//                         controller: routerNameController,
-//                         onTap: () {
-//                           if (widget.onFocusNode != null) {
-//                             widget.onFocusNode!();
-//                           }
-//                         },
-//                       )
-//                     ],
-//                   ),
-//                   createColorIndicators(() {
-//                     setState(() {});
-//                   }),
-//                   (error)?const Text(
-//                     "Field is missing Data!",
-//                     style: TextStyle(
-//                         color: Colors.red,
-//                         fontFamily: 'NotoSans',
-//                         package: 'css',
-//                         fontSize: 20),
-//                   ):Container(),
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       LSIWidgets.squareButton(
-//                         text: 'cancel',
-//                         onTap: () {
-//                           setState(() {
-//                             routerNameController.text = '';
-//                           });
-//                           routerClickedColor = Colors.white;
-//                           error = false;
-//                           Navigator.of(context).pop();
-//                         },
-//                         buttonColor: Colors.transparent,
-//                         borderColor: Theme.of(context)
-//                             .primaryTextTheme
-//                             .bodyMedium!
-//                             .color,
-//                         height: 45,
-//                         radius: 45 / 2,
-//                         width: 320 / 3 - 10,
-//                       ),
-//                       const SizedBox(width: 10),
-//                       (!isNewRouter)?LSIWidgets.squareButton(
-//                         text: 'complete',
-//                         onTap: () {
-//                           if (widget.onComplete != null) {
-//                             widget.onComplete!(editRouter);
-//                           }
-//                           setState(() {
-//                             error = false;
-//                             routerNameController.text = '';
-//                           });
-//                           routerClickedColor = Colors.white;
-//                           Navigator.of(context).pop();
-//                         },
-//                         textColor: Theme.of(context).indicatorColor,
-//                         buttonColor: Theme.of(context)
-//                             .primaryTextTheme
-//                             .bodyMedium!
-//                             .color!,
-//                         height: 45,
-//                         radius: 45 / 2,
-//                         width: 320 / 3 - 10,
-//                       ):const SizedBox(),
-//                       const SizedBox(width: 10),
-//                       LSIWidgets.squareButton(
-//                         text: (isNewRouter) ? 'submit' : 'update',
-//                         onTap: () {
-//                           if (routerNameController.text != '') {
-//                             if (isNewRouter) {
-//                               if (widget.onSubmit != null) {
-//                                 widget.onSubmit!(
-//                                   routerNameController.text,
-//                                   routerImageController.text,
-//                                   '',
-//                                   routerClickedColor.value
-//                                 );
-//                               }
-//                             } else {
-//                               if (widget.onUpdate != null) {
-//                                 widget.onUpdate!(
-//                                   routerNameController.text,
-//                                   routerImageController.text,
-//                                   '',
-//                                   routerClickedColor.value,
-//                                   editRouter
-//                                 );
-//                               }
-//                             }
-//                             setState(() {
-//                               error = false;
-//                               routerNameController.text = '';
-//                             });
-//                             routerClickedColor = Colors.white;
-//                             Navigator.of(context).pop();
-//                           }
-//                         },
-//                           buttonColor: Colors.transparent,
-//                           borderColor: Theme.of(context)
-//                               .primaryTextTheme
-//                               .bodyMedium!
-//                               .color,
-//                           height: 45,
-//                           radius: 45 / 2,
-//                           width: 320 / 3 - 10,
-//                         ),
-//                         // (!isNewRouter) ? LSIWidgets.squareButton(
-//                         //   text: 'complete',
-//                         //   onTap: () {
-//                         //     if (widget.onComplete != null) {
-//                         //       widget.onComplete!(editRouter);
-//                         //     }
-//                         //     setState(() {
-//                         //       error = false;
-//                         //       routerNameController.text = '';
-//                         //     });
-//                         //     routerClickedColor = Colors.white;
-//                         //     Navigator.of(context).pop();
-//                         //   },
-//                         //   textColor: Theme.of(context).indicatorColor,
-//                         //   buttonColor: Theme.of(context)
-//                         //       .primaryTextTheme
-//                         //       .bodyMedium!
-//                         //       .color!,
-//                         //   height: 45,
-//                         //   radius: 45 / 2,
-//                         //   width: 320 / 3 - 10,
-//                         // ) : Container(),
-//                         LSIWidgets.squareButton(
-//                           text: (isNewRouter) ? 'submit' : 'update',
-//                           onTap: () {
-//                             if (routerNameController.text != '') {
-//                               if (isNewRouter) {
-//                                 if (widget.onSubmit != null) {
-//                                   widget.onSubmit!(
-//                                       routerNameController.text,
-//                                       routerImageController.text,
-//                                       (assignedDate != '')
-//                                           ? selectedDate
-//                                               .toString()
-//                                               .replaceAll(' ', 'T')
-//                                           : '',
-//                                       routerClickedColor.value);
-//                                 }
-//                               } else {
-//                                 if (widget.onUpdate != null) {
-//                                   widget.onUpdate!(
-//                                       routerNameController.text,
-//                                       routerImageController.text,
-//                                       (assignedDate != '')
-//                                           ? selectedDate
-//                                               .toString()
-//                                               .replaceAll(' ', 'T')
-//                                           : '',
-//                                       routerClickedColor.value,
-//                                       editRouter);
-//                                 }
-//                               }
-//                               setState(() {
-//                                 error = false;
-//                                 routerNameController.text = '';
-//                               });
-//                               routerClickedColor = Colors.white;
-//                               Navigator.of(context).pop();
-//                             } else {
-//                               setState(() {
-//                                 error = true;
-//                               });
-//                             }
-//                           },
-//                           textColor: Theme.of(context).indicatorColor,
-//                           buttonColor: Theme.of(context)
-//                               .primaryTextTheme
-//                               .bodyMedium!
-//                               .color!,
-//                           height: 45,
-//                           radius: 45 / 2,
-//                           width: 320 / 3 - 10,
-//                         )
-//                       ])
-//                 ]),
-//           ));
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       // if (widget.epic != epic) {
-//       //   setState(() {
-//       //     start();
-//       //   });
-//       // }
-//     });
-//     width = (widget.width == null)
-//         ? MediaQuery.of(context).size.width
-//         : widget.width!;
-//     height = (widget.height == null)?MediaQuery.of(context).size.height: widget.height!;
-//     return Material(
-//       color: Colors.transparent,
-//       child: InkWell(
-//         mouseCursor: MouseCursor.defer,
-//         onTap: () {
-//           setState(() {
-//             FocusManager.instance.primaryFocus?.unfocus();
-//           });
-//         },
-//         child: Stack(
-//           alignment: AlignmentDirectional.bottomEnd,
-//           children: [
-//             (widget.routerData.isNotEmpty) ? Container(
-//               height: height,
-//               width: width,
-//               color: Theme.of(context).canvasColor,
-//               child: ListView(
-//                 padding: const EdgeInsets.all(0),
-//                 children: [
-//                   Wrap(
-//                     alignment: WrapAlignment.spaceAround,
-//                     children: routerCards()
-//                   )
-//                 ]
-//               )
-//             ) : Container(
-//               height: height,
-//               width: width,
-//               color: Theme.of(context).canvasColor,
-//             ),
-//             LSIFloatingActionButton(
-//               allowed: widget.allowEditing,
-//               color: Theme.of(context).secondaryHeaderColor,
-//               icon: Icons.add,
-//               onTap: () {
-//                 setState(() {
-//                   isNewRouter = true;
-//                 });
-//                 showDialog(
-//                     context: context,
-//                     builder: (BuildContext context) {
-//                       return projectName();
-//                     });
-//               }
-//             ),
-//           ]
-//         )
-//       )
-//     );
-//   }
-// }
-
 // Router Manager Screen - Displays list of routers and allows for CRUD operations
 import 'package:flutter/material.dart';
 import '../data/routerData.dart';
@@ -745,6 +7,7 @@ import '../example/routerCard.dart';
 import 'package:css/css.dart' as css;
 import '../models/router_model.dart';
 import '../data/processData.dart';
+import '../managers/processManager.dart';
 
 class RouterManager extends StatefulWidget {
   const RouterManager({
@@ -785,7 +48,7 @@ class _RouterManagerState extends State<RouterManager> {
   @override
   void initState() {
     super.initState();
-    
+
     _initializeSampleData();
 
     if (routers.isNotEmpty) {
@@ -812,18 +75,16 @@ class _RouterManagerState extends State<RouterManager> {
         createdBy: 'testUser',
         processId: 'process_2',
       ),
-
       RouterData(
         id: 'router_3',
         title: 'Archived Router',
         color: 0xFF4CAF50,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_3', 
+        processId: 'process_3',
         dateArchived: DateTime.now().toIso8601String(),
         archivedBy: 'testUser',
       ),
-
       RouterData(
         id: 'router_4',
         title: 'Router 4',
@@ -832,20 +93,19 @@ class _RouterManagerState extends State<RouterManager> {
         createdBy: 'testUser',
         processId: 'process_4',
       ),
-
       RouterData(
         id: 'router_5',
         title: 'Archived Router 2',
         color: 0xFF9C27B0,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_5', 
+        processId: 'process_5',
         dateArchived: DateTime.now().toIso8601String(),
         archivedBy: 'testUser',
       ),
     ];
-    _nextRouterId = 6; 
-    _nextProcessId = 6; 
+    _nextRouterId = 6;
+    _nextProcessId = 6;
 
     // Map process IDs to types for initial sample data
     processIdToType['process_1'] = 'Core Parts';
@@ -875,10 +135,15 @@ class _RouterManagerState extends State<RouterManager> {
       return JobData(
         id: '${routerId}_job_$order',
         title: jobTemplate['title'] as String,
-        description: jobTemplate['description'] as String? ?? '',
         processId: processId, // Use unique process instance ID
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
+        dueDate: '', // Can be set later
+        startDate: '',
+        completeDate: '',
+        notes: {},
+        good: 0,
+        bad: 0,
         status: JobStatus.notStarted,
         priority: 1,
         workers: [],
@@ -888,7 +153,7 @@ class _RouterManagerState extends State<RouterManager> {
   }
 
   // Helper to create a new process instance ID and map it to a process type
-  static String _createProcessInstance(String processType) {
+  static String createProcessInstance(String processType) {
     final processId = 'process_$_nextProcessId';
     _nextProcessId++;
     processIdToType[processId] = processType;
@@ -901,12 +166,12 @@ class _RouterManagerState extends State<RouterManager> {
       final routerTitle = routers[index].title;
       final deletedRouterId = routers[index].id;
       final deletedProcessId = routers[index].processId;
-      
+
       routers.removeAt(index);
 
       // Delete associated process mapping
       processIdToType.remove(deletedProcessId);
-      
+
       // Delete associated jobs
       routerJobs.remove(deletedRouterId);
 
@@ -959,10 +224,10 @@ class _RouterManagerState extends State<RouterManager> {
     if (result != null) {
       setState(() {
         final routerId = 'router_$_nextRouterId';
-        
+
         // Create process instance for this router
-        final processId = _createProcessInstance(result.process);
-        
+        final processId = createProcessInstance(result.process);
+
         final newRouter = RouterData(
           id: routerId,
           title: result.title,
@@ -978,15 +243,24 @@ class _RouterManagerState extends State<RouterManager> {
 
         routers.add(newRouter);
         _nextRouterId++;
-        
-        // Create template jobs for the new router
-        routerJobs[newRouter.id] = _createJobsFromTemplate(processId, result.process, newRouter.id);
-        
+
+        // Create template jobs for the new router (or empty list if clearJobs is true)
+        if (result.clearJobs) {
+          // Start with empty job palette
+          routerJobs[newRouter.id] = [];
+          debugPrint('Router created with empty job palette');
+        } else {
+          // Use template jobs
+          routerJobs[newRouter.id] =
+              _createJobsFromTemplate(processId, result.process, newRouter.id);
+        }
+
         // Auto-select newly added router
         selectedRouterId = newRouter.id;
         debugPrint('Added new router: ${result.title}');
         debugPrint('Process ID: $processId (type: ${result.process})');
-        debugPrint('Created ${routerJobs[newRouter.id]?.length ?? 0} template jobs');
+        debugPrint(
+            'Created ${routerJobs[newRouter.id]?.length ?? 0} template jobs');
       });
     }
   }
@@ -994,7 +268,7 @@ class _RouterManagerState extends State<RouterManager> {
   // Edit an existing router
   Future<void> _editRouter(int index) async {
     final currentRouter = routers[index];
-    
+
     // Get current process type
     final currentProcessType = processIdToType[currentRouter.processId] ?? '';
 
@@ -1211,11 +485,18 @@ class _RouterManagerState extends State<RouterManager> {
         ),
         FloatingActionButton(
           backgroundColor: css.purple,
-          onPressed: _addRouter,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          onPressed: _addRouter,
+          child:
+            Text(
+              'Add Router',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            )
         ),
       ],
     );
@@ -1344,6 +625,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
   int _routerColor = 0;
   String _processId = '';
   bool _isArchived = false;
+  bool _clearJobs = false;
   String? newProcess = null;
   final List<String> _processes = [
     'Core Parts',
@@ -1465,6 +747,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   onChanged: (value) {
                     setState(() {
                       _processId = value!;
+                      newProcess = null; 
                     });
                   },
                   validator: (value) {
@@ -1474,6 +757,51 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     return null;
                   },
                 ),
+
+                CheckboxListTile(
+                  value: newProcess != null && newProcess!.isNotEmpty,
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == true) {
+                        newProcess = ''; 
+                      } else {
+                        newProcess = null;
+                        _processId = ''; // Reset process ID
+                      }
+                    });
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Create new process instance'),
+                ),
+                if (newProcess != null && newProcess!.isNotEmpty) ...[
+                  const SizedBox(height: 8.0),
+                  const Text(
+                    'Enter a name for the new process',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w600,
+                      color: css.darkGrey,
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  TextField(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'New process name',
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        newProcess = value;
+                        if (value.isNotEmpty) {
+                          _processId = _RouterManagerState.createProcessInstance(value);
+                        }
+                      });
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16.0),
                 const Text(
                   "Router Color",
@@ -1512,6 +840,31 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                       );
                     },
                   ),
+                ),
+
+                CheckboxListTile(
+                  title: const Text(
+                    'Start with empty process (no template jobs)',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  value: _clearJobs,
+                  onChanged: (bool? value) async {
+                    if (value == true && !_clearJobs) {
+                      setState(() {
+                        _clearJobs = true;
+                      });
+                    }
+                    else {
+                      setState(() {
+                        _clearJobs = false;
+                      });
+                    }
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
                 ),
                 Align(
                   alignment: Alignment.bottomRight,
@@ -1554,6 +907,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                             process: _processId,
                             color: _routerColor,
                             isArchived: _isArchived,
+                            clearJobs: _clearJobs,
                           ),
                         );
                       }
