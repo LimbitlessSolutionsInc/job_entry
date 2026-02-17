@@ -17,13 +17,13 @@ class JobData {
     required this.dueDate,
     required this.completeDate,
     required this.startDate,
+    required this.partsReceivedDate,
     this.workers = const [],
     required this.notes,
     required this.status,
     required this.good,
     required this.bad,
     this.numApprovals = 2, // default to 2 approvals needed //will need to double check this later -nlw
-    this.isApproved = const [],
     this.approvers = const [],
     //this.prevJobs,
   });
@@ -60,10 +60,10 @@ class JobData {
   String processId;
   int priority;
   String completeDate;
+  String partsReceivedDate;
   JobStatus status;
   int good;
   int bad;
   int numApprovals;
-  List<String> isApproved;
   //Map<String, dynamic>? prevJobs;
 }

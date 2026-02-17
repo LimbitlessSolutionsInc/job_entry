@@ -74,6 +74,7 @@ class _RouterManagerState extends State<RouterManager> {
     final process4Id = _uuid.v4();
     final process5Id = _uuid.v4();
     
+    // Sample router data, can delete when testing is done
     routers = [
       RouterData(
         id: router1Id,
@@ -154,6 +155,7 @@ class _RouterManagerState extends State<RouterManager> {
         dueDate: '', // Can be set later
         startDate: '',
         completeDate: '',
+        partsReceivedDate: '',
         notes: {},
         good: 0,
         bad: 0,
@@ -720,7 +722,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
       child: SingleChildScrollView(
         child: Container(
           decoration: BoxDecoration(
-            color: css.CSS.lsiTheme.primaryColor,
+            color: css.CSS.darkTheme.cardColor,
             borderRadius: BorderRadius.circular(12.0),
             boxShadow: const [
               BoxShadow(
@@ -747,7 +749,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     style: TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
-                      color: css.CSS.lsiTheme.secondaryHeaderColor,
+                      color: Colors.white,
+                      letterSpacing: 1.25,
                     ),
                   ),
                 ),
@@ -756,8 +759,9 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   "Router Name",
                   style: TextStyle(
                     fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    fontWeight: FontWeight.w200,
+                    color: Colors.white,
+                    letterSpacing: 1.25,
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -765,6 +769,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: 'Enter router name',
+                    hintStyle: const TextStyle(color: Colors.white70),
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
                   ),
@@ -783,13 +788,14 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   "Process",
                   style: TextStyle(
                     fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    fontWeight: FontWeight.w200,
+                    color: Colors.white,
+                    letterSpacing: 1.25,
                   ),
                 ),
                 const SizedBox(height: 8.0),
                 DropdownButtonFormField<String>(
-                  dropdownColor: css.lightGrey,
+                  dropdownColor: Theme.of(context).cardColor,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     contentPadding:
@@ -804,6 +810,10 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                         ),
                       )
                       .toList(),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 15, 
+                  ),
                   onChanged: (value) {
                     setState(() {
                       _processId = value!;
@@ -828,7 +838,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     'New process',
                     style: TextStyle(
                       fontSize: 14.0,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w200,
+                      color: Colors.white,
                     )
                   ), 
                   value: newProcess != null,
@@ -853,8 +864,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     'New Process Name',
                     style: TextStyle(
                       fontSize: 16.0,
-                      fontWeight: FontWeight.w600,
-                      color: css.darkGrey,
+                      fontWeight: FontWeight.w200,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8.0),
@@ -863,8 +874,9 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: 'Enter new process name',
+                      hintStyle: const TextStyle(color: Colors.white70),
                       contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+                          const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
                     ),
                     validator: (value) {
                       if (newProcess != null && (value == null || value.trim().isEmpty)) {
@@ -887,8 +899,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   "Router Color",
                   style: TextStyle(
                     fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    fontWeight: FontWeight.w200,
+                    color: Colors.white,
                   ),
                 ),
                 Container(
@@ -927,8 +939,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   "Connected Routers (Optional)",
                   style: TextStyle(
                     fontSize: 16.0,
-                    fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    fontWeight: FontWeight.w200,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -943,7 +955,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                         padding: EdgeInsets.all(12.0),
                         child: Text(
                           'No available routers to connect',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Colors.white70),
                         ),
                       )
                     : ConstrainedBox(
@@ -955,7 +967,10 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                                 .map((router) {
                               final isSelected = _selectedConnectedRouters.contains(router.id);
                               return CheckboxListTile(
-                                title: Text(router.title),
+                                title: Text(
+                                  router.title,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
                                 value: isSelected,
                                 onChanged: (bool? value) {
                                   setState(() {
@@ -982,7 +997,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     'Start with empty process (no template jobs)',
                     style: TextStyle(
                       fontSize: 14.0,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w200,
+                      color: Colors.white,
                     ),
                   ),
                   value: _clearJobs,

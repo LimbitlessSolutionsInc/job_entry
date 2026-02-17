@@ -420,7 +420,6 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
       textAlign: TextAlign.center,
       style: const TextStyle(
         fontSize: 20,
-        fontWeight: FontWeight.bold,
       ),
     );
 
@@ -580,6 +579,9 @@ class _HoverAddButtonState extends State<_HoverAddButton> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
@@ -588,27 +590,25 @@ class _HoverAddButtonState extends State<_HoverAddButton> {
         width: _isHovering ? 80 : 40,
         height: 400,
         child: Center(
-          child: AnimatedOpacity(
+          child: AnimatedScale(
+            scale: _isHovering ? 1.15 : 1.0,
             duration: const Duration(milliseconds: 200),
-            opacity: _isHovering ? 1.0 : 0.3,
+            curve: Curves.easeOut,
             child: Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: _isHovering
-                    ? css.CSS.lsiTheme.secondaryHeaderColor
-                    : Colors.grey[300],
                 shape: BoxShape.circle,
-                boxShadow: _isHovering
-                    ? [
-                        BoxShadow(
-                          color: css.CSS.lsiTheme.secondaryHeaderColor
-                              .withOpacity(0.3),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                    : [],
+                color: _isHovering 
+                    ? theme.colorScheme.primary 
+                    : (isDark ? theme.colorScheme.surface : Colors.white),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                    blurRadius: _isHovering ? 12 : 6,
+                    offset: Offset(0, _isHovering ? 4 : 2),
+                  ),
+                ],
               ),
               child: Material(
                 color: Colors.transparent,
@@ -617,7 +617,9 @@ class _HoverAddButtonState extends State<_HoverAddButton> {
                   customBorder: const CircleBorder(),
                   child: Icon(
                     Icons.add,
-                    color: _isHovering ? Colors.white : Colors.grey[600],
+                    color: _isHovering 
+                        ? theme.colorScheme.onPrimary 
+                        : theme.colorScheme.onSurfaceVariant,
                     size: 32,
                   ),
                 ),

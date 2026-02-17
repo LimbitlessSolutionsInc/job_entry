@@ -161,12 +161,23 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
       });
 
       // Add current user to approvals list if marking as completed
-      List<String> updatedApprovals = List.from(widget.job.isApproved);
+      List<String> updatedApprovals = List.from(widget.job.approvers);
       if (newStatus == JobStatus.completed && !updatedApprovals.contains(currentUser.uid)) {
         updatedApprovals.add(currentUser.uid);
       }
 
-      // Create updated job data
+      if(newStatus == JobStatus.partsReceived && widget.job.partsReceivedDate.isEmpty) {
+        widget.job.partsReceivedDate = DateTime.now().toIso8601String();
+      }
+
+      if(newStatus == JobStatus.inProgress && widget.job.startDate.isEmpty) {
+        widget.job.startDate = DateTime.now().toIso8601String();
+      }
+
+      if(newStatus == JobStatus.completed && widget.job.completeDate.isEmpty) {
+        widget.job.completeDate = DateTime.now().toIso8601String();
+      }
+      
       final updatedJob = JobData(
         id: widget.job.id,
         title: widget.job.title,
@@ -176,17 +187,15 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
         priority: widget.job.priority,
         dueDate: widget.job.dueDate,
         startDate: widget.job.startDate,
-        completeDate: newStatus == JobStatus.completed && widget.job.completeDate.isEmpty
-            ? DateTime.now().toIso8601String()
-            : widget.job.completeDate,
+        completeDate: widget.job.completeDate,
+        partsReceivedDate: widget.job.partsReceivedDate,
         notes: widget.job.notes,
         status: newStatus,
         good: widget.job.good,
         bad: widget.job.bad,
         workers: widget.job.workers,
-        approvers: widget.job.approvers,
+        approvers: updatedApprovals, 
         numApprovals: widget.job.numApprovals,
-        isApproved: updatedApprovals,
       );
 
       widget.onStatusChange?.call(updatedJob);
@@ -199,14 +208,14 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.2),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: statusColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<JobStatus>(
           value: _currentStatus,
-          dropdownColor: css.lightGrey,
+          dropdownColor: Theme.of(context).cardColor,
           isDense: true,
           icon: Icon(Icons.arrow_drop_down, color: statusColor, size: 20),
           selectedItemBuilder: (BuildContext context) {
@@ -228,8 +237,8 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               value: status,
               child: Text(
                 _formatStatusText(status),
-                style: const TextStyle(
-                  color: Colors.black87,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -288,7 +297,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               label,
               style: TextStyle(
                 fontSize: 15.0,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w200,
                 color: css.darkGrey,
               ),
             ),
@@ -299,7 +308,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               value,
               style: TextStyle(
                 fontSize: 15.0,
-                color: highlight ? css.CSS.lsiTheme.secondaryHeaderColor : Colors.black87,
+                color: highlight ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                 fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -322,7 +331,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                  color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(4),
                     topRight: Radius.circular(4),
@@ -340,7 +349,8 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                             style: TextStyle(
                               fontSize: 22.0,
                               fontWeight: FontWeight.bold,
-                              color: css.CSS.lsiTheme.secondaryHeaderColor,
+                              color: css.CSS.lsiTheme.primaryColor,
+                              letterSpacing: 1.5,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -370,7 +380,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                     const SizedBox(height: 16),
                     //_buildDetailRow('Job ID:', widget.job.id),
                     //_buildDetailRow('Process ID:', widget.job.processId),
-                    _buildDetailRow('Job Name:', widget.job.title, highlight: true),
+                    _buildDetailRow('Job Name:', widget.job.title),
                     _buildDetailRow('Priority:', 'Level ${widget.job.priority}'),
                     const Divider(height: 32),
 
@@ -386,6 +396,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                     const SizedBox(height: 16),
                     _buildDetailRow('Created On:', formatDate(widget.job.dateCreated)),
                     _buildDetailRow('Created By:', widget.job.createdBy),
+                    _buildDetailRow('Parts Received On:', formatDate(widget.job.partsReceivedDate)),
                     _buildDetailRow('Start Date:', formatDate(widget.job.startDate)),
                     _buildDetailRow('Due Date:', formatDate(widget.job.dueDate)),
                     _buildDetailRow('Completed On:', formatDate(widget.job.completeDate)),
@@ -411,7 +422,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                     ),
                     _buildDetailRow(
                       'Approvals:',
-                      '${widget.job.isApproved.length} of ${widget.job.numApprovals}',
+                      '${widget.job.approvers.length} of ${widget.job.numApprovals}',
                     ),
                     const Divider(height: 32),
 
@@ -431,7 +442,9 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.green.shade50,
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? Colors.green.shade300.withOpacity(0.3)
+                                  : Colors.green.shade50,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.green.shade300),
                             ),
@@ -462,7 +475,9 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade50,
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? Colors.red.shade300.withOpacity(0.3)
+                                  : Colors.red.shade50,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.red.shade300),
                             ),
@@ -507,9 +522,9 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: Theme.of(context).colorScheme.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
                         ),
                         child: Text(
                           widget.job.notes.entries
@@ -591,7 +606,7 @@ class CreateJobDialog extends StatefulWidget {
 class _CreateJobDialogState extends State<CreateJobDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  
+  DateTime? _partsReceivedDate;
   // Form field values
   int _priority = 1;
   JobStatus _status = JobStatus.notStarted;
@@ -630,6 +645,9 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
     if (picked != null) {
       setState(() {
         switch (field) {
+          case 'partsReceived':
+            _partsReceivedDate = picked;
+            break;
           case 'start':
             _startDate = picked;
             break;
@@ -646,6 +664,22 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
 
   void _handleCreate() {
     if (_formKey.currentState!.validate()) {
+      // Auto-set dates based on status if not manually set
+      DateTime? finalPartsReceivedDate = _partsReceivedDate;
+      if (_status == JobStatus.partsReceived && _partsReceivedDate == null) {
+        finalPartsReceivedDate = DateTime.now();
+      }
+
+      DateTime? finalStartDate = _startDate;
+      if (_status == JobStatus.inProgress && _startDate == null) {
+        finalStartDate = DateTime.now();
+      }
+
+      DateTime? finalCompleteDate = _completeDate;
+      if (_status == JobStatus.completed && _completeDate == null) {
+        finalCompleteDate = DateTime.now();
+      }
+
       final newJob = JobData(
         id: JobManagerState._uuid.v4(), // Generate unique job ID
         title: _titleController.text.trim(),
@@ -654,8 +688,9 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
         processId: widget.processId,
         priority: _priority,
         dueDate: _dueDate?.toIso8601String() ?? '',
-        startDate: _startDate?.toIso8601String() ?? '',
-        completeDate: _completeDate?.toIso8601String() ?? '',
+        startDate: finalStartDate?.toIso8601String() ?? '',
+        completeDate: finalCompleteDate?.toIso8601String() ?? '',
+        partsReceivedDate: finalPartsReceivedDate?.toIso8601String() ?? '',
         notes: {},
         status: _status,
         good: _good,
@@ -688,19 +723,21 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade600),
+                Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     date == null ? 'Select date' : DateFormat('MMM dd, yyyy').format(date),
                     style: TextStyle(
                       fontSize: 15,
-                      color: date == null ? Colors.grey.shade600 : Colors.black87,
+                      color: date == null 
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -718,10 +755,13 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                           case 'complete':
                             _completeDate = null;
                             break;
+                          case 'partsReceived':
+                            _partsReceivedDate = null;
+                            break;
                         }
                       });
                     },
-                    child: Icon(Icons.clear, size: 18, color: Colors.grey.shade600),
+                    child: Icon(Icons.clear, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -824,7 +864,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField<int>(
                                   value: _priority,
-                                  dropdownColor: css.lightGrey,
+                                  dropdownColor: Theme.of(context).cardColor,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
@@ -874,18 +914,18 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                       vertical: 14,
                                     ),
                                   ),
-                                  style: const TextStyle(
-                                    color: Colors.black87,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontSize: 15,
                                   ),
-                                  dropdownColor: css.lightGrey,
+                                  dropdownColor: Theme.of(context).cardColor,
                                   items: JobStatus.values
                                       .map((status) => DropdownMenuItem(
                                             value: status,
                                             child: Text(
                                               _formatStatusText(status),
-                                              style: const TextStyle(
-                                                color: Colors.black87,
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
                                                 fontSize: 15,
                                               ),
                                             ),
@@ -1084,6 +1124,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
   DateTime? _startDate;
   DateTime? _dueDate;
   DateTime? _completeDate;
+  DateTime? _partsReceivedDate;
   late List<String> _workers;
   late List<String> _approvers;
   Map<String, String> _notes = {};
@@ -1106,6 +1147,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
     _startDate = _parseDate(widget.job.startDate);
     _dueDate = _parseDate(widget.job.dueDate);
     _completeDate = _parseDate(widget.job.completeDate);
+    _partsReceivedDate = _parseDate(widget.job.partsReceivedDate);
   }
 
   DateTime? _parseDate(String isoDate) {
@@ -1207,11 +1249,27 @@ class _EditJobDialogState extends State<EditJobDialog> {
   void _handleUpdate() {
     if (_formKey.currentState!.validate()) {
       // Add current user to approvals list if marking as completed
-      List<String> updatedApprovals = List.from(widget.job.isApproved);
+      List<String> updatedApprovals = List.from(widget.job.approvers);
       if (_status == JobStatus.completed && 
           widget.job.status != JobStatus.completed && 
           !updatedApprovals.contains(currentUser.uid)) {
         updatedApprovals.add(currentUser.uid);
+      }
+
+      // Auto-set dates based on status if not manually set
+      DateTime? finalPartsReceivedDate = _partsReceivedDate;
+      if (_status == JobStatus.partsReceived && _partsReceivedDate == null && widget.job.partsReceivedDate.isEmpty) {
+        finalPartsReceivedDate = DateTime.now();
+      }
+
+      DateTime? finalStartDate = _startDate;
+      if (_status == JobStatus.inProgress && _startDate == null && widget.job.startDate.isEmpty) {
+        finalStartDate = DateTime.now();
+      }
+
+      DateTime? finalCompleteDate = _completeDate;
+      if (_status == JobStatus.completed && _completeDate == null && widget.job.completeDate.isEmpty) {
+        finalCompleteDate = DateTime.now();
       }
 
       final updatedJob = JobData(
@@ -1222,16 +1280,16 @@ class _EditJobDialogState extends State<EditJobDialog> {
         processId: widget.job.processId, 
         priority: _priority,
         dueDate: _dueDate?.toIso8601String() ?? '',
-        startDate: _startDate?.toIso8601String() ?? '',
-        completeDate: _completeDate?.toIso8601String() ?? '',
+        startDate: finalStartDate?.toIso8601String() ?? '',
+        completeDate: finalCompleteDate?.toIso8601String() ?? '',
+        partsReceivedDate: finalPartsReceivedDate?.toIso8601String() ?? '',
         notes: _notes,
         status: _status,
         good: int.tryParse(_goodController.text) ?? 0,
         bad: int.tryParse(_badController.text) ?? 0,
         workers: _workers,
-        approvers: _approvers,
+        approvers: updatedApprovals,
         numApprovals: widget.job.numApprovals,
-        isApproved: updatedApprovals,
       );
 
       Navigator.pop(context, updatedJob);
@@ -1258,19 +1316,21 @@ class _EditJobDialogState extends State<EditJobDialog> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade600),
+                Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     date == null ? 'Select date' : DateFormat('MMM dd, yyyy').format(date),
                     style: TextStyle(
                       fontSize: 15,
-                      color: date == null ? Colors.grey.shade600 : Colors.black87,
+                      color: date == null 
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -1288,10 +1348,13 @@ class _EditJobDialogState extends State<EditJobDialog> {
                           case 'complete':
                             _completeDate = null;
                             break;
+                          case 'partsReceived':
+                            _partsReceivedDate = null;
+                            break;
                         }
                       });
                     },
-                    child: Icon(Icons.clear, size: 18, color: Colors.grey.shade600),
+                    child: Icon(Icons.clear, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -1400,7 +1463,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField<int>(
                                   value: _priority,
-                                  dropdownColor: css.lightGrey,
+                                  dropdownColor: Theme.of(context).cardColor,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
@@ -1441,7 +1504,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField<JobStatus>(
                                   value: _status,
-                                  dropdownColor: css.lightGrey,
+                                  dropdownColor: Theme.of(context).cardColor,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
@@ -1451,8 +1514,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                       vertical: 14,
                                     ),
                                   ),
-                                  style: const TextStyle(
-                                    color: Colors.black87,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontSize: 15,
                                   ),
                                   items: JobStatus.values
@@ -1460,8 +1523,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                             value: status,
                                             child: Text(
                                               _formatStatusText(status),
-                                              style: const TextStyle(
-                                                color: Colors.black87,
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurface,
                                                 fontSize: 15,
                                               ),
                                             ),

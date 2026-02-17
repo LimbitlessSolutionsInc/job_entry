@@ -58,23 +58,26 @@ class RouterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cardColor = color ?? theme.colorScheme.primary;
+    
     return Card(
-      color: color ?? Colors.grey[200],
+      color: css.chartNameGrey,
       clipBehavior: Clip.hardEdge,
       elevation: isSelected ? 4 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
         side: BorderSide(
-          color: isSelected ? (color ?? Colors.blue) : Colors.transparent,
-          width: 2,
+          color: cardColor,
+          width: 8,
         ),
       ),
       child: InkWell(
-        hoverColor: Colors.purple[100],
-        splashColor: Colors.blue.withAlpha(30),
+        hoverColor: cardColor.withOpacity(0.2),
+        splashColor: cardColor.withAlpha(30),
         onTap: onTap,
         child: Container(
-          color: isSelected ? (color ?? Colors.blue).withOpacity(0.1) : null,
+          color: isSelected ? cardColor.withOpacity(0.1) : null,
           child: SizedBox(
             width: double.infinity,
             height: 100,
@@ -90,7 +93,11 @@ class RouterCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: css.chartGrey,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

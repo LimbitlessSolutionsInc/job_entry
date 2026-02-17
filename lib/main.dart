@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: css.CSS.lsiTheme,
+      theme: css.CSS.darkTheme,
       home: const TabBarWidget(),
     );
   }
