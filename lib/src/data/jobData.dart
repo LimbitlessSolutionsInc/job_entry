@@ -1,7 +1,9 @@
 enum JobStatus {
   notStarted,
+  partsReceived,
   inProgress,
   completed,
+  skipped,
 }
 
 class JobData {

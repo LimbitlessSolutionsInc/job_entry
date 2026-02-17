@@ -5,6 +5,7 @@ class RouterModel {
     required this.color,
     required this.isArchived,
     this.clearJobs = false,
+    this.connectedRouters = const [],
   });
 
   final String title;
@@ -12,4 +13,5 @@ class RouterModel {
   final int color;
   final bool isArchived;
   final bool clearJobs;
+  final List<String> connectedRouters;
 }

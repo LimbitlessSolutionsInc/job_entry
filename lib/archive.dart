@@ -52,6 +52,7 @@ class _ArchivePageState extends State<ArchivePage> {
         dateCreated: routerToUnarchive.dateCreated,
         createdBy: routerToUnarchive.createdBy,
         processId: routerToUnarchive.processId,
+        connectedRouters: routerToUnarchive.connectedRouters,
         dateArchived: '',
         archivedBy: '',
       );
@@ -73,6 +74,29 @@ class _ArchivePageState extends State<ArchivePage> {
       } catch (e) {
         return isoDate;
       }
+    }
+
+    String getConnectedRouterNames() {
+      if (router.connectedRouters.isEmpty) return 'None';
+      
+      final names = router.connectedRouters
+          .map((id) {
+            final foundRouter = RouterManager.routers.firstWhere(
+              (r) => r.id == id,
+              orElse: () => RouterData(
+                id: '',
+                title: 'Unknown Router',
+                color: 0,
+                dateCreated: '',
+                createdBy: '',
+                processId: '',
+              ),
+            );
+            return foundRouter.title;
+          })
+          .toList();
+      
+      return names.join(', ');
     }
 
     Widget buildDetailRow(String label, String value) {
@@ -158,10 +182,11 @@ class _ArchivePageState extends State<ArchivePage> {
                         ),
                         const Divider(height: 32, thickness: 1.5),
                         buildDetailRow("Router Name:", router.title),
-                        buildDetailRow("Router ID:", router.id),
-                        buildDetailRow("Process:", router.processId),
+                        //buildDetailRow("Router ID:", router.id),
+                        //buildDetailRow("Process ID:", router.processId),
                         buildDetailRow("Created By:", router.createdBy),
                         buildDetailRow("Date Created:", formatDate(router.dateCreated)),
+                        buildDetailRow("Connected Routers:", getConnectedRouterNames()),
                         if (router.dateArchived.isNotEmpty)
                           buildDetailRow("Date Archived:", formatDate(router.dateArchived)),
                         if (router.archivedBy.isNotEmpty)

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../data/jobData.dart';
 import 'package:css/css.dart' as css;
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import '../../styles/globals.dart';
 
 
 class JobManager extends StatefulWidget {
@@ -12,8 +14,10 @@ class JobManager extends StatefulWidget {
 }
 
 class JobManagerState extends State<JobManager> {
+  // UUID generator for creating unique job IDs
+  static const _uuid = Uuid();
+  
   static List<JobData> jobs = [];
-  static int _nextJobId = 0;
 
   String? selectedJobId;
 
@@ -29,6 +33,7 @@ void showJobDetailsDialog(
   JobData job, {
   VoidCallback? onEdit,
   VoidCallback? onDelete,
+  Function(JobData)? onStatusChange,
 }) {
   showDialog(
     context: context,
@@ -37,6 +42,7 @@ void showJobDetailsDialog(
         job: job,
         onEdit: onEdit,
         onDelete: onDelete,
+        onStatusChange: onStatusChange,
       );
     },
   );
@@ -73,17 +79,202 @@ Future<JobData?> showEditJobDialog(
 }
 
 /// Dialog to view job details with edit/delete options
-class JobDetailsDialog extends StatelessWidget {
+class JobDetailsDialog extends StatefulWidget {
   const JobDetailsDialog({
     super.key,
     required this.job,
     this.onEdit,
     this.onDelete,
+    this.onStatusChange,
   });
 
   final JobData job;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final Function(JobData)? onStatusChange;
+
+  @override
+  State<JobDetailsDialog> createState() => _JobDetailsDialogState();
+}
+
+class _JobDetailsDialogState extends State<JobDetailsDialog> {
+  late JobStatus _currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentStatus = widget.job.status;
+  }
+
+  Future<bool> _confirmStatusChange(BuildContext context, JobStatus newStatus) async {
+    String title;
+    String message;
+
+    switch (newStatus) {
+      case JobStatus.partsReceived:
+        title = 'Confirm Parts Received';
+        message = 'Have the parts for this job been received and verified?';
+        break;
+      case JobStatus.completed:
+        title = 'Confirm Job Completion';
+        message = 'Have you reviewed the parts and confirmed they are ready for handoff?';
+        break;
+      default:
+        return true; 
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: css.CSS.lsiTheme.secondaryHeaderColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed ?? false;
+  }
+
+  Future<void> _handleStatusChange(JobStatus newStatus) async {
+    if (newStatus == _currentStatus) return;
+
+    final confirmed = await _confirmStatusChange(context, newStatus);
+    
+    if (confirmed) {
+      setState(() {
+        _currentStatus = newStatus;
+      });
+
+      // Add current user to approvals list if marking as completed
+      List<String> updatedApprovals = List.from(widget.job.isApproved);
+      if (newStatus == JobStatus.completed && !updatedApprovals.contains(currentUser.uid)) {
+        updatedApprovals.add(currentUser.uid);
+      }
+
+      // Create updated job data
+      final updatedJob = JobData(
+        id: widget.job.id,
+        title: widget.job.title,
+        dateCreated: widget.job.dateCreated,
+        createdBy: widget.job.createdBy,
+        processId: widget.job.processId,
+        priority: widget.job.priority,
+        dueDate: widget.job.dueDate,
+        startDate: widget.job.startDate,
+        completeDate: newStatus == JobStatus.completed && widget.job.completeDate.isEmpty
+            ? DateTime.now().toIso8601String()
+            : widget.job.completeDate,
+        notes: widget.job.notes,
+        status: newStatus,
+        good: widget.job.good,
+        bad: widget.job.bad,
+        workers: widget.job.workers,
+        approvers: widget.job.approvers,
+        numApprovals: widget.job.numApprovals,
+        isApproved: updatedApprovals,
+      );
+
+      widget.onStatusChange?.call(updatedJob);
+    }
+  }
+
+  Widget _buildStatusDropdown() {
+    final statusColor = _getStatusColor(_currentStatus);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusColor),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<JobStatus>(
+          value: _currentStatus,
+          dropdownColor: css.lightGrey,
+          isDense: true,
+          icon: Icon(Icons.arrow_drop_down, color: statusColor, size: 20),
+          selectedItemBuilder: (BuildContext context) {
+            return JobStatus.values.map((status) {
+              return Center(
+                child: Text(
+                  _formatStatusText(status),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }).toList();
+          },
+          items: JobStatus.values.map((status) {
+            return DropdownMenuItem(
+              value: status,
+              child: Text(
+                _formatStatusText(status),
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (JobStatus? newStatus) {
+            if (newStatus != null) {
+              _handleStatusChange(newStatus);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(JobStatus status) {
+    switch (status) {
+      case JobStatus.notStarted:
+        return Colors.grey;
+      case JobStatus.partsReceived:
+        return Colors.purple;
+      case JobStatus.inProgress:
+        return Colors.blue;
+      case JobStatus.completed:
+        return Colors.green;
+      case JobStatus.skipped:
+        return Colors.orange;
+    }
+  }
+
+  String _formatStatusText(JobStatus status) {
+    switch (status) {
+      case JobStatus.notStarted:
+        return 'Not Started';
+      case JobStatus.partsReceived:
+        return 'Parts Received';
+      case JobStatus.inProgress:
+        return 'In Progress';
+      case JobStatus.completed:
+        return 'Completed';
+      case JobStatus.skipped:
+        return 'Skipped';
+    }
+  }
 
   Widget _buildDetailRow(String label, String value, {bool highlight = false}) {
     return Padding(
@@ -145,15 +336,15 @@ class JobDetailsDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            job.title,
+                            widget.job.title,
                             style: TextStyle(
                               fontSize: 22.0,
                               fontWeight: FontWeight.bold,
                               color: css.CSS.lsiTheme.secondaryHeaderColor,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          buildStatusBadge(job.status),
+                          const SizedBox(height: 8),
+                          _buildStatusDropdown(),
                         ],
                       ),
                     ),
@@ -177,9 +368,10 @@ class JobDetailsDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildDetailRow('Job ID:', job.id),
-                    _buildDetailRow('Process ID:', job.processId),
-                    _buildDetailRow('Priority:', 'Level ${job.priority}'),
+                    //_buildDetailRow('Job ID:', widget.job.id),
+                    //_buildDetailRow('Process ID:', widget.job.processId),
+                    _buildDetailRow('Job Name:', widget.job.title, highlight: true),
+                    _buildDetailRow('Priority:', 'Level ${widget.job.priority}'),
                     const Divider(height: 32),
 
                     // Timeline Section
@@ -192,11 +384,11 @@ class JobDetailsDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildDetailRow('Created On:', formatDate(job.dateCreated)),
-                    _buildDetailRow('Created By:', job.createdBy),
-                    _buildDetailRow('Start Date:', formatDate(job.startDate)),
-                    _buildDetailRow('Due Date:', formatDate(job.dueDate)),
-                    _buildDetailRow('Completed On:', formatDate(job.completeDate)),
+                    _buildDetailRow('Created On:', formatDate(widget.job.dateCreated)),
+                    _buildDetailRow('Created By:', widget.job.createdBy),
+                    _buildDetailRow('Start Date:', formatDate(widget.job.startDate)),
+                    _buildDetailRow('Due Date:', formatDate(widget.job.dueDate)),
+                    _buildDetailRow('Completed On:', formatDate(widget.job.completeDate)),
                     const Divider(height: 32),
 
                     // Team Section
@@ -211,15 +403,15 @@ class JobDetailsDialog extends StatelessWidget {
                     const SizedBox(height: 16),
                     _buildDetailRow(
                       'Workers:',
-                      job.workers.isEmpty ? 'None assigned' : job.workers.join(', '),
+                      widget.job.workers.isEmpty ? 'None assigned' : widget.job.workers.join(', '),
                     ),
                     _buildDetailRow(
                       'Approvers:',
-                      job.approvers.isEmpty ? 'None assigned' : job.approvers.join(', '),
+                      widget.job.approvers.isEmpty ? 'None assigned' : widget.job.approvers.join(', '),
                     ),
                     _buildDetailRow(
                       'Approvals:',
-                      '${job.isApproved.length} of ${job.numApprovals}',
+                      '${widget.job.isApproved.length} of ${widget.job.numApprovals}',
                     ),
                     const Divider(height: 32),
 
@@ -245,10 +437,9 @@ class JobDetailsDialog extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                Icon(Icons.thumb_up, color: Colors.green.shade700, size: 32),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${job.good}',
+                                  '${widget.job.good}',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -277,10 +468,9 @@ class JobDetailsDialog extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                Icon(Icons.thumb_down, color: Colors.red.shade700, size: 32),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${job.bad}',
+                                  '${widget.job.bad}',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -302,7 +492,7 @@ class JobDetailsDialog extends StatelessWidget {
                     ),
 
                     // Notes Section
-                    if (job.notes.isNotEmpty) ...[
+                    if (widget.job.notes.isNotEmpty) ...[
                       const Divider(height: 32),
                       Text(
                         'Notes',
@@ -322,7 +512,7 @@ class JobDetailsDialog extends StatelessWidget {
                           border: Border.all(color: Colors.grey.shade300),
                         ),
                         child: Text(
-                          job.notes.entries
+                          widget.job.notes.entries
                               .map((e) => '${e.key}: ${e.value}')
                               .join('\n'),
                           style: const TextStyle(fontSize: 14),
@@ -335,11 +525,11 @@ class JobDetailsDialog extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        if (onDelete != null)
+                        if (widget.onDelete != null)
                           OutlinedButton.icon(
                             onPressed: () {
                               Navigator.pop(context);
-                              onDelete?.call();
+                              widget.onDelete?.call();
                             },
                             icon: const Icon(Icons.delete_outline),
                             label: const Text('Delete Job'),
@@ -353,11 +543,11 @@ class JobDetailsDialog extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(width: 12),
-                        if (onEdit != null)
+                        if (widget.onEdit != null)
                           ElevatedButton.icon(
                             onPressed: () {
                               Navigator.pop(context);
-                              onEdit?.call();
+                              widget.onEdit?.call();
                             },
                             icon: const Icon(Icons.edit_outlined),
                             label: const Text('Edit Job'),
@@ -457,7 +647,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
   void _handleCreate() {
     if (_formKey.currentState!.validate()) {
       final newJob = JobData(
-        id: 'job_${JobManagerState._nextJobId++}',
+        id: JobManagerState._uuid.v4(), // Generate unique job ID
         title: _titleController.text.trim(),
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser', 
@@ -634,6 +824,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField<int>(
                                   value: _priority,
+                                  dropdownColor: css.lightGrey,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
@@ -683,10 +874,21 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                       vertical: 14,
                                     ),
                                   ),
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 15,
+                                  ),
+                                  dropdownColor: css.lightGrey,
                                   items: JobStatus.values
                                       .map((status) => DropdownMenuItem(
                                             value: status,
-                                            child: Text(_formatStatusText(status)),
+                                            child: Text(
+                                              _formatStatusText(status),
+                                              style: const TextStyle(
+                                                color: Colors.black87,
+                                                fontSize: 15,
+                                              ),
+                                            ),
                                           ))
                                       .toList(),
                                   onChanged: (value) {
@@ -843,10 +1045,16 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
     switch (status) {
       case JobStatus.notStarted:
         return 'Not Started';
+      case JobStatus.partsReceived:
+        return 'Parts Received';
       case JobStatus.inProgress:
         return 'In Progress';
       case JobStatus.completed:
         return 'Completed';
+      case JobStatus.skipped:
+        return 'Skipped';
+      default:
+        return status.toString().split('.').last;
     }
   }
 }
@@ -909,6 +1117,50 @@ class _EditJobDialogState extends State<EditJobDialog> {
     }
   }
 
+  Future<bool> _confirmStatusChange(BuildContext context, JobStatus newStatus) async {
+    String title;
+    String message;
+
+    switch (newStatus) {
+      case JobStatus.partsReceived:
+        title = 'Confirm Parts Received';
+        message = 'Have the parts for this job been received and verified?';
+        break;
+      case JobStatus.completed:
+        title = 'Confirm Job Completion';
+        message = 'Have you reviewed the parts and confirmed they are ready for handoff?';
+        break;
+      default:
+        return true; // No confirmation needed for other statuses
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: css.CSS.lsiTheme.secondaryHeaderColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed ?? false;
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -954,6 +1206,14 @@ class _EditJobDialogState extends State<EditJobDialog> {
 
   void _handleUpdate() {
     if (_formKey.currentState!.validate()) {
+      // Add current user to approvals list if marking as completed
+      List<String> updatedApprovals = List.from(widget.job.isApproved);
+      if (_status == JobStatus.completed && 
+          widget.job.status != JobStatus.completed && 
+          !updatedApprovals.contains(currentUser.uid)) {
+        updatedApprovals.add(currentUser.uid);
+      }
+
       final updatedJob = JobData(
         id: widget.job.id,
         title: _titleController.text.trim(),
@@ -971,7 +1231,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
         workers: _workers,
         approvers: _approvers,
         numApprovals: widget.job.numApprovals,
-        isApproved: widget.job.isApproved,
+        isApproved: updatedApprovals,
       );
 
       Navigator.pop(context, updatedJob);
@@ -1140,6 +1400,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField<int>(
                                   value: _priority,
+                                  dropdownColor: css.lightGrey,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
@@ -1170,7 +1431,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Status',
+                          'Status',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -1180,6 +1441,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                 const SizedBox(height: 8),
                                 DropdownButtonFormField<JobStatus>(
                                   value: _status,
+                                  dropdownColor: css.lightGrey,
                                   decoration: InputDecoration(
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
@@ -1189,16 +1451,31 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                       vertical: 14,
                                     ),
                                   ),
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 15,
+                                  ),
                                   items: JobStatus.values
                                       .map((status) => DropdownMenuItem(
                                             value: status,
-                                            child: Text(_formatStatusText(status)),
+                                            child: Text(
+                                              _formatStatusText(status),
+                                              style: const TextStyle(
+                                                color: Colors.black87,
+                                                fontSize: 15,
+                                              ),
+                                            ),
                                           ))
                                       .toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _status = value!;
-                                    });
+                                  onChanged: (value) async {
+                                    if (value != null && value != _status) {
+                                      final confirmed = await _confirmStatusChange(context, value);
+                                      if (confirmed) {
+                                        setState(() {
+                                          _status = value;
+                                        });
+                                      }
+                                    }
                                   },
                                 ),
                               ],
@@ -1378,10 +1655,14 @@ class _EditJobDialogState extends State<EditJobDialog> {
     switch (status) {
       case JobStatus.notStarted:
         return 'Not Started';
+      case JobStatus.partsReceived:
+        return 'Parts Received';
       case JobStatus.inProgress:
         return 'In Progress';
       case JobStatus.completed:
         return 'Completed';
+      case JobStatus.skipped:
+        return 'Skipped';
     }
   }
 }
@@ -1407,6 +1688,10 @@ Widget buildStatusBadge(JobStatus status) {
       badgeColor = Colors.grey;
       statusText = 'Not Started';
       break;
+    case JobStatus.partsReceived:
+      badgeColor = Colors.purple;
+      statusText = 'Parts Received';
+      break;
     case JobStatus.inProgress:
       badgeColor = Colors.blue;
       statusText = 'In Progress';
@@ -1414,6 +1699,10 @@ Widget buildStatusBadge(JobStatus status) {
     case JobStatus.completed:
       badgeColor = Colors.green;
       statusText = 'Completed';
+      break;
+    case JobStatus.skipped:
+      badgeColor = Colors.orange;
+      statusText = 'Skipped';
       break;
   }
 

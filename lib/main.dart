@@ -40,6 +40,7 @@ class TabBarWidget extends StatelessWidget {
           ),
         ),
         body: const TabBarView(
+          physics: NeverScrollableScrollPhysics(),
           children: <Widget>[
             RouterPage(),
             ArchivePage(),

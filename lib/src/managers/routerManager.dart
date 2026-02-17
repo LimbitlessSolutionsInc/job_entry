@@ -8,6 +8,7 @@ import 'package:css/css.dart' as css;
 import '../models/router_model.dart';
 import '../data/processData.dart';
 import '../managers/processManager.dart';
+import 'package:uuid/uuid.dart';
 
 class RouterManager extends StatefulWidget {
   const RouterManager({
@@ -31,16 +32,15 @@ class RouterManager extends StatefulWidget {
 }
 
 class _RouterManagerState extends State<RouterManager> {
+  // UUID generator for creating unique IDs
+  static const _uuid = Uuid();
+  
   static List<RouterData> routers = [];
 
   static Map<String, List<JobData>> routerJobs = {};
 
   // Map process IDs to process types for job template
   static Map<String, String> processIdToType = {};
-
-  // Counter for generating unique IDs
-  static int _nextRouterId = 1;
-  static int _nextProcessId = 1;
 
   // Track selected router ID
   String? selectedRouterId;
@@ -49,7 +49,10 @@ class _RouterManagerState extends State<RouterManager> {
   void initState() {
     super.initState();
 
-    _initializeSampleData();
+    // Only initialize sample data if routers list is empty (first time)
+    if (routers.isEmpty) {
+      _initializeSampleData();
+    }
 
     if (routers.isNotEmpty) {
       selectedRouterId = routers[0].id;
@@ -58,61 +61,72 @@ class _RouterManagerState extends State<RouterManager> {
 
   // Initialize with sample routers for testing
   void _initializeSampleData() {
+    // Generate unique IDs for sample routers and processes
+    final router1Id = _uuid.v4();
+    final router2Id = _uuid.v4();
+    final router3Id = _uuid.v4();
+    final router4Id = _uuid.v4();
+    final router5Id = _uuid.v4();
+    
+    final process1Id = _uuid.v4();
+    final process2Id = _uuid.v4();
+    final process3Id = _uuid.v4();
+    final process4Id = _uuid.v4();
+    final process5Id = _uuid.v4();
+    
     routers = [
       RouterData(
-        id: 'router_1',
+        id: router1Id,
         title: 'Router 1',
         color: 0xFFFF5252,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_1',
+        processId: process1Id,
       ),
       RouterData(
-        id: 'router_2',
+        id: router2Id,
         title: 'Router 2',
         color: 0xFF2196F3,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_2',
+        processId: process2Id,
       ),
       RouterData(
-        id: 'router_3',
+        id: router3Id,
         title: 'Archived Router',
         color: 0xFF4CAF50,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_3',
+        processId: process3Id,
         dateArchived: DateTime.now().toIso8601String(),
         archivedBy: 'testUser',
       ),
       RouterData(
-        id: 'router_4',
+        id: router4Id,
         title: 'Router 4',
         color: 0xFFFFC107,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_4',
+        processId: process4Id,
       ),
       RouterData(
-        id: 'router_5',
+        id: router5Id,
         title: 'Archived Router 2',
         color: 0xFF9C27B0,
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
-        processId: 'process_5',
+        processId: process5Id,
         dateArchived: DateTime.now().toIso8601String(),
         archivedBy: 'testUser',
       ),
     ];
-    _nextRouterId = 6;
-    _nextProcessId = 6;
 
     // Map process IDs to types for initial sample data
-    processIdToType['process_1'] = 'Core Parts';
-    processIdToType['process_2'] = 'Cosmetic Sleeves';
-    processIdToType['process_3'] = 'Magnets/Magnet Holders';
-    processIdToType['process_4'] = 'Core Parts';
-    processIdToType['process_5'] = 'Cosmetic Sleeves';
+    processIdToType[process1Id] = 'Core Parts';
+    processIdToType[process2Id] = 'Cosmetic Sleeves';
+    processIdToType[process3Id] = 'Magnets/Magnet Holders';
+    processIdToType[process4Id] = 'Core Parts';
+    processIdToType[process5Id] = 'Cosmetic Sleeves';
 
     // Create jobs for all sample routers
     for (var router in routers) {
@@ -131,9 +145,8 @@ class _RouterManagerState extends State<RouterManager> {
     }
 
     return template.map((jobTemplate) {
-      final order = jobTemplate['order'] as int;
       return JobData(
-        id: '${routerId}_job_$order',
+        id: _uuid.v4(), // Generate unique job ID
         title: jobTemplate['title'] as String,
         processId: processId, // Use unique process instance ID
         dateCreated: DateTime.now().toIso8601String(),
@@ -154,8 +167,7 @@ class _RouterManagerState extends State<RouterManager> {
 
   // Helper to create a new process instance ID and map it to a process type
   static String createProcessInstance(String processType) {
-    final processId = 'process_$_nextProcessId';
-    _nextProcessId++;
+    final processId = _uuid.v4(); // Generate unique process ID
     processIdToType[processId] = processType;
     return processId;
   }
@@ -223,7 +235,7 @@ class _RouterManagerState extends State<RouterManager> {
 
     if (result != null) {
       setState(() {
-        final routerId = 'router_$_nextRouterId';
+        final routerId = _uuid.v4(); // Generate unique router ID
 
         // Create process instance for this router
         final processId = createProcessInstance(result.process);
@@ -239,10 +251,10 @@ class _RouterManagerState extends State<RouterManager> {
           dateArchived:
               result.isArchived ? DateTime.now().toIso8601String() : '',
           archivedBy: result.isArchived ? 'testUser' : '',
+          connectedRouters: result.connectedRouters,
         );
 
         routers.add(newRouter);
-        _nextRouterId++;
 
         // Create template jobs for the new router (or empty list if clearJobs is true)
         if (result.clearJobs) {
@@ -313,10 +325,12 @@ class _RouterManagerState extends State<RouterManager> {
       context: context,
       builder: (BuildContext context) {
         return EditRouterFormWidget(
+          currentRouterId: currentRouter.id,
           initialTitle: currentRouter.title,
           initialProcess: currentProcessType, // Pass process type, not instance ID
           initialColorIndex: currentColorIndex,
           isCurrentlyArchived: currentRouter.dateArchived.isNotEmpty,
+          initialConnectedRouters: currentRouter.connectedRouters,
           onArchiveRequest: confirmArchive,
         );
       },
@@ -341,6 +355,7 @@ class _RouterManagerState extends State<RouterManager> {
                   ? 'testUser'
                   : currentRouter.archivedBy)
               : '',
+          connectedRouters: result.connectedRouters,
         );
         debugPrint('Updated router: ${result.title}');
       });
@@ -358,6 +373,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: currentRouter.dateCreated,
         createdBy: currentRouter.createdBy,
         processId: currentRouter.processId,
+        connectedRouters: currentRouter.connectedRouters,
         dateArchived: '',
         archivedBy: '',
       );
@@ -483,20 +499,32 @@ class _RouterManagerState extends State<RouterManager> {
                   controller: ScrollController(initialScrollOffset: 0.0),
                 ),
         ),
-        FloatingActionButton(
-          backgroundColor: css.purple,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          onPressed: _addRouter,
-          child:
-            Text(
-              'Add Router',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: css.purple,
+                foregroundColor: Colors.white,
+                elevation: 2,
               ),
-            )
+              onPressed: _addRouter,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(width: 8),
+                  Text(
+                    'Add Router',
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -583,6 +611,29 @@ class ViewDetailsWidget extends StatelessWidget {
     );
   }
 
+  String _getConnectedRouterNames() {
+    if (routerData.connectedRouters.isEmpty) return 'None';
+    
+    final names = routerData.connectedRouters
+        .map((id) {
+          final router = _RouterManagerState.routers.firstWhere(
+            (r) => r.id == id,
+            orElse: () => RouterData(
+              id: '',
+              title: 'Unknown Router',
+              color: 0,
+              dateCreated: '',
+              createdBy: '',
+              processId: '',
+            ),
+          );
+          return router.title;
+        })
+        .toList();
+    
+    return names.join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -599,8 +650,9 @@ class ViewDetailsWidget extends StatelessWidget {
         children: [
           const Divider(height: 32, thickness: 1.5),
           _buildDetailRow("Router Name:", routerData.title),
-          _buildDetailRow("Router ID:", routerData.id),
-          _buildDetailRow("Process:", routerData.processId),
+          //_buildDetailRow("Router ID:", routerData.id),
+          //_buildDetailRow("Process:", routerData.processId),
+          _buildDetailRow("Connected Routers:", _getConnectedRouterNames()),
           _buildDetailRow("Created By:", routerData.createdBy),
           _buildDetailRow("Date Created:", _formatDate(routerData.dateCreated)),
           const SizedBox(height: 16),
@@ -621,12 +673,20 @@ class CreateRouterFormWidget extends StatefulWidget {
 
 class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
   final _formKey = GlobalKey<FormState>();
+  final _newProcessController = TextEditingController();
   String _routerName = '';
   int _routerColor = 0;
   String _processId = '';
   bool _isArchived = false;
   bool _clearJobs = false;
   String? newProcess = null;
+  List<String> _selectedConnectedRouters = [];
+
+  @override
+  void dispose() {
+    _newProcessController.dispose();
+    super.dispose();
+  }
   final List<String> _processes = [
     'Core Parts',
     'Cosmetic Sleeves',
@@ -747,10 +807,15 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   onChanged: (value) {
                     setState(() {
                       _processId = value!;
-                      newProcess = null; 
+                      newProcess = null;
+                      _newProcessController.clear();
                     });
                   },
                   validator: (value) {
+                    // Skip validation if using new process
+                    if (newProcess != null) {
+                      return null;
+                    }
                     if (value == null || value.isEmpty) {
                       return 'Please select a process';
                     }
@@ -759,43 +824,58 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 ),
 
                 CheckboxListTile(
-                  value: newProcess != null && newProcess!.isNotEmpty,
+                  title: const Text(
+                    'New process',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.w600,
+                    )
+                  ), 
+                  value: newProcess != null,
                   onChanged: (value) {
                     setState(() {
                       if (value == true) {
-                        newProcess = ''; 
+                        newProcess = '';
+                        _processId = '';
+                        _newProcessController.clear();
                       } else {
                         newProcess = null;
-                        _processId = ''; // Reset process ID
+                        _newProcessController.clear();
                       }
                     });
                   },
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Create new process instance'),
                 ),
-                if (newProcess != null && newProcess!.isNotEmpty) ...[
+                if (newProcess != null) ...[
                   const SizedBox(height: 8.0),
                   const Text(
-                    'Enter a name for the new process',
+                    'New Process Name',
                     style: TextStyle(
-                      fontSize: 14.0,
+                      fontSize: 16.0,
                       fontWeight: FontWeight.w600,
                       color: css.darkGrey,
                     ),
                   ),
                   const SizedBox(height: 8.0),
-                  TextField(
+                  TextFormField(
+                    controller: _newProcessController,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      hintText: 'New process name',
+                      hintText: 'Enter new process name',
                       contentPadding:
                           EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
                     ),
+                    validator: (value) {
+                      if (newProcess != null && (value == null || value.trim().isEmpty)) {
+                        return 'Please enter a process name';
+                      }
+                      return null;
+                    },
                     onChanged: (value) {
                       setState(() {
                         newProcess = value;
-                        if (value.isNotEmpty) {
+                        if (value.trim().isNotEmpty) {
                           _processId = _RouterManagerState.createProcessInstance(value);
                         }
                       });
@@ -842,6 +922,61 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   ),
                 ),
 
+                const SizedBox(height: 16.0),
+                const Text(
+                  "Connected Routers (Optional)",
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                    color: css.darkGrey,
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: _RouterManagerState.routers.where((r) => r.dateArchived.isEmpty).isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: Text(
+                          'No available routers to connect',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 150),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: _RouterManagerState.routers
+                                .where((r) => r.dateArchived.isEmpty)
+                                .map((router) {
+                              final isSelected = _selectedConnectedRouters.contains(router.id);
+                              return CheckboxListTile(
+                                title: Text(router.title),
+                                value: isSelected,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedConnectedRouters.add(router.id);
+                                    } else {
+                                      _selectedConnectedRouters.remove(router.id);
+                                    }
+                                  });
+                                },
+                                dense: true,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                ),
+
+                const SizedBox(height: 16.0),
                 CheckboxListTile(
                   title: const Text(
                     'Start with empty process (no template jobs)',
@@ -908,6 +1043,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                             color: _routerColor,
                             isArchived: _isArchived,
                             clearJobs: _clearJobs,
+                            connectedRouters: _selectedConnectedRouters,
                           ),
                         );
                       }
@@ -933,18 +1069,22 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
 
 // Edit Router Dialog Widget
 class EditRouterFormWidget extends StatefulWidget {
+  final String currentRouterId;
   final String initialTitle;
   final String initialProcess;
   final int initialColorIndex;
   final bool isCurrentlyArchived;
+  final List<String> initialConnectedRouters;
   final Future<bool> Function()? onArchiveRequest;
 
   const EditRouterFormWidget({
     super.key,
+    required this.currentRouterId,
     required this.initialTitle,
     required this.initialProcess,
     required this.initialColorIndex,
     required this.isCurrentlyArchived,
+    this.initialConnectedRouters = const [],
     this.onArchiveRequest,
   });
 
@@ -958,6 +1098,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
   late int _routerColor;
   late String _processId;
   late bool _isArchived;
+  late List<String> _selectedConnectedRouters;
 
   final List<String> _processes = [
     'Core Parts',
@@ -993,6 +1134,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
     _routerColor = widget.initialColorIndex;
     _processId = widget.initialProcess;
     _isArchived = widget.isCurrentlyArchived;
+    _selectedConnectedRouters = List.from(widget.initialConnectedRouters);
   }
 
   @override
@@ -1081,44 +1223,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                         color: css.darkGrey,
                       )
                     ]),
-                // const SizedBox(height: 8.0),
-                // DropdownButtonFormField<String>(
-                //   value:
-                //       _processId.isNotEmpty && _processes.contains(_processId)
-                //           ? _processId
-                //           : null,
-                //   dropdownColor: css.lightGrey,
-                //   decoration: const InputDecoration(
-                //     border: OutlineInputBorder(),
-                //     hintText: 'Select a process',
-                //     hintStyle: TextStyle(color: css.darkGrey),
-                //     contentPadding:
-                //         EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
-                //   ),
-                //   isExpanded: true,
-                //   items: _processes
-                //       .map(
-                //         (process) => DropdownMenuItem<String>(
-                //           value: process,
-                //           child: Text(process),
-                //         ),
-                //       )
-                //       .toList(),
-                //   onChanged: (value) {
-                //     setState(() {
-                //       _processId = value!;
-                //     });
-                //   },
-                //   validator: (value) {
-                //     if (value == null || value.isEmpty) {
-                //       return 'Please select a process';
-                //     }
-                //     return null;
-                //   },
-                // ),
-
-                // User should not be able to change process after creation?
-
+          
                 const SizedBox(height: 16.0),
                 const Text(
                   "Router Color",
@@ -1160,6 +1265,63 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                   ),
                 ),
 
+                const SizedBox(height: 16.0),
+                const Text(
+                  "Connected Routers (Optional)",
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.w600,
+                    color: css.darkGrey,
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: _RouterManagerState.routers
+                          .where((r) => r.dateArchived.isEmpty && r.id != widget.currentRouterId)
+                          .isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: Text(
+                          'No available routers to connect',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 150),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: _RouterManagerState.routers
+                                .where((r) => r.dateArchived.isEmpty && r.id != widget.currentRouterId)
+                                .map((router) {
+                              final isSelected = _selectedConnectedRouters.contains(router.id);
+                              return CheckboxListTile(
+                                title: Text(router.title),
+                                value: isSelected,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedConnectedRouters.add(router.id);
+                                    } else {
+                                      _selectedConnectedRouters.remove(router.id);
+                                    }
+                                  });
+                                },
+                                dense: true,
+                                controlAffinity: ListTileControlAffinity.leading,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                ),
+
+                const SizedBox(height: 16.0),
                 // Archive checkbox
                 CheckboxListTile(
                   title: const Text(
@@ -1218,6 +1380,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                             process: _processId,
                             color: _routerColor,
                             isArchived: _isArchived,
+                            connectedRouters: _selectedConnectedRouters,
                           ),
                         );
                       }
