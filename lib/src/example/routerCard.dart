@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:css/css.dart' as css;
-import 'package:job_entry/src/router_master.dart';
 
 class RouterCard extends StatelessWidget {
   const RouterCard({
     super.key,
     required this.title,
+    required this.createdBy,
+    required this.createdDate,
     this.color,
     this.isSelected = false,
     this.onTap,
@@ -17,6 +18,8 @@ class RouterCard extends StatelessWidget {
   });
 
   final String title;
+  final String createdBy;
+  final String createdDate;
   final Color? color;
   final bool isSelected;
   final VoidCallback? onTap;
@@ -60,9 +63,13 @@ class RouterCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cardColor = color ?? theme.colorScheme.primary;
+    final cardInsideColor = Color.alphaBlend(
+      cardColor.withOpacity(0.85),
+      theme.cardColor,
+    );
     
     return Card(
-      color: css.chartNameGrey,
+      color: cardInsideColor,
       clipBehavior: Clip.hardEdge,
       elevation: isSelected ? 4 : 1,
       shape: RoundedRectangleBorder(
@@ -73,11 +80,11 @@ class RouterCard extends StatelessWidget {
         ),
       ),
       child: InkWell(
-        hoverColor: cardColor.withOpacity(0.2),
+        hoverColor: cardColor.withAlpha(20),
         splashColor: cardColor.withAlpha(30),
         onTap: onTap,
         child: Container(
-          color: isSelected ? cardColor.withOpacity(0.1) : null,
+          color: isSelected ? cardInsideColor: null,
           child: SizedBox(
             width: double.infinity,
             height: 100,
@@ -91,14 +98,26 @@ class RouterCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: css.chartGrey,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: css.chartGrey,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Created by: $createdBy on $createdDate',
+                          style: TextStyle(
+                            color: css.chartGrey,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -148,10 +167,10 @@ class RouterCard extends StatelessWidget {
                         ),
                       if (onUnarchive != null)
                         IconButton(
-                          icon: const Icon(Icons.remove_red_eye),
+                          icon: const Icon(Icons.outbox_rounded),
                           onPressed: onUnarchive,
                           tooltip: 'Unarchive',
-                          iconSize: 12,
+                          iconSize: 18,
                           color: css.chartGrey,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(

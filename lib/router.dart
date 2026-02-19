@@ -8,7 +8,6 @@ import '../src/data/processTemplates.dart';
 import '../styles/globals.dart';
 import 'package:css/css.dart' as css;
 import '../src/example/jobCard.dart';
-import '../src/managers/processManager.dart';
 
 class RouterPage extends StatefulWidget {
   const RouterPage({super.key});
@@ -59,42 +58,8 @@ class _RouterPageState extends State<RouterPage> {
     });
   }
 
-  // void selectRouter(String routerId) {
-  //   setState(() {
-  //     selectedRouterId = routerId;
-  //     showRouterList = false;
-  //   });
-  // }
-
-  // void addRouter(RouterData router) {
-  //   setState(() {
-  //     routers.add(router);
-  //     selectedRouterId = router.id;
-  //     showRouterList = false;
-  //   });
-  // }
-
-  // void editRouter(RouterData updatedRouter) {
-  //   setState(() {
-  //     final index = routers.indexWhere((r) => r.id == updatedRouter.id);
-  //     if (index != -1) {
-  //       routers[index] = updatedRouter;
-  //     }
-  //   });
-  // }
-
-  // void deleteRouter(String routerId) {
-  //   setState(() {
-  //     routers.removeWhere((r) => r.id == routerId);
-  //     if (selectedRouterId == routerId) {
-  //       selectedRouterId = routers.isNotEmpty ? routers[0].id : null;
-  //       showRouterList = true;
-  //     }
-  //   });
-  // }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -241,7 +206,7 @@ class RouterWorkspace extends StatelessWidget {
     }
 
     return ProcessTimelineView(
-        routerId: selectedRouter!.id, processId: selectedRouter!.processId);
+        routerId: selectedRouter!.id, processId: selectedRouter!.processId, selectedRouter: selectedRouter);
   }
 }
 
@@ -251,10 +216,12 @@ class ProcessTimelineView extends StatefulWidget {
     super.key,
     required this.routerId,
     required this.processId,
+    required this.selectedRouter,
   });
 
   final String routerId;
   final String processId;
+  final RouterData? selectedRouter;
 
   @override
   State<ProcessTimelineView> createState() => _ProcessTimelineViewState();
@@ -434,7 +401,7 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
                 'Create a job to get started!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 28,
                   color: Colors.grey[600],
                 ),
               ),
@@ -444,7 +411,7 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
                 },
                 icon: Icon(
                   Icons.add_circle_outline,
-                  size: 100,
+                  size: 70,
                   color: Colors.grey[400],
                 ),
               ),
@@ -459,6 +426,19 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
         constraints: const BoxConstraints(maxWidth: 2000),
         child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
           const SizedBox(height: 40),
+          Column(
+            children: [
+              const SizedBox(height: 8),
+              Text(
+                'Router Name: ${widget.selectedRouter?.title ?? 'Unknown Router'}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
           Expanded(
             child: SizedBox(
               child: Stack(

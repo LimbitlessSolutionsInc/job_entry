@@ -1,5 +1,6 @@
 // Router Manager Screen - Displays list of routers and allows for CRUD operations
 import 'package:flutter/material.dart';
+import 'package:job_entry/styles/globals.dart';
 import '../data/routerData.dart';
 import '../data/jobData.dart';
 import '../data/processTemplates.dart';
@@ -7,7 +8,6 @@ import '../example/routerCard.dart';
 import 'package:css/css.dart' as css;
 import '../models/router_model.dart';
 import '../data/processData.dart';
-import '../managers/processManager.dart';
 import 'package:uuid/uuid.dart';
 
 class RouterManager extends StatefulWidget {
@@ -16,22 +16,22 @@ class RouterManager extends StatefulWidget {
     this.onRouterSelected,
   });
 
-  static List<RouterData> get routers => _RouterManagerState.routers;
+  static List<RouterData> get routers => RouterManagerState.routers;
 
   final Function(String routerId, List<RouterData> routers)? onRouterSelected;
 
-  static get routerJobs => _RouterManagerState.routerJobs;
+  static get routerJobs => RouterManagerState.routerJobs;
 
-  static get processIdToType => _RouterManagerState.processIdToType;
+  static get processIdToType => RouterManagerState.processIdToType;
   // final void Function(String title) onAdd;
   // final void Function(String id, String newTitle) onEdit;
   // final void Function(String id) onDelete;
 
   @override
-  State<RouterManager> createState() => _RouterManagerState();
+  State<RouterManager> createState() => RouterManagerState();
 }
 
-class _RouterManagerState extends State<RouterManager> {
+class RouterManagerState extends State<RouterManager> {
   // UUID generator for creating unique IDs
   static const _uuid = Uuid();
   
@@ -83,6 +83,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
         processId: process1Id,
+        processType: 'Core Parts',
       ),
       RouterData(
         id: router2Id,
@@ -91,6 +92,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
         processId: process2Id,
+        processType: 'Cosmetic Sleeves',
       ),
       RouterData(
         id: router3Id,
@@ -99,6 +101,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
         processId: process3Id,
+        processType: 'Magnets/Magnet Holders',
         dateArchived: DateTime.now().toIso8601String(),
         archivedBy: 'testUser',
       ),
@@ -109,6 +112,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
         processId: process4Id,
+        processType: 'Core Parts',
       ),
       RouterData(
         id: router5Id,
@@ -117,6 +121,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: DateTime.now().toIso8601String(),
         createdBy: 'testUser',
         processId: process5Id,
+        processType: 'Cosmetic Sleeves',
         dateArchived: DateTime.now().toIso8601String(),
         archivedBy: 'testUser',
       ),
@@ -160,7 +165,7 @@ class _RouterManagerState extends State<RouterManager> {
         good: 0,
         bad: 0,
         status: JobStatus.notStarted,
-        priority: 1,
+        priority: 'Medium',
         workers: [],
         approvers: [],
       );
@@ -250,6 +255,7 @@ class _RouterManagerState extends State<RouterManager> {
           dateCreated: DateTime.now().toIso8601String(),
           createdBy: 'testUser', // Using test user for now
           processId: processId, // Reference the unique process instance ID
+          processType: result.process, // Store the actual process name
           dateArchived:
               result.isArchived ? DateTime.now().toIso8601String() : '',
           archivedBy: result.isArchived ? 'testUser' : '',
@@ -347,6 +353,7 @@ class _RouterManagerState extends State<RouterManager> {
           dateCreated: currentRouter.dateCreated,
           createdBy: currentRouter.createdBy,
           processId: currentRouter.processId,
+          processType: result.process, // Update process type
           dateArchived: result.isArchived
               ? (currentRouter.dateArchived.isEmpty
                   ? DateTime.now().toIso8601String()
@@ -375,6 +382,7 @@ class _RouterManagerState extends State<RouterManager> {
         dateCreated: currentRouter.dateCreated,
         createdBy: currentRouter.createdBy,
         processId: currentRouter.processId,
+        processType: currentRouter.processType,
         connectedRouters: currentRouter.connectedRouters,
         dateArchived: '',
         archivedBy: '',
@@ -384,45 +392,204 @@ class _RouterManagerState extends State<RouterManager> {
   }
 
   // Show router details in a dialog
-  void _showRouterDetails(BuildContext context, RouterData router) {
+  static void showRouterDetails(BuildContext context, RouterData router) {
+    // Get process type from the router first, fall back to map lookup
+    final processType = router.processType.isNotEmpty 
+        ? router.processType 
+        : (RouterManagerState.processIdToType[router.processId] ?? 'Unknown');
+    final isArchived = router.dateArchived.isNotEmpty;
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: const BoxConstraints(maxWidth: 700),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 32,
-                            color: css.CSS.lsiTheme.secondaryHeaderColor,
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                router.title,
+                                style: TextStyle(
+                                  fontSize: 22.0,
+                                  fontWeight: FontWeight.normal,
+                                  color: css.CSS.lsiTheme.primaryColor,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isArchived ? Colors.grey : Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isArchived ? 'Archived' : 'Active',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w200,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
+                        ),
+                        const CloseButton(),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Basic Information Section
+                        Text(
+                          'Router Info',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDetailRow('Router Name:', router.title, context),
+                        _buildDetailRow('Process Type:', processType, context),
+                        const Divider(height: 32),
+
+                        // Timeline Section
+                        Text(
+                          'Timeline',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDetailRow('Created By:', router.createdBy, context),
+                        _buildDetailRow('Date Created:', _formatDate(router.dateCreated), context),
+                        if (isArchived) ...[
+                          _buildDetailRow('Archived By:', router.archivedBy, context),
+                          _buildDetailRow('Date Archived:', _formatDate(router.dateArchived), context),
+                        ],
+                        const Divider(height: 32),
+
+                        // Connected Routers Section
+                        Text(
+                          'Connected Routers',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (router.connectedRouters.isEmpty)
                           Text(
-                            "Router Details",
+                            'No connected routers',
                             style: TextStyle(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold,
-                              color: css.CSS.lsiTheme.secondaryHeaderColor,
+                              fontSize: 15.0,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                              ),
+                            ),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: router.connectedRouters.map((routerId) {
+                                final connectedRouter = RouterManagerState.routers.firstWhere(
+                                  (r) => r.id == routerId,
+                                  orElse: () => RouterData(
+                                    id: '',
+                                    title: 'Unknown Router',
+                                    color: 0,
+                                    dateCreated: '',
+                                    createdBy: '',
+                                    processId: '',
+                                    processType: 'Unknown',
+                                  ),
+                                );
+                                return InkWell(
+                                  onTap: connectedRouter.id.isNotEmpty
+                                      ? () => RouterManagerState.showRouterDetails(
+                                          context, connectedRouter)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Color(connectedRouter.color).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Color(connectedRouter.color),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          connectedRouter.title,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        if (connectedRouter.id.isNotEmpty) ...[
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.open_in_new,
+                                            size: 14,
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(width: 40), // Balance the close button
-                      const CloseButton(),
-                    ],
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  ViewDetailsWidget(routerData: router),
                 ],
               ),
             ),
@@ -432,7 +599,52 @@ class _RouterManagerState extends State<RouterManager> {
     );
   }
 
-  // Color list matching the dialog's color picker
+  static Widget _buildDetailRow(String label, String value, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15.0,
+                fontWeight: FontWeight.w200,
+                color: css.darkGrey,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 15.0,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatDate(String isoDate) {
+    if (isoDate.isEmpty) return 'N/A';
+    try {
+      final date = DateTime.parse(isoDate);
+      return '${date.month}/${date.day}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return isoDate;
+    }
+  }
+
+  void _showRouterDetailsInstance(BuildContext context, RouterData router) {
+    RouterManagerState.showRouterDetails(context, router);
+  }
+
   final List<Color> _colorsList = [
     Colors.red,
     Colors.green,
@@ -474,6 +686,8 @@ class _RouterManagerState extends State<RouterManager> {
                       final isSelected = router.id == selectedRouterId;
                       return RouterCard(
                         title: router.title,
+                        createdBy: router.createdBy,
+                        createdDate: router.dateCreated.split('T')[0], // format date
                         isSelected: isSelected,
                         onTap: () {
                           setState(() {
@@ -493,7 +707,7 @@ class _RouterManagerState extends State<RouterManager> {
                           _deleteRouter(actualIndex);
                         },
                         onInfo: () {
-                          _showRouterDetails(context, router);
+                          _showRouterDetailsInstance(context, router);
                         },
                       );
                     },
@@ -508,20 +722,24 @@ class _RouterManagerState extends State<RouterManager> {
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: css.purple,
-                foregroundColor: Colors.white,
+                backgroundColor: css.darkBlue,
                 elevation: 2,
               ),
               onPressed: _addRouter,
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(width: 8),
-                  Text(
-                    'Add Router',
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
+                  Row(
+                    children: [
+                      Icon(Icons.add, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Add Router',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -563,107 +781,6 @@ class _RouterManagerState extends State<RouterManager> {
   }
 }
 
-class ViewDetailsWidget extends StatelessWidget {
-  const ViewDetailsWidget({
-    super.key,
-    required this.routerData,
-  });
-
-  final RouterData routerData;
-
-  String _formatDate(String isoDate) {
-    if (isoDate.isEmpty) return 'N/A';
-    try {
-      final date = DateTime.parse(isoDate);
-      return '${date.month}/${date.day}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return isoDate;
-    }
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
-                color: css.darkGrey,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16.0,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getConnectedRouterNames() {
-    if (routerData.connectedRouters.isEmpty) return 'None';
-    
-    final names = routerData.connectedRouters
-        .map((id) {
-          final router = _RouterManagerState.routers.firstWhere(
-            (r) => r.id == id,
-            orElse: () => RouterData(
-              id: '',
-              title: 'Unknown Router',
-              color: 0,
-              dateCreated: '',
-              createdBy: '',
-              processId: '',
-            ),
-          );
-          return router.title;
-        })
-        .toList();
-    
-    return names.join(', ');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Divider(height: 32, thickness: 1.5),
-          _buildDetailRow("Router Name:", routerData.title),
-          //_buildDetailRow("Router ID:", routerData.id),
-          //_buildDetailRow("Process:", routerData.processId),
-          _buildDetailRow("Connected Routers:", _getConnectedRouterNames()),
-          _buildDetailRow("Created By:", routerData.createdBy),
-          _buildDetailRow("Date Created:", _formatDate(routerData.dateCreated)),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
 class CreateRouterFormWidget extends StatefulWidget {
   final Future<bool> Function()? onArchiveRequest;
 
@@ -697,8 +814,14 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
     'Game Controller Electronics',
     'Arm Box',
     'Socket',
-    'Socket Electronics',
+    'Magnetic EMG',
     'Boa Assembly',
+    'Finger Assembly',
+    'Hand Assembly',
+    'Board',
+    'Battery Assembly',
+    'Battery Core Assembly',
+    'Arm Assembly',
   ];
 
   final List<Color> _colors = [
@@ -716,11 +839,88 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
     Colors.lime,
   ];
 
+  // Helper method to build grouped router checkboxes by process type
+  List<Widget> _buildGroupedRouterCheckboxes(List<RouterData> routers, String? excludeRouterId) {
+    // Group routers by process type
+    final Map<String, List<RouterData>> groupedRouters = {};
+    
+    for (final router in routers) {
+      final processType = RouterManagerState.processIdToType[router.processId] ?? 'Unknown Process';
+      if (!groupedRouters.containsKey(processType)) {
+        groupedRouters[processType] = [];
+      }
+      groupedRouters[processType]!.add(router);
+    }
+
+    // Sort process types alphabetically
+    final sortedProcessTypes = groupedRouters.keys.toList()..sort();
+
+    // Build widgets
+    final List<Widget> widgets = [];
+    
+    for (int i = 0; i < sortedProcessTypes.length; i++) {
+      final processType = sortedProcessTypes[i];
+      final routersInProcess = groupedRouters[processType]!;
+
+      // Add divider before each section except the first
+      if (i > 0) {
+        widgets.add(const Divider(height: 1, thickness: 1));
+      }
+
+      // Add section header
+      widgets.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          color: Colors.grey.withOpacity(0.2),
+          child: Text(
+            processType,
+            style: const TextStyle(
+              fontSize: 13.0,
+              fontWeight: FontWeight.w400,
+              color: Colors.white,
+              letterSpacing: 1.25,
+            ),
+          ),
+        ),
+      );
+
+      // Add routers in this process
+      for (final router in routersInProcess) {
+        final isSelected = _selectedConnectedRouters.contains(router.id);
+        widgets.add(
+          CheckboxListTile(
+            title: Text(
+              router.title,
+              style: const TextStyle(color: Colors.white),
+            ),
+            value: isSelected,
+            onChanged: (bool? value) {
+              setState(() {
+                if (value == true) {
+                  _selectedConnectedRouters.add(router.id);
+                } else {
+                  _selectedConnectedRouters.remove(router.id);
+                }
+              });
+            },
+            dense: true,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+          ),
+        );
+      }
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: SingleChildScrollView(
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 800),
           decoration: BoxDecoration(
             color: css.CSS.darkTheme.cardColor,
             borderRadius: BorderRadius.circular(12.0),
@@ -748,7 +948,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     "Add a New Router",
                     style: TextStyle(
                       fontSize: 24.0,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                       color: Colors.white,
                       letterSpacing: 1.25,
                     ),
@@ -833,6 +1033,8 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   },
                 ),
 
+                // Display "Jobs in this process:" and list template jobs if existing process selected and jobs list isnt empty?
+
                 CheckboxListTile(
                   title: const Text(
                     'New process',
@@ -888,7 +1090,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                       setState(() {
                         newProcess = value;
                         if (value.trim().isNotEmpty) {
-                          _processId = _RouterManagerState.createProcessInstance(value);
+                          _processId = RouterManagerState.createProcessInstance(value);
                         }
                       });
                     },
@@ -925,7 +1127,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                             color: color,
                             shape: BoxShape.circle,
                             border: _routerColor == index
-                                ? Border.all(color: Colors.black, width: 3.0)
+                                ? Border.all(color: Colors.white, width: 3.0)
                                 : null,
                           ),
                         ),
@@ -950,7 +1152,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: _RouterManagerState.routers.where((r) => r.dateArchived.isEmpty).isEmpty
+                  child: RouterManagerState.routers.where((r) => r.dateArchived.isEmpty).isEmpty
                     ? const Padding(
                         padding: EdgeInsets.all(12.0),
                         child: Text(
@@ -962,30 +1164,13 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                         constraints: const BoxConstraints(maxHeight: 150),
                         child: SingleChildScrollView(
                           child: Column(
-                            children: _RouterManagerState.routers
-                                .where((r) => r.dateArchived.isEmpty)
-                                .map((router) {
-                              final isSelected = _selectedConnectedRouters.contains(router.id);
-                              return CheckboxListTile(
-                                title: Text(
-                                  router.title,
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                value: isSelected,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    if (value == true) {
-                                      _selectedConnectedRouters.add(router.id);
-                                    } else {
-                                      _selectedConnectedRouters.remove(router.id);
-                                    }
-                                  });
-                                },
-                                dense: true,
-                                controlAffinity: ListTileControlAffinity.leading,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              );
-                            }).toList(),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: _buildGroupedRouterCheckboxes(
+                              RouterManagerState.routers
+                                  .where((r) => r.dateArchived.isEmpty)
+                                  .toList(),
+                              null,
+                            ),
                           ),
                         ),
                       ),
@@ -1064,13 +1249,20 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                         );
                       }
                     },
-                    child: const Text(
-                      "Add Router",
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.add, size: 20),
+                        SizedBox(width: 8),
+                        const Text(
+                          "Add Router",
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -1153,13 +1345,85 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
     _selectedConnectedRouters = List.from(widget.initialConnectedRouters);
   }
 
+  // Helper method to build grouped router checkboxes by process type
+  List<Widget> _buildGroupedRouterCheckboxes(List<RouterData> routers, String? excludeRouterId) {
+    // Group routers by process type
+    final Map<String, List<RouterData>> groupedRouters = {};
+    
+    for (final router in routers) {
+      final processType = RouterManagerState.processIdToType[router.processId] ?? 'Unknown Process';
+      if (!groupedRouters.containsKey(processType)) {
+        groupedRouters[processType] = [];
+      }
+      groupedRouters[processType]!.add(router);
+    }
+
+    // Sort process types alphabetically
+    final sortedProcessTypes = groupedRouters.keys.toList()..sort();
+
+    // Build widgets
+    final List<Widget> widgets = [];
+    
+    for (int i = 0; i < sortedProcessTypes.length; i++) {
+      final processType = sortedProcessTypes[i];
+      final routersInProcess = groupedRouters[processType]!;
+
+      // Add divider before each section except the first
+      if (i > 0) {
+        widgets.add(const Divider(height: 1, thickness: 1));
+      }
+
+      // Add section header
+      widgets.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          color: Colors.grey.withOpacity(0.2),
+          child: Text(
+            processType,
+            style: TextStyle(
+              fontSize: 13.0,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ),
+      );
+
+      // Add routers in this process
+      for (final router in routersInProcess) {
+        final isSelected = _selectedConnectedRouters.contains(router.id);
+        widgets.add(
+          CheckboxListTile(
+            title: Text(router.title),
+            value: isSelected,
+            onChanged: (bool? value) {
+              setState(() {
+                if (value == true) {
+                  _selectedConnectedRouters.add(router.id);
+                } else {
+                  _selectedConnectedRouters.remove(router.id);
+                }
+              });
+            },
+            dense: true,
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+          ),
+        );
+      }
+    }
+
+    return widgets;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: SingleChildScrollView(
         child: Container(
           decoration: BoxDecoration(
-            color: css.CSS.lsiTheme.primaryColor,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
             boxShadow: const [
               BoxShadow(
@@ -1186,18 +1450,19 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                     style: TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
-                      color: css.CSS.lsiTheme.secondaryHeaderColor,
+                      color: Theme.of(context).textTheme.headlineMedium!.color,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Router Name",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
 
@@ -1227,26 +1492,26 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                     children: [
                       Text(
                         "Process: $_processId",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.w600,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Icon(
                         Icons.lock_outline,
                         size: 16,
-                        color: css.darkGrey,
+                        color: Theme.of(context).colorScheme.onSurface,
                       )
                     ]),
           
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Router Color",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
 
@@ -1272,7 +1537,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                             color: color,
                             shape: BoxShape.circle,
                             border: _routerColor == index
-                                ? Border.all(color: Colors.black, width: 3.0)
+                                ? Border.all(color: Colors.white, width: 3.0)
                                 : null,
                           ),
                         ),
@@ -1282,12 +1547,12 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                 ),
 
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Connected Routers (Optional)",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,
-                    color: css.darkGrey,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -1297,41 +1562,27 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: _RouterManagerState.routers
+                  child: RouterManagerState.routers
                           .where((r) => r.dateArchived.isEmpty && r.id != widget.currentRouterId)
                           .isEmpty
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.all(12.0),
                         child: Text(
                           'No available routers to connect',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         ),
                       )
                     : ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 150),
                         child: SingleChildScrollView(
                           child: Column(
-                            children: _RouterManagerState.routers
-                                .where((r) => r.dateArchived.isEmpty && r.id != widget.currentRouterId)
-                                .map((router) {
-                              final isSelected = _selectedConnectedRouters.contains(router.id);
-                              return CheckboxListTile(
-                                title: Text(router.title),
-                                value: isSelected,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    if (value == true) {
-                                      _selectedConnectedRouters.add(router.id);
-                                    } else {
-                                      _selectedConnectedRouters.remove(router.id);
-                                    }
-                                  });
-                                },
-                                dense: true,
-                                controlAffinity: ListTileControlAffinity.leading,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              );
-                            }).toList(),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: _buildGroupedRouterCheckboxes(
+                              RouterManagerState.routers
+                                  .where((r) => r.dateArchived.isEmpty && r.id != widget.currentRouterId)
+                                  .toList(),
+                              widget.currentRouterId,
+                            ),
                           ),
                         ),
                       ),
@@ -1405,7 +1656,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                       "Update Router",
                       style: TextStyle(
                         fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.normal,
                         color: Colors.white,
                       ),
                     ),

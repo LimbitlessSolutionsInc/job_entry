@@ -58,7 +58,7 @@ class JobData {
   String startDate;
   Map<String, dynamic> notes;
   String processId;
-  int priority;
+  String priority;
   String completeDate;
   String partsReceivedDate;
   JobStatus status;
