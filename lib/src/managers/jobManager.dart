@@ -387,7 +387,6 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                     //_buildDetailRow('Process ID:', widget.job.processId),
                     _buildDetailRow('Job Name:', widget.job.title),
                     _buildDetailRow('Priority:', widget.job.priority),
-                    _buildDetailRow('Notes:', widget.job.notes.isEmpty ? 'None' : widget.job.notes.values.join(', ')),
                     const Divider(height: 32),
 
                     // Timeline Section
@@ -1186,11 +1185,9 @@ class _EditJobDialogState extends State<EditJobDialog> {
     _workers = List.from(widget.job.workers);
     _approvers = List.from(widget.job.approvers);
     _notes = Map.from(widget.job.notes);
-    
-    // Initialize notes controller with formatted notes
-    _notesController = TextEditingController(
-      text: _notes.entries.map((e) => '${e.key}: ${e.value}').join('\n'),
-    );
+
+    // Initialize notes controller with empty text (existing notes will be preserved)
+    _notesController = TextEditingController(text: '');
 
     // Parse dates
     _startDate = _parseDate(widget.job.startDate);
@@ -1330,6 +1327,48 @@ class _EditJobDialogState extends State<EditJobDialog> {
         finalCompleteDate = DateTime.now();
       }
 
+      // Parse new notes from controller text and ADD to existing notes
+      // Start with existing notes from widget.job
+      Map<String, String> allNotes = Map.from(widget.job.notes);
+      
+      // Only process if there's new text in the controller
+      if (_notesController.text.trim().isNotEmpty) {
+        var lines = _notesController.text.split('\n');
+        Map<String, int> keyCounts = {}; // Track duplicate keys
+        
+        for (int i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (line.isEmpty) continue;
+          
+          var colonIndex = line.indexOf(':');
+          if (colonIndex > 0) {
+            // Has colon: split on first colon only
+            var key = line.substring(0, colonIndex).trim();
+            var val = line.substring(colonIndex + 1).trim();
+            if (key.isNotEmpty) {
+              // Handle duplicate keys
+              var finalKey = key;
+              if (allNotes.containsKey(key)) {
+                keyCounts[key] = (keyCounts[key] ?? 1) + 1;
+                finalKey = '$key (${keyCounts[key]})';
+              }
+              allNotes[finalKey] = val;
+            }
+          } else {
+            // No colon: use current user's name as key with counter
+            var baseKey = currentUser.displayName;
+            var finalKey = baseKey;
+            if (allNotes.containsKey(baseKey)) {
+              keyCounts[baseKey] = (keyCounts[baseKey] ?? 1) + 1;
+              finalKey = '$baseKey (${keyCounts[baseKey]})';
+            }
+            allNotes[finalKey] = line;
+          }
+        }
+      }
+      
+      _notes = allNotes;
+
       final updatedJob = JobData(
         id: widget.job.id,
         title: _titleController.text.trim(),
@@ -1349,6 +1388,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
         approvers: updatedApprovals,
         numApprovals: widget.job.numApprovals,
       );
+
+      debugPrint('Widget Job Notes: ${widget.job.notes}');
 
       Navigator.pop(context, updatedJob);
     }
@@ -1735,15 +1776,6 @@ class _EditJobDialogState extends State<EditJobDialog> {
                             vertical: 14,
                           ),
                         ),
-                        onChanged: (value) {
-                          _notes = {};
-                          for (var line in value.split('\n')) {
-                            var parts = line.split(':');
-                            if (parts.length == 2) {
-                              _notes[parts[0].trim()] = parts[1].trim();
-                            }
-                          }
-                        },
                       ),
 
                       // Action Buttons

@@ -308,6 +308,15 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
           jobList[jobIndex] = updatedJob;
         }
       });
+      
+      // Reopen the details dialog to show updated data
+      showJobDetailsDialog(
+        context,
+        updatedJob,
+        onEdit: () => _handleEdit(updatedJob),
+        onDelete: () => _handleDelete(updatedJob),
+        onStatusChange: (updatedJobFromStatus) => _handleStatusChange(updatedJobFromStatus),
+      );
     }
   }
 
