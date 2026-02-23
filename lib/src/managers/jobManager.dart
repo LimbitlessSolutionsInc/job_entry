@@ -635,6 +635,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
   List<String> _approvers = [];
   int _good = 0;
   int _bad = 0;
+  String? _selectedWorker;
 
   @override
   void dispose() {
@@ -985,10 +986,12 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
+                            value: _selectedWorker,
                             decoration: InputDecoration(
                               hintText: 'Select a worker', 
                               hintStyle: TextStyle(
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w400,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -1014,6 +1017,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                   !_workers.contains(value)) {
                                 setState(() {
                                   _workers.add(value);
+                                  _selectedWorker = null; // Reset dropdown
                                 });
                               }
                             },
@@ -1032,8 +1036,8 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                       _workers.remove(worker);
                                     });
                                   },
-                                  backgroundColor: css.darkBlue.withOpacity(0.2),
-                                  labelStyle: TextStyle(color: css.darkBlue),
+                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
                                 );
                               }).toList(),
                             ),
@@ -1066,7 +1070,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 16),
