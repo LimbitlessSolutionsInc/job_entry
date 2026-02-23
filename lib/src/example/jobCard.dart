@@ -41,7 +41,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
     final isStarted = widget.job.status != JobStatus.notStarted && widget.job.status != JobStatus.skipped;
     
     // Brighter opacity for all cards to make them stand out
-    final opacity = isActive || isCompleted ? 1.0 : (isStarted ? 0.85 : 0.6);
+    final opacity = 1.0; // Can adjust this value for fading out jobs
 
     // Determine circle color based on status - theme aware
     Color circleColor;
@@ -55,7 +55,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
     } else if (isActive) {
       circleColor = theme.colorScheme.primary;
       borderColor = theme.colorScheme.primary;
-      textColor = theme.colorScheme.onPrimary;
+      textColor = css.darkBlue;
     } else if (widget.job.status == JobStatus.partsReceived) {
       circleColor = isDark ? Colors.orange.shade700 : Colors.orange.shade100;
       borderColor = Colors.orange.shade400;
@@ -88,7 +88,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                   children: [
                     // Circle with number and hover animation
                     AnimatedScale(
-                      scale: _isHovering ? 1.1 : 1.0,
+                      scale: _isHovering ? 1.5 : 1.0,
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeOut,
                       child: Container(

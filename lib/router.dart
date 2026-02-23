@@ -59,7 +59,7 @@ class _RouterPageState extends State<RouterPage> {
   }
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -206,7 +206,9 @@ class RouterWorkspace extends StatelessWidget {
     }
 
     return ProcessTimelineView(
-        routerId: selectedRouter!.id, processId: selectedRouter!.processId, selectedRouter: selectedRouter);
+        routerId: selectedRouter!.id,
+        processId: selectedRouter!.processId,
+        selectedRouter: selectedRouter);
   }
 }
 
@@ -308,14 +310,15 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
           jobList[jobIndex] = updatedJob;
         }
       });
-      
+
       // Reopen the details dialog to show updated data
       showJobDetailsDialog(
         context,
         updatedJob,
         onEdit: () => _handleEdit(updatedJob),
         onDelete: () => _handleDelete(updatedJob),
-        onStatusChange: (updatedJobFromStatus) => _handleStatusChange(updatedJobFromStatus),
+        onStatusChange: (updatedJobFromStatus) =>
+            _handleStatusChange(updatedJobFromStatus),
       );
     }
   }
@@ -475,7 +478,8 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
                                 jobs[i],
                                 onEdit: () => _handleEdit(jobs[i]),
                                 onDelete: () => _handleDelete(jobs[i]),
-                                onStatusChange: (updatedJob) => _handleStatusChange(updatedJob),
+                                onStatusChange: (updatedJob) =>
+                                    _handleStatusChange(updatedJob),
                               );
                             },
                           ),
@@ -568,34 +572,29 @@ class _HoverAddButtonState extends State<_HoverAddButton> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: _isHovering ? 80 : 40,
-        height: 400,
-        child: Center(
-          child: AnimatedScale(
+    return Container(
+      width: 40,
+      height: 400,
+      child: Center(
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovering = true),
+          onExit: (_) => setState(() => _isHovering = false),
+          child: Transform.scale(
             scale: _isHovering ? 1.15 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: 60,
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _isHovering 
-                    ? theme.colorScheme.primary 
-                    : (isDark ? theme.colorScheme.surface : Colors.white),
+                    ? Colors.white.withOpacity(0.9)
+                    : Colors.grey.withOpacity(0.3),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
-                    blurRadius: _isHovering ? 12 : 6,
-                    offset: Offset(0, _isHovering ? 4 : 2),
+                    color: Colors.black.withOpacity(_isHovering ? 0.1 : 0.05),
+                    blurRadius: _isHovering ? 8 : 4,
+                    spreadRadius: _isHovering ? 2 : 1,
                   ),
                 ],
               ),
@@ -607,8 +606,8 @@ class _HoverAddButtonState extends State<_HoverAddButton> {
                   child: Icon(
                     Icons.add,
                     color: _isHovering 
-                        ? theme.colorScheme.onPrimary 
-                        : theme.colorScheme.onSurfaceVariant,
+                        ? css.darkBlue 
+                        : Colors.grey.shade600,
                     size: 32,
                   ),
                 ),

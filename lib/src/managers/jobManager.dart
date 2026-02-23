@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:universal_html/html.dart' hide VoidCallback;
 import '../data/jobData.dart';
 import 'package:css/css.dart' as css;
 import 'package:intl/intl.dart';
@@ -970,7 +971,77 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      // Workers Section
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Assign Workers',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: css.darkGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            decoration: InputDecoration(
+                              hintText: 'Select a worker', 
+                              hintStyle: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                            ),
+                            dropdownColor: Theme.of(context).cardColor,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
+                              fontSize: 15,
+                            ),
+                            items: ['Test User', 'John Doe', 'Jane Smith', 'None']
+                                .map((worker) => DropdownMenuItem(
+                                      value: worker,
+                                      child: Text(worker),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null && value != 'None' &&
+                                  !_workers.contains(value)) {
+                                setState(() {
+                                  _workers.add(value);
+                                });
+                              }
+                            },
+                          ),
+                          if (_workers.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _workers.map((worker) {
+                                return Chip(
+                                  label: Text(worker),
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _workers.remove(worker);
+                                    });
+                                  },
+                                  backgroundColor: css.darkBlue.withOpacity(0.2),
+                                  labelStyle: TextStyle(color: css.darkBlue),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ],
+                      ),
 
+                      const SizedBox(height: 16),
                       // Dates Section
                       Text(
                         'Timeline',
@@ -1380,7 +1451,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
         startDate: finalStartDate?.toIso8601String() ?? '',
         completeDate: finalCompleteDate?.toIso8601String() ?? '',
         partsReceivedDate: finalPartsReceivedDate?.toIso8601String() ?? '',
-        notes: _notes,
+        notes: _notes,  
         status: _status,
         good: int.tryParse(_goodController.text) ?? 0,
         bad: int.tryParse(_badController.text) ?? 0,

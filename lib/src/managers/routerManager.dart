@@ -956,7 +956,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 ),
                 const SizedBox(height: 16.0),
                 const Text(
-                  "Router Name",
+                  "Router Name*",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w200,
@@ -985,7 +985,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 ),
                 const SizedBox(height: 16.0),
                 const Text(
-                  "Process",
+                  "Process*",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w200,
@@ -1063,7 +1063,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 if (newProcess != null) ...[
                   const SizedBox(height: 8.0),
                   const Text(
-                    'New Process Name',
+                    'New Process Name*',
                     style: TextStyle(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w200,
@@ -1179,7 +1179,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 const SizedBox(height: 16.0),
                 CheckboxListTile(
                   title: const Text(
-                    'Start with empty process (no template jobs)',
+                    'Start with empty job list',
                     style: TextStyle(
                       fontSize: 14.0,
                       fontWeight: FontWeight.w200,
@@ -1240,7 +1240,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                         Navigator.of(context).pop(
                           RouterModel(
                             title: _routerName,
-                            process: _processId,
+                            process: newProcess ?? _processId,
                             color: _routerColor,
                             isArchived: _isArchived,
                             clearJobs: _clearJobs,
