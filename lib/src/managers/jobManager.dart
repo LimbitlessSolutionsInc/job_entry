@@ -169,6 +169,13 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
         updatedApprovals.add(currentUser.uid);
       }
 
+      // Add current user to partsReceivedBy list if marking as partsReceived
+      List<String> updatedPartsReceivedBy = List.from(widget.job.partsReceivedBy);
+      if (newStatus == JobStatus.partsReceived &&
+          !updatedPartsReceivedBy.contains(currentUser.displayName)) {
+        updatedPartsReceivedBy.add(currentUser.displayName);
+      }
+
       if (newStatus == JobStatus.partsReceived &&
           widget.job.partsReceivedDate.isEmpty) {
         widget.job.partsReceivedDate = DateTime.now().toIso8601String();
@@ -198,6 +205,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
         good: widget.job.good,
         bad: widget.job.bad,
         workers: widget.job.workers,
+        partsReceivedBy: updatedPartsReceivedBy,
         approvers: updatedApprovals,
         numApprovals: widget.job.numApprovals,
       );
@@ -428,6 +436,12 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                       widget.job.workers.isEmpty
                           ? 'None assigned'
                           : widget.job.workers.join(', '),
+                    ),
+                    _buildDetailRow(
+                      'Parts Received By:',
+                      widget.job.partsReceivedBy.isEmpty
+                          ? 'None assigned'
+                          : widget.job.partsReceivedBy.join(', '),
                     ),
                     _buildDetailRow(
                       'Job Completion Verified By:',
@@ -699,6 +713,12 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
         finalCompleteDate = DateTime.now();
       }
 
+      // Set partsReceivedBy if status is partsReceived
+      List<String> finalPartsReceivedBy = [];
+      if (_status == JobStatus.partsReceived) {
+        finalPartsReceivedBy = [currentUser.displayName];
+      }
+
       final newJob = JobData(
         id: JobManagerState._uuid.v4(), // Generate unique job ID
         title: _titleController.text.trim(),
@@ -715,6 +735,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
         good: _good,
         bad: _bad,
         workers: _workers,
+        partsReceivedBy: finalPartsReceivedBy,
         approvers: _approvers,
       );
 
@@ -1380,6 +1401,14 @@ class _EditJobDialogState extends State<EditJobDialog> {
         updatedApprovals.add(currentUser.uid);
       }
 
+      // Add current user to partsReceivedBy list if marking as partsReceived
+      List<String> updatedPartsReceivedBy = List.from(widget.job.partsReceivedBy);
+      if (_status == JobStatus.partsReceived &&
+          widget.job.status != JobStatus.partsReceived &&
+          !updatedPartsReceivedBy.contains(currentUser.displayName)) {
+        updatedPartsReceivedBy.add(currentUser.displayName);
+      }
+
       // Auto-set dates based on status if not manually set
       DateTime? finalPartsReceivedDate = _partsReceivedDate;
       if (_status == JobStatus.partsReceived &&
@@ -1460,6 +1489,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
         good: int.tryParse(_goodController.text) ?? 0,
         bad: int.tryParse(_badController.text) ?? 0,
         workers: _workers,
+        partsReceivedBy: updatedPartsReceivedBy,
         approvers: updatedApprovals,
         numApprovals: widget.job.numApprovals,
       );

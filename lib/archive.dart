@@ -133,29 +133,6 @@ class _ArchivePageState extends State<ArchivePage> {
       }
     }
 
-    String getRouterNames() {
-      if (packet.routerIds.isEmpty) return 'None';
-      
-      final names = packet.routerIds
-          .map((id) {
-            final foundRouter = RouterManager.routers.firstWhere(
-              (r) => r.id == id,
-              orElse: () => RouterData(
-                id: '',
-                title: 'Unknown Router',
-                color: 0,
-                dateCreated: '',
-                createdBy: '',
-                processId: '',
-                processType: 'Unknown',
-              ),
-            );
-            return foundRouter.title;
-          })
-          .toList();
-      return names.join(', ');
-    }
-
     Widget buildDetailRow(String label, String value) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -163,19 +140,24 @@ class _ArchivePageState extends State<ArchivePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 150,
+              width: 140,
               child: Text(
                 label,
                 style: const TextStyle(
-                  fontWeight: FontWeight.w600,
                   fontSize: 15.0,
+                  fontWeight: FontWeight.w200,
+                  color: css.darkGrey,
                 ),
               ),
             ),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 value,
-                style: const TextStyle(fontSize: 15.0),
+                style: TextStyle(
+                  fontSize: 15.0,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
           ],
@@ -183,66 +165,195 @@ class _ArchivePageState extends State<ArchivePage> {
       );
     }
 
+    final isArchived = packet.dateArchived.isNotEmpty;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: const BoxConstraints(maxWidth: 700),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const SizedBox(width: 40),
-                      const CloseButton(),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  // Header
                   Container(
-                    width: double.infinity,
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).dividerColor),
+                      color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(4),
+                      ),
                     ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                packet.title,
+                                style: TextStyle(
+                                  fontSize: 22.0,
+                                  fontWeight: FontWeight.normal,
+                                  color: css.CSS.lsiTheme.primaryColor,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isArchived ? Colors.grey : Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isArchived ? 'Archived' : 'Active',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w200,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const CloseButton(),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.inventory_2_outlined,
-                              size: 32,
-                              color: css.CSS.lsiTheme.secondaryHeaderColor,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Packet Details',
-                              style: TextStyle(
-                                fontSize: 24.0,
-                                fontWeight: FontWeight.bold,
-                                color: css.CSS.lsiTheme.secondaryHeaderColor,
-                              ),
-                            ),
-                          ],
+                        // Basic Information Section
+                        Text(
+                          'Packet Info',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
-                        const Divider(height: 32, thickness: 1.5),
+                        const SizedBox(height: 16),
                         buildDetailRow('Packet Name:', packet.title),
                         if (packet.notes.isNotEmpty)
                           buildDetailRow('Notes:', packet.notes),
+                        const Divider(height: 32),
+
+                        // Timeline Section
+                        Text(
+                          'Timeline',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         buildDetailRow('Created By:', packet.createdBy),
                         buildDetailRow('Date Created:', formatDate(packet.dateCreated)),
-                        buildDetailRow('Routers (${packet.routerIds.length}):', getRouterNames()),
-                        if (packet.dateArchived.isNotEmpty)
-                          buildDetailRow('Date Archived:', formatDate(packet.dateArchived)),
-                        if (packet.archivedBy.isNotEmpty)
+                        if (isArchived) ...[
                           buildDetailRow('Archived By:', packet.archivedBy),
+                          buildDetailRow('Date Archived:', formatDate(packet.dateArchived)),
+                        ],
+                        const Divider(height: 32),
+
+                        // Routers Section
+                        Text(
+                          'Routers (${packet.routerIds.length})',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (packet.routerIds.isEmpty)
+                          Text(
+                            'No routers in this packet',
+                            style: TextStyle(
+                              fontSize: 15.0,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                              ),
+                            ),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: packet.routerIds.map((routerId) {
+                                final router = RouterManager.routers.firstWhere(
+                                  (r) => r.id == routerId,
+                                  orElse: () => RouterData(
+                                    id: '',
+                                    title: 'Unknown Router',
+                                    color: 0,
+                                    dateCreated: '',
+                                    createdBy: '',
+                                    processId: '',
+                                    processType: 'Unknown',
+                                  ),
+                                );
+                                return InkWell(
+                                  onTap: router.id.isNotEmpty
+                                      ? () => _showRouterDetails(context, router)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Color(router.color).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Color(router.color),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          router.title,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        if (router.id.isNotEmpty) ...[
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.open_in_new,
+                                            size: 14,
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -268,30 +379,6 @@ class _ArchivePageState extends State<ArchivePage> {
       }
     }
 
-    String getConnectedRouterNames() {
-      if (router.connectedRouters.isEmpty) return 'None';
-      
-      final names = router.connectedRouters
-          .map((id) {
-            final foundRouter = RouterManager.routers.firstWhere(
-              (r) => r.id == id,
-              orElse: () => RouterData(
-                id: '',
-                title: 'Unknown Router',
-                color: 0,
-                dateCreated: '',
-                createdBy: '',
-                processId: '',
-                processType: 'Unknown',
-              ),
-            );
-            return foundRouter.title;
-          })
-          .toList();
-      
-      return names.join(', ');
-    }
-
     Widget buildDetailRow(String label, String value) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -299,12 +386,12 @@ class _ArchivePageState extends State<ArchivePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 120,
+              width: 140,
               child: Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.w200,
                   color: css.darkGrey,
                 ),
               ),
@@ -313,9 +400,9 @@ class _ArchivePageState extends State<ArchivePage> {
             Expanded(
               child: Text(
                 value,
-                style: const TextStyle(
-                  fontSize: 16.0,
-                  color: Colors.black87,
+                style: TextStyle(
+                  fontSize: 15.0,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -324,66 +411,198 @@ class _ArchivePageState extends State<ArchivePage> {
       );
     }
 
+    // Get process type from the router first, fall back to map lookup
+    final processType = router.processType.isNotEmpty 
+        ? router.processType 
+        : (RouterManager.processIdToType[router.processId] ?? 'Unknown');
+    final isArchived = router.dateArchived.isNotEmpty;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: const BoxConstraints(maxWidth: 700),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const SizedBox(width: 40),
-                      const CloseButton(),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  // Header
                   Container(
-                    width: double.infinity,
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Theme.of(context).dividerColor),
+                      color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(4),
+                      ),
                     ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                router.title,
+                                style: TextStyle(
+                                  fontSize: 22.0,
+                                  fontWeight: FontWeight.normal,
+                                  color: css.CSS.lsiTheme.primaryColor,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isArchived ? Colors.grey : Colors.green,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isArchived ? 'Archived' : 'Active',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w200,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const CloseButton(),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 32,
-                              color: css.CSS.lsiTheme.secondaryHeaderColor,
+                        // Basic Information Section
+                        Text(
+                          'Router Info',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        buildDetailRow('Router Name:', router.title),
+                        buildDetailRow('Process Type:', processType),
+                        const Divider(height: 32),
+
+                        // Timeline Section
+                        Text(
+                          'Timeline',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        buildDetailRow('Created By:', router.createdBy),
+                        buildDetailRow('Date Created:', formatDate(router.dateCreated)),
+                        if (isArchived) ...[
+                          buildDetailRow('Archived By:', router.archivedBy),
+                          buildDetailRow('Date Archived:', formatDate(router.dateArchived)),
+                        ],
+                        const Divider(height: 32),
+
+                        // Connected Routers Section
+                        Text(
+                          'Connected Routers',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.normal,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (router.connectedRouters.isEmpty)
+                          Text(
+                            'No connected routers',
+                            style: TextStyle(
+                              fontSize: 15.0,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              "Router Details",
-                              style: TextStyle(
-                                fontSize: 24.0,
-                                fontWeight: FontWeight.bold,
-                                color: css.CSS.lsiTheme.secondaryHeaderColor,
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
                               ),
                             ),
-                          ],
-                        ),
-                        const Divider(height: 32, thickness: 1.5),
-                        buildDetailRow("Router Name:", router.title),
-                        //buildDetailRow("Router ID:", router.id),
-                        //buildDetailRow("Process ID:", router.processId),
-                        buildDetailRow("Created By:", router.createdBy),
-                        buildDetailRow("Date Created:", formatDate(router.dateCreated)),
-                        buildDetailRow("Connected Routers:", getConnectedRouterNames()),
-                        if (router.dateArchived.isNotEmpty)
-                          buildDetailRow("Date Archived:", formatDate(router.dateArchived)),
-                        if (router.archivedBy.isNotEmpty)
-                          buildDetailRow("Archived By:", router.archivedBy),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: router.connectedRouters.map((routerId) {
+                                final connectedRouter = RouterManager.routers.firstWhere(
+                                  (r) => r.id == routerId,
+                                  orElse: () => RouterData(
+                                    id: '',
+                                    title: 'Unknown Router',
+                                    color: 0,
+                                    dateCreated: '',
+                                    createdBy: '',
+                                    processId: '',
+                                    processType: 'Unknown',
+                                  ),
+                                );
+                                return InkWell(
+                                  onTap: connectedRouter.id.isNotEmpty
+                                      ? () => _showRouterDetails(context, connectedRouter)
+                                      : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Color(connectedRouter.color).withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Color(connectedRouter.color),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          connectedRouter.title,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
+                                        ),
+                                        if (connectedRouter.id.isNotEmpty) ...[
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.open_in_new,
+                                            size: 14,
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         const SizedBox(height: 16),
                       ],
                     ),

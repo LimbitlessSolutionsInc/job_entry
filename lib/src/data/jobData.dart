@@ -19,6 +19,7 @@ class JobData {
     required this.startDate,
     required this.partsReceivedDate,
     this.workers = const [],
+    this.partsReceivedBy = const [],
     required this.notes,
     required this.status,
     required this.good,
@@ -53,6 +54,7 @@ class JobData {
   String createdBy;
   String id;
   List<String> workers;
+  List<String> partsReceivedBy;
   List<String> approvers;
   String dueDate;
   String startDate;
