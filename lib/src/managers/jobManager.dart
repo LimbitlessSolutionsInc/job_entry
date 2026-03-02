@@ -1267,6 +1267,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
   late List<String> _workers;
   late List<String> _approvers;
   Map<String, String> _notes = {};
+  
+  String? get _selectedWorker => null;
 
   @override
   void initState() {
@@ -1782,6 +1784,56 @@ class _EditJobDialogState extends State<EditJobDialog> {
                           'Complete Date', _completeDate, 'complete'),
                       const SizedBox(height: 20),
 
+                      // IN PROGRESS: Assigning workers when editing job
+                      /* Text(
+                        'Team',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Assign Workers',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: css.darkGrey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: _selectedWorker,
+                            dropdownColor: Theme.of(context).cardColor,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                            ),
+                            items: widget.job.workers
+                                .map((worker) => DropdownMenuItem(
+                                      value: worker,
+                                      child: Text(worker),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              if (value != null && !_workers.contains(value)) {
+                                setState(() {
+                                  _workers.add(value);
+                                  _selectedWorker = null;
+                                });
+                              }
+                            },
+                          ),
+                      */
                       // Quality Metrics
                       Text(
                         'Quality Metrics',
@@ -1948,6 +2000,9 @@ String formatDate(String isoDate) {
   if (isoDate.isEmpty) return 'Not set';
   try {
     final date = DateTime.parse(isoDate);
+    if(date.hour == 0 && date.minute == 0) {
+        return DateFormat('MM/dd/yyyy').format(date);
+    }
     return DateFormat('MMM dd, yyyy h:mm a').format(date);
   } catch (e) {
     return isoDate;

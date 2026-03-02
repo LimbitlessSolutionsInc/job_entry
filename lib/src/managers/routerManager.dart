@@ -9,6 +9,10 @@ import 'package:css/css.dart' as css;
 import '../models/router_model.dart';
 import '../data/processData.dart';
 import 'package:uuid/uuid.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 
 class RouterManager extends StatefulWidget {
   const RouterManager({
@@ -23,9 +27,6 @@ class RouterManager extends StatefulWidget {
   static get routerJobs => RouterManagerState.routerJobs;
 
   static get processIdToType => RouterManagerState.processIdToType;
-  // final void Function(String title) onAdd;
-  // final void Function(String id, String newTitle) onEdit;
-  // final void Function(String id) onDelete;
 
   @override
   State<RouterManager> createState() => RouterManagerState();
@@ -455,6 +456,11 @@ class RouterManagerState extends State<RouterManager> {
                             ],
                           ),
                         ),
+                        IconButton(
+                          icon: const Icon(Icons.download),
+                          tooltip: 'Export to PDF',
+                          onPressed: () => _exportRouterToPdf(context, router),
+                        ),
                         const CloseButton(),
                       ],
                     ),
@@ -636,9 +642,316 @@ class RouterManagerState extends State<RouterManager> {
     if (isoDate.isEmpty) return 'N/A';
     try {
       final date = DateTime.parse(isoDate);
+      if(date.hour == 0 && date.minute == 0) {
+        return DateFormat('MM/dd/yyyy').format(date);
+      }
       return '${date.month}/${date.day}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return isoDate;
+    }
+  }
+
+  static Future<void> _exportRouterToPdf(BuildContext context, RouterData router) async {
+    final processType = router.processType.isNotEmpty 
+        ? router.processType 
+        : (RouterManagerState.processIdToType[router.processId] ?? 'Unknown');
+    final isArchived = router.dateArchived.isNotEmpty;
+    final jobs = RouterManagerState.routerJobs[router.id] ?? [];
+    
+    // Get connected router details
+    final connectedRouterDetails = router.connectedRouters.map((routerId) {
+      return RouterManagerState.routers.firstWhere(
+        (r) => r.id == routerId,
+        orElse: () => RouterData(
+          id: '',
+          title: 'Unknown Router',
+          color: 0,
+          dateCreated: '',
+          createdBy: '',
+          processId: '',
+          processType: 'Unknown',
+        ),
+      );
+    }).toList();
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'Router Details',
+                    style: pw.TextStyle(
+                      fontSize: 24,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    router.title,
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.normal,
+                    ),
+                  ),
+                  pw.SizedBox(height: 8),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: pw.BoxDecoration(
+                      color: isArchived ? PdfColors.grey : PdfColors.green,
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                    ),
+                    child: pw.Text(
+                      isArchived ? 'Archived' : 'Active',
+                      style: const pw.TextStyle(
+                        color: PdfColors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+
+            // Router Information
+            pw.Text(
+              'Router Information',
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            _buildPdfDetailRow('Router Name:', router.title),
+            _buildPdfDetailRow('Process Type:', processType),
+            pw.SizedBox(height: 16),
+
+            pw.Text(
+              'Timeline',
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            _buildPdfDetailRow('Created By:', router.createdBy),
+            _buildPdfDetailRow('Created On:', _formatDate(router.dateCreated)),
+            if (isArchived) ...[
+              _buildPdfDetailRow('Archived By:', router.archivedBy),
+              _buildPdfDetailRow('Archived On:', _formatDate(router.dateArchived)),
+            ],
+            pw.SizedBox(height: 16),
+
+            // Connected Routers
+            pw.Text(
+              'Connected Routers',
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            if (connectedRouterDetails.isEmpty)
+              pw.Text('No connected routers', style: const pw.TextStyle(fontSize: 12))
+            else
+              ...connectedRouterDetails.map((connectedRouter) {
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 4, left: 8),
+                  child: pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('- ', style: const pw.TextStyle(fontSize: 12)),
+                      pw.Expanded(
+                        child: pw.Text(
+                          '${connectedRouter.title} (Created by: ${connectedRouter.createdBy})',
+                          style: const pw.TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            pw.SizedBox(height: 16),
+
+            // Jobs List
+            pw.Text(
+              'Jobs',
+              style: pw.TextStyle(
+                fontSize: 16,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            if (jobs.isEmpty)
+              pw.Text('No jobs in this router', style: const pw.TextStyle(fontSize: 12))
+            else
+              ...jobs.asMap().entries.map((entry) {
+                final index = entry.key;
+                final job = entry.value;
+                final statusText = _formatJobStatus(job.status);
+                
+                return pw.Container(
+                  margin: const pw.EdgeInsets.only(bottom: 16),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      // Job title with status
+                      pw.Row(
+                        children: [
+                          pw.Expanded(
+                            child: pw.Text(
+                              '${index + 1}. ${job.title}',
+                              style: pw.TextStyle(
+                                fontSize: 14,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: pw.BoxDecoration(
+                              color: _getStatusPdfColor(job.status),
+                              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                            ),
+                            child: pw.Text(
+                              statusText,
+                              style: const pw.TextStyle(
+                                color: PdfColors.white,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      // Job details table
+                      pw.Table(
+                        border: pw.TableBorder.all(color: PdfColors.grey400),
+                        columnWidths: {
+                          0: const pw.FlexColumnWidth(1),
+                          1: const pw.FlexColumnWidth(2),
+                        },
+                        children: [
+                          _buildJobTableRow('Start Date:', _formatDate(job.startDate)),
+                          _buildJobTableRow('Completion Date:', _formatDate(job.completeDate)),
+                          _buildJobTableRow('Due Date:', _formatDate(job.dueDate)),
+                          _buildJobTableRow('Received On:', _formatDate(job.partsReceivedDate)),
+                          _buildJobTableRow('Received By:', job.partsReceivedBy.isEmpty ? 'None' : job.partsReceivedBy.join(', ')),
+                          _buildJobTableRow('Workers:', job.workers.isEmpty ? 'None' : job.workers.join(', ')),
+                          _buildJobTableRow('Completion Verified By:', job.approvers.isEmpty ? 'None' : job.approvers.join(', ')),
+                          _buildJobTableRow('Number of Good Parts:', '${job.good}'),
+                          _buildJobTableRow('Number of Bad Parts:', '${job.bad}'),
+                          _buildJobTableRow('Notes:', job.notes.isEmpty 
+                            ? 'None' 
+                            : job.notes.entries.map((e) => '${e.key}: ${e.value}').join('; ')),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+          ];
+        },
+      ),
+    );
+
+    // generating file name
+    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final fileName = '${router.title}_$dateStr.pdf';
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: fileName,
+    );
+  }
+
+  static pw.Widget _buildPdfDetailRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 120,
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 12,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: const pw.TextStyle(fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static pw.TableRow _buildJobTableRow(String label, String value) {
+    return pw.TableRow(
+      children: [
+        pw.Padding(
+          padding: const pw.EdgeInsets.all(6),
+          child: pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+        pw.Padding(
+          padding: const pw.EdgeInsets.all(6),
+          child: pw.Text(
+            value,
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _formatJobStatus(JobStatus status) {
+    switch (status) {
+      case JobStatus.notStarted:
+        return 'Not Started';
+      case JobStatus.partsReceived:
+        return 'Parts Received';
+      case JobStatus.inProgress:
+        return 'In Progress';
+      case JobStatus.completed:
+        return 'Completed';
+      case JobStatus.skipped:
+        return 'Skipped';
+    }
+  }
+
+  static PdfColor _getStatusPdfColor(JobStatus status) {
+    switch (status) {
+      case JobStatus.notStarted:
+        return PdfColors.grey;
+      case JobStatus.partsReceived:
+        return PdfColors.blue;
+      case JobStatus.inProgress:
+        return PdfColors.orange;
+      case JobStatus.completed:
+        return PdfColors.green;
+      case JobStatus.skipped:
+        return PdfColors.red;
     }
   }
 

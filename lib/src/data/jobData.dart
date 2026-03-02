@@ -29,26 +29,6 @@ class JobData {
     //this.prevJobs,
   });
 
-  // factory JobData.fromPrevious(JobData oldJob) {
-  //   return JobData(
-  //     title: oldJob.title,
-  //     description: oldJob.description,
-  //     dateCreated: DateTime.now().toIso8601String(),
-  //     dueDate: oldJob.dueDate,
-  //     startDate: oldJob.startDate,
-  //     createdBy: oldJob.createdBy,
-  //     processId: oldJob.processId,
-  //     notes: oldJob.notes,
-  //     status: JobStatus.notStarted,
-  //     good: oldJob.good,
-  //     bad: 0,
-  //     workers: oldJob.workers,
-  //     approvers: oldJob.approvers,
-  //     isArchive: false,
-  //     prevJobs: oldJob.prevJobs,
-  //   );
-  // }
-
   String title;
   String dateCreated;
   String createdBy;

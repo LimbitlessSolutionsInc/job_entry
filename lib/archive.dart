@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../src/organization/organization.dart';
 import '../styles/globals.dart';
 import 'package:css/css.dart' as css;
@@ -373,6 +374,9 @@ class _ArchivePageState extends State<ArchivePage> {
       if (isoDate.isEmpty) return 'N/A';
       try {
         final date = DateTime.parse(isoDate);
+        if(date.hour == 0 && date.minute == 0) {
+        return DateFormat('MM/dd/yyyy').format(date);
+        }
         return '${date.month}/${date.day}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
       } catch (e) {
         return isoDate;
