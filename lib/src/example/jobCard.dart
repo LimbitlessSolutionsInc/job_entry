@@ -11,15 +11,11 @@ class JobTimelineCard extends StatefulWidget {
     super.key,
     required this.job,
     required this.jobNumber,
-    required this.isFirst,
-    required this.isLast,
     required this.onTap,
   });
 
   final JobData job;
   final int jobNumber;
-  final bool isFirst;
-  final bool isLast;
   final VoidCallback onTap;
 
   @override
@@ -31,130 +27,115 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Get theme for adaptive colors
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    // Determine visual state based on job status
+
     final isActive = widget.job.status == JobStatus.inProgress;
     final isCompleted = widget.job.status == JobStatus.completed;
-    final isStarted = widget.job.status != JobStatus.notStarted && widget.job.status != JobStatus.skipped;
-    
-    // Brighter opacity for all cards to make them stand out
-    final opacity = 1.0; // Can adjust this value for fading out jobs
 
-    // Determine circle color based on status - theme aware
-    Color circleColor;
-    Color borderColor;
-    Color textColor;
-    
+    Color accentColor;
     if (isCompleted) {
-      circleColor = Colors.green;
-      borderColor = Colors.green.shade700;
-      textColor = Colors.white;
+      accentColor = Colors.green;
     } else if (isActive) {
-      circleColor = theme.colorScheme.primary;
-      borderColor = theme.colorScheme.primary;
-      textColor = css.darkBlue;
+      accentColor = theme.colorScheme.primary;
     } else if (widget.job.status == JobStatus.partsReceived) {
-      circleColor = isDark ? Colors.orange.shade700 : Colors.orange.shade100;
-      borderColor = Colors.orange.shade400;
-      textColor = isDark ? Colors.orange.shade100 : Colors.orange.shade900;
+      accentColor = Colors.orange.shade400;
     } else {
-      circleColor = theme.colorScheme.surfaceVariant;
-      borderColor = theme.colorScheme.outline;
-      textColor = theme.colorScheme.onSurfaceVariant;
+      accentColor = theme.colorScheme.outline;
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Job card with background and elevation
-        MouseRegion(
-          onEnter: (_) => setState(() => _isHovering = true),
-          onExit: (_) => setState(() => _isHovering = false),
-          child: GestureDetector(
-            onTap: widget.onTap,
-            child: Opacity(
-              opacity: opacity,
-              child: Container(
-                width: 200,
-                height: 250,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Circle with number and hover animation
-                    AnimatedScale(
-                      scale: _isHovering ? 1.5 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeOut,
-                      child: Container(
-                        width: 75,
-                        height: 75,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: circleColor,
-                          border: Border.all(
-                            color: borderColor,
-                            width: 2,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            widget.jobNumber.toString(),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                          ),
-                        ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.all(14),
+          height: 210,
+          decoration: BoxDecoration(
+            color: theme.cardColor.withOpacity(0.92),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: accentColor,
+              width: _isHovering ? 2.4 : 1.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(_isHovering ? 0.14 : 0.08),
+                blurRadius: _isHovering ? 14 : 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Job ${widget.jobNumber}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    // Job title
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          widget.job.title ?? 'Untitled',
-                          textAlign: TextAlign.center,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: (isActive || isCompleted) ? FontWeight.w600 : FontWeight.w500,
-                            color: (isActive || isCompleted) 
-                                ? theme.colorScheme.onSurface 
-                                : theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.drag_indicator,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                widget.job.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-            ),
+              const Spacer(),
+              Text(
+                _statusLabel(widget.job.status),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
-        // Connecting line (except for last job)
-        if (!widget.isLast)
-          Opacity(
-            opacity: opacity,
-            child: Container(
-              width: 40,
-              height: 2,
-              margin: const EdgeInsets.only(top: 24),
-              color: (isCompleted) 
-                  ? Colors.green 
-                  : (isActive) 
-                      ? theme.colorScheme.primary 
-                      : theme.colorScheme.outline,
-            ),
-          ),
-      ],
+      ),
     );
+  }
+
+  String _statusLabel(JobStatus status) {
+    switch (status) {
+      case JobStatus.notStarted:
+        return 'Not Started';
+      case JobStatus.partsReceived:
+        return 'Parts Received';
+      case JobStatus.inProgress:
+        return 'In Progress';
+      case JobStatus.completed:
+        return 'Completed';
+      case JobStatus.skipped:
+        return 'Skipped';
+    }
   }
 }

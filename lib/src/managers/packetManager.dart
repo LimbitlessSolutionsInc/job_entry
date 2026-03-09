@@ -41,11 +41,11 @@ class _PacketManagerState extends State<PacketManager> {
     // Sample packet data
     final packet1Id = _uuid.v4();
     final packet2Id = _uuid.v4();
-    
+
     // Get some router IDs from RouterManager if available
     final availableRouters = RouterManager.routers;
     final routerIds = availableRouters.take(2).map((r) => r.id).toList();
-    
+
     packets = [
       PacketData(
         id: packet1Id,
@@ -68,7 +68,8 @@ class _PacketManagerState extends State<PacketManager> {
     ];
   }
 
-  void _addPacket(String title, String notes, int color, List<String> routerIds) {
+  void _addPacket(
+      String title, String notes, int color, List<String> routerIds) {
     setState(() {
       final newPacket = PacketData(
         id: _uuid.v4(),
@@ -84,7 +85,8 @@ class _PacketManagerState extends State<PacketManager> {
     });
   }
 
-  void _editPacket(String id, String title, String notes, int color, List<String> routerIds) {
+  void _editPacket(String id, String title, String notes, int color,
+      List<String> routerIds) {
     setState(() {
       final index = packets.indexWhere((p) => p.id == id);
       if (index != -1) {
@@ -168,6 +170,7 @@ class _PacketManagerState extends State<PacketManager> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
             const SizedBox(width: 12),
             const Text('Delete Packet'),
           ],
@@ -241,9 +244,19 @@ class _PacketManagerState extends State<PacketManager> {
             onPressed: () {
               _deletePacket(id);
               Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Packet "${packet.title}" deleted'),
+                  backgroundColor: Colors.red.shade700,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete Permanently'),
           ),
         ],
       ),
@@ -310,7 +323,7 @@ class _PacketManagerState extends State<PacketManager> {
                   itemBuilder: (context, index) {
                     final packet = activePackets[index];
                     final isSelected = packet.id == selectedPacketId;
-                    
+
                     return PacketCard(
                       packet: packet,
                       isSelected: isSelected,
@@ -345,7 +358,7 @@ class PacketCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final routerCount = packet.routerIds.length;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: isSelected ? 4 : 1,
@@ -364,7 +377,7 @@ class PacketCard extends StatelessWidget {
           child: Row(
             children: [
               const SizedBox(width: 16),
-              
+
               // Packet info
               Expanded(
                 child: Column(
@@ -394,7 +407,7 @@ class PacketCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Arrow icon
               Icon(
                 Icons.chevron_right,
@@ -483,7 +496,7 @@ class PacketDetailsDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     if (routers.isEmpty)
                       Container(
                         padding: const EdgeInsets.all(32),
@@ -505,9 +518,11 @@ class PacketDetailsDialog extends StatelessWidget {
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               title: Text(router.title),
-                              subtitle: Text('Created ${_formatDate(router.dateCreated)}'),
+                              subtitle: Text(
+                                  'Created ${_formatDate(router.dateCreated)}'),
                               trailing: TextButton.icon(
-                                onPressed: () => _showRouterDetails(context, router),
+                                onPressed: () =>
+                                    _showRouterDetails(context, router),
                                 icon: const Icon(Icons.open_in_new, size: 16),
                                 label: const Text('View'),
                               ),
@@ -580,8 +595,6 @@ class PacketDetailsDialog extends StatelessWidget {
   }
 }
 
-
-
 // Create Packet Dialog
 class CreatePacketDialog extends StatefulWidget {
   const CreatePacketDialog({
@@ -589,7 +602,8 @@ class CreatePacketDialog extends StatefulWidget {
     required this.onSave,
   });
 
-  final Function(String title, String notes, int color, List<String> routerIds) onSave;
+  final Function(String title, String notes, int color, List<String> routerIds)
+      onSave;
 
   @override
   State<CreatePacketDialog> createState() => _CreatePacketDialogState();
@@ -627,11 +641,12 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final availableRouters = RouterManager.routers.where((r) => r.dateArchived.isEmpty).toList();
+    final availableRouters =
+        RouterManager.routers.where((r) => r.dateArchived.isEmpty).toList();
 
     return Dialog(
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: const BoxConstraints(maxWidth: 800),
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -681,7 +696,7 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Color picker
                   Text(
                     'Color',
@@ -719,7 +734,7 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Router selection
                   Text(
                     'Add Routers (optional)',
@@ -729,7 +744,8 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
                   if (availableRouters.isEmpty)
                     Text(
                       'No routers available',
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      style:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                     )
                   else
                     Container(
@@ -743,8 +759,9 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
                         itemCount: availableRouters.length,
                         itemBuilder: (context, index) {
                           final router = availableRouters[index];
-                          final isSelected = _selectedRouterIds.contains(router.id);
-                          
+                          final isSelected =
+                              _selectedRouterIds.contains(router.id);
+
                           return CheckboxListTile(
                             value: isSelected,
                             onChanged: (value) {
@@ -757,21 +774,13 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
                               });
                             },
                             title: Text(router.title),
-                            secondary: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: Color(router.color),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
                           );
                         },
                       ),
                     ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Actions
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -819,7 +828,9 @@ class EditPacketDialog extends StatefulWidget {
   });
 
   final PacketData packet;
-  final Function(String title, String description, int color, List<String> routerIds) onSave;
+  final Function(
+          String title, String description, int color, List<String> routerIds)
+      onSave;
 
   @override
   State<EditPacketDialog> createState() => _EditPacketDialogState();
@@ -866,7 +877,8 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final availableRouters = RouterManager.routers.where((r) => r.dateArchived.isEmpty).toList();
+    final availableRouters =
+        RouterManager.routers.where((r) => r.dateArchived.isEmpty).toList();
 
     return Dialog(
       child: Container(
@@ -885,7 +897,6 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                     style: theme.textTheme.headlineMedium,
                   ),
                   const SizedBox(height: 24),
-                  
                   TextFormField(
                     controller: _titleController,
                     decoration: const InputDecoration(
@@ -900,7 +911,6 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
                   TextFormField(
                     controller: _notesController,
                     decoration: const InputDecoration(
@@ -910,7 +920,6 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 16),
-                  
                   Text(
                     'Color',
                     style: theme.textTheme.titleMedium,
@@ -931,7 +940,9 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                             color: color,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isSelected ? Colors.white : Colors.transparent,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.transparent,
                               width: 3,
                             ),
                             boxShadow: isSelected
@@ -952,7 +963,6 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                     }).toList(),
                   ),
                   const SizedBox(height: 24),
-                  
                   Text(
                     'Routers in Packet',
                     style: theme.textTheme.titleMedium,
@@ -961,7 +971,8 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                   if (availableRouters.isEmpty)
                     Text(
                       'No routers available',
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      style:
+                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
                     )
                   else
                     Container(
@@ -975,8 +986,9 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                         itemCount: availableRouters.length,
                         itemBuilder: (context, index) {
                           final router = availableRouters[index];
-                          final isSelected = _selectedRouterIds.contains(router.id);
-                          
+                          final isSelected =
+                              _selectedRouterIds.contains(router.id);
+
                           return CheckboxListTile(
                             value: isSelected,
                             onChanged: (value) {
@@ -1001,9 +1013,7 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                         },
                       ),
                     ),
-                  
                   const SizedBox(height: 24),
-                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [

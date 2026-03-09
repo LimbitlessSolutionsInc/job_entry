@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../src/organization/organization.dart';
 import '../src/managers/routerManager.dart';
@@ -231,35 +232,20 @@ class ProcessTimelineView extends StatefulWidget {
 
 class _ProcessTimelineViewState extends State<ProcessTimelineView> {
   final ScrollController _scrollController = ScrollController();
-  bool _canScrollLeft = false;
-  bool _canScrollRight = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_updateScrollButtons);
     // Auto-scroll to first in-progress job after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToFirstInProgressJob();
-      _updateScrollButtons();
     });
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_updateScrollButtons);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _updateScrollButtons() {
-    if (_scrollController.hasClients) {
-      setState(() {
-        _canScrollLeft = _scrollController.offset > 0;
-        _canScrollRight = _scrollController.offset <
-            _scrollController.position.maxScrollExtent;
-      });
-    }
   }
 
   void _scrollToFirstInProgressJob() {
@@ -268,32 +254,10 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
         jobs.indexWhere((job) => job.status == JobStatus.inProgress);
 
     if (firstInProgressIndex != -1 && _scrollController.hasClients) {
-      // Calculate approximate position (card width + hover button width)
-      // Each card is ~300px, hover button ~40-80px, so approximately 350px per item
-      final scrollPosition = firstInProgressIndex * 350.0;
+      final scrollPosition = firstInProgressIndex * 300.0;
       _scrollController.animateTo(
         scrollPosition,
         duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  void _scrollLeft() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.offset - 350,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  void _scrollRight() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.offset + 350,
-        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -364,13 +328,11 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
         final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
         jobList.removeWhere((j) => j.id == job.id);
       });
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _updateScrollButtons());
     }
   }
 
-  /// Handle adding a new job in specific part of timeline
-  Future<void> _handleAdd(int position) async {
+  /// Handle adding a new job at the end of timeline
+  Future<void> _handleAdd() async {
     final newJob = await showCreateJobDialog(
       context,
       routerId: widget.routerId,
@@ -379,10 +341,30 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
     if (newJob != null) {
       setState(() {
         final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
-        jobList.insert(position, newJob);
+        jobList.add(newJob);
       });
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _updateScrollButtons());
+    }
+  }
+
+  void _handleReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final moved = jobList.removeAt(oldIndex);
+      jobList.insert(newIndex, moved);
+    });
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (!_scrollController.hasClients) return;
+    if (event is PointerScrollEvent) {
+      final maxExtent = _scrollController.position.maxScrollExtent;
+      final nextOffset = (_scrollController.offset + event.scrollDelta.dy)
+          .clamp(0.0, maxExtent)
+          .toDouble();
+      _scrollController.jumpTo(nextOffset);
     }
   }
 
@@ -394,44 +376,44 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
     // Get process type from process ID
     final processType = RouterManager.processIdToType[widget.processId];
 
-    Text(
-      'Process: $processType',
-      textAlign: TextAlign.center,
-      style: const TextStyle(
-        fontSize: 20,
-      ),
-    );
+    // Text(
+    //   'Process: $processType',
+    //   textAlign: TextAlign.center,
+    //   style: const TextStyle(
+    //     fontSize: 20,
+    //   ),
+    // );
 
-    if (jobs.isEmpty || processType == null) {
-      return SizedBox(
-        height: 100,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Create a job to get started!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  color: Colors.grey[600],
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  _handleAdd(0);
-                },
-                icon: Icon(
-                  Icons.add_circle_outline,
-                  size: 70,
-                  color: Colors.grey[400],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    // if (jobs.isEmpty || processType == null) {
+    //   return SizedBox(
+    //     height: 100,
+    //     child: Center(
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.center,
+    //         children: [
+    //           Text(
+    //             'Create a job to get started!',
+    //             textAlign: TextAlign.center,
+    //             style: TextStyle(
+    //               fontSize: 28,
+    //               color: Colors.grey[600],
+    //             ),
+    //           ),
+    //           IconButton(
+    //             onPressed: () {
+    //               _handleAdd(0);
+    //             },
+    //             icon: Icon(
+    //               Icons.add_circle_outline,
+    //               size: 70,
+    //               color: Colors.grey[400],
+    //             ),
+    //           ),
+    //         ],
+    //       ),
+    //     ),
+    //   );
+    // }
 
     return Center(
       child: Container(
@@ -455,166 +437,78 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
             child: SizedBox(
               child: Stack(
                 children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    controller: _scrollController,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Add button at the beginning
-                        _HoverAddButton(
-                          onAdd: () => _handleAdd(0),
-                        ),
-                        // Interleave cards and add buttons
-                        for (int i = 0; i < jobs.length; i++) ...[
-                          JobTimelineCard(
-                            job: jobs[i],
-                            jobNumber: i + 1,
-                            isFirst: i == 0,
-                            isLast: i == jobs.length - 1,
-                            onTap: () {
-                              showJobDetailsDialog(
-                                context,
-                                jobs[i],
-                                onEdit: () => _handleEdit(jobs[i]),
-                                onDelete: () => _handleDelete(jobs[i]),
-                                onStatusChange: (updatedJob) =>
-                                    _handleStatusChange(updatedJob),
+                  Listener(
+                    onPointerSignal: _handlePointerSignal,
+                    child: (jobs.isEmpty || processType == null)
+                        ? Center(
+                            child: Text(
+                              'Create a job to get started!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 28,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          )
+                        : ReorderableListView.builder(
+                            key: ValueKey(widget.routerId),
+                            scrollDirection: Axis.horizontal,
+                            //controller: _scrollController,
+                            buildDefaultDragHandles: false,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            itemCount: jobs.length,
+                            onReorder: _handleReorder,
+                            proxyDecorator: (child, index, animation) {
+                              return Material(
+                                color: Colors.transparent,
+                                elevation: 8,
+                                borderRadius: BorderRadius.circular(14),
+                                child: child,
+                              );
+                            },
+                            itemBuilder: (context, i) {
+                              return SizedBox(
+                                key: ValueKey(jobs[i].id),
+                                width: 280,
+                                child: ReorderableDelayedDragStartListener(
+                                  index: i,
+                                  child: JobTimelineCard(
+                                    job: jobs[i],
+                                    jobNumber: i + 1,
+                                    onTap: () {
+                                      showJobDetailsDialog(
+                                        context,
+                                        jobs[i],
+                                        onEdit: () => _handleEdit(jobs[i]),
+                                        onDelete: () => _handleDelete(jobs[i]),
+                                        onStatusChange: (updatedJob) =>
+                                            _handleStatusChange(updatedJob),
+                                      );
+                                    },
+                                  ),
+                                ),
                               );
                             },
                           ),
-                          // Add button after each card
-                          _HoverAddButton(
-                            onAdd: () => _handleAdd(i + 1),
-                          ),
-                        ],
-                      ],
+                  ),
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: FloatingActionButton(
+                      heroTag: 'add-job-${widget.routerId}',
+                      onPressed: _handleAdd,
+                      backgroundColor: css.darkBlue,
+                      foregroundColor: Colors.white,
+                      tooltip: 'Add Job',
+                      child: const Icon(Icons.add),
                     ),
                   ),
-                  // Left navigation arrow
-                  if (_canScrollLeft)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.chevron_left, size: 32),
-                            onPressed: _scrollLeft,
-                            tooltip: 'Scroll left',
-                            color: css.darkBlue,
-                          ),
-                        ),
-                      ),
-                    ),
-                  // Right navigation arrow
-                  if (_canScrollRight)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: Center(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.chevron_right, size: 32),
-                            onPressed: _scrollRight,
-                            tooltip: 'Scroll right',
-                            color: css.darkBlue,
-                          ),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
           )
         ]),
-      ),
-    );
-  }
-}
-
-/// Shows '+' button on hover between job cards
-class _HoverAddButton extends StatefulWidget {
-  const _HoverAddButton({required this.onAdd});
-
-  final VoidCallback onAdd;
-
-  @override
-  State<_HoverAddButton> createState() => _HoverAddButtonState();
-}
-
-class _HoverAddButtonState extends State<_HoverAddButton> {
-  bool _isHovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 400,
-      child: Center(
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovering = true),
-          onExit: (_) => setState(() => _isHovering = false),
-          child: Transform.scale(
-            scale: _isHovering ? 1.15 : 1.0,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isHovering 
-                    ? Colors.white.withOpacity(0.9)
-                    : Colors.grey.withOpacity(0.3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(_isHovering ? 0.1 : 0.05),
-                    blurRadius: _isHovering ? 8 : 4,
-                    spreadRadius: _isHovering ? 2 : 1,
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: widget.onAdd,
-                  customBorder: const CircleBorder(),
-                  child: Icon(
-                    Icons.add,
-                    color: _isHovering 
-                        ? css.darkBlue 
-                        : Colors.grey.shade600,
-                    size: 32,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
