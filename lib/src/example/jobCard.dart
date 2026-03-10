@@ -73,20 +73,15 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      'Job ${widget.jobNumber}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: accentColor,
-                      ),
+                  Text(
+                    widget.job.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.1,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   const Spacer(),
@@ -96,17 +91,6 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                widget.job.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
-                ),
               ),
               const Spacer(),
               Text(

@@ -164,7 +164,7 @@ class _PacketManagerState extends State<PacketManager> {
 
   void _showDeleteConfirmation(String id) {
     final packet = packets.firstWhere((p) => p.id == id);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -179,7 +179,8 @@ class _PacketManagerState extends State<PacketManager> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Are you sure you want to permanently delete this packet?'),
+            const Text(
+                'Are you sure you want to permanently delete this packet?'),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -215,7 +216,9 @@ class _PacketManagerState extends State<PacketManager> {
                             '${packet.routerIds.length} router(s) attached',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                       ],
@@ -460,12 +463,20 @@ class PacketDetailsDialog extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      packet.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          packet.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        CloseButton(
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ]
                     ),
                     if (packet.notes.isNotEmpty) ...[
                       const SizedBox(height: 8),
@@ -537,16 +548,16 @@ class PacketDetailsDialog extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            OutlinedButton.icon(
-                              onPressed: onDelete,
-                              icon: const Icon(Icons.delete_outline),
-                              label: const Text('Delete'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(color: Colors.red),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
+                            // OutlinedButton.icon(
+                            //   onPressed: onDelete,
+                            //   icon: const Icon(Icons.delete_outline),
+                            //   label: const Text('Delete'),
+                            //   style: OutlinedButton.styleFrom(
+                            //     foregroundColor: Colors.red,
+                            //     side: const BorderSide(color: Colors.red),
+                            //   ),
+                            // ),
+                            // const SizedBox(width: 8),
                             OutlinedButton.icon(
                               onPressed: onArchive,
                               icon: const Icon(Icons.archive_outlined),
@@ -556,10 +567,6 @@ class PacketDetailsDialog extends StatelessWidget {
                         ),
                         Row(
                           children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Close'),
-                            ),
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               onPressed: onEdit,

@@ -821,35 +821,55 @@ class RouterManagerState extends State<RouterManager> {
                             ),
                             child: pw.Text(
                               statusText,
-                              style: const pw.TextStyle(
+                              style: pw.TextStyle(
                                 color: PdfColors.white,
                                 fontSize: 10,
+                                letterSpacing: 1.1,
                               ),
                             ),
                           ),
                         ],
                       ),
                       pw.SizedBox(height: 8),
-                      // Job details table
-                      pw.Table(
-                        border: pw.TableBorder.all(color: PdfColors.grey400),
-                        columnWidths: {
-                          0: const pw.FlexColumnWidth(1),
-                          1: const pw.FlexColumnWidth(2),
-                        },
+                      // Job details split into two columns
+                      pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          _buildJobTableRow('Start Date:', _formatDate(job.startDate)),
-                          _buildJobTableRow('Completion Date:', _formatDate(job.completeDate)),
-                          _buildJobTableRow('Due Date:', _formatDate(job.dueDate)),
-                          _buildJobTableRow('Received On:', _formatDate(job.partsReceivedDate)),
-                          _buildJobTableRow('Received By:', job.partsReceivedBy.isEmpty ? 'None' : job.partsReceivedBy.join(', ')),
-                          _buildJobTableRow('Workers:', job.workers.isEmpty ? 'None' : job.workers.join(', ')),
-                          _buildJobTableRow('Completion Verified By:', job.approvers.isEmpty ? 'None' : job.approvers.join(', ')),
-                          _buildJobTableRow('Number of Good Parts:', '${job.good}'),
-                          _buildJobTableRow('Number of Bad Parts:', '${job.bad}'),
-                          _buildJobTableRow('Notes:', job.notes.isEmpty 
-                            ? 'None' 
-                            : job.notes.entries.map((e) => '${e.key}: ${e.value}').join('; ')),
+                          pw.Expanded(
+                            child: pw.Table(
+                              border: pw.TableBorder.all(color: PdfColors.grey400),
+                              columnWidths: {
+                                0: const pw.FlexColumnWidth(1),
+                                1: const pw.FlexColumnWidth(2),
+                              },
+                              children: [
+                                _buildJobTableRow('Workers:', job.workers.isEmpty ? 'None' : job.workers.join(', ')),
+                                _buildJobTableRow('Completion Verified By:', job.approvers.isEmpty ? 'None' : job.approvers.join(', ')),
+                                _buildJobTableRow('Number of Good Parts:', '${job.good}'),
+                                _buildJobTableRow('Number of Bad Parts:', '${job.bad}'),
+                                _buildJobTableRow('Notes:', job.notes.isEmpty
+                                    ? 'None'
+                                    : job.notes.entries.map((e) => '${e.key}: ${e.value}').join('; ')),
+                              ],
+                            ),
+                          ),
+                          pw.SizedBox(width: 10),
+                          pw.Expanded(
+                            child: pw.Table(
+                              border: pw.TableBorder.all(color: PdfColors.grey400),
+                              columnWidths: {
+                                0: const pw.FlexColumnWidth(1),
+                                1: const pw.FlexColumnWidth(2),
+                              },
+                              children: [
+                                _buildJobTableRow('Start Date:', _formatDate(job.startDate)),
+                                _buildJobTableRow('Completion Date:', _formatDate(job.completeDate)),
+                                _buildJobTableRow('Due Date:', _formatDate(job.dueDate)),
+                                _buildJobTableRow('Received On:', _formatDate(job.partsReceivedDate)),
+                                _buildJobTableRow('Received By:', job.partsReceivedBy.isEmpty ? 'None' : job.partsReceivedBy.join(', ')),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -1809,11 +1829,6 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      Icon(
-                        Icons.lock_outline,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      )
                     ]),
           
                 const SizedBox(height: 16.0),

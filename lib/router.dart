@@ -419,20 +419,38 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
       child: Container(
         constraints: const BoxConstraints(maxWidth: 2000),
         child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-          const SizedBox(height: 40),
-          Column(
-            children: [
-              const SizedBox(height: 8),
-              Text(
-                'Router Name: ${widget.selectedRouter?.title ?? 'Unknown Router'}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey,
+          const SizedBox(height: 20),
+          // Column(
+          //   children: [
+          //     Text(
+          //       'Router Name: ${widget.selectedRouter?.title ?? 'Unknown Router'}',
+          //       textAlign: TextAlign.center,
+          //       style: const TextStyle(
+          //         fontSize: 18,
+          //         color: Colors.grey,
+          //       ),
+          //     ),
+          //     const SizedBox(height: 8),
+          //   ],
+          // ),
+          Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+            Tooltip(
+              message:
+                  '${widget.selectedRouter?.title ?? 'Unknown Router'}',
+              waitDuration: const Duration(milliseconds: 250),
+              child: Material(
+                color: Colors.transparent,
+                child: Icon(
+                  Icons.info_outline,
+                  size: 24,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withOpacity(0.9),
                 ),
               ),
-            ],
-          ),
+            ),
+          ]),
           Expanded(
             child: SizedBox(
               child: Stack(
@@ -441,19 +459,33 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
                     onPointerSignal: _handlePointerSignal,
                     child: (jobs.isEmpty || processType == null)
                         ? Center(
-                            child: Text(
-                              'Create a job to get started!',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 28,
-                                color: Colors.grey[600],
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'No jobs yet in this router',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Click the + button to create the first job!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
                             ),
                           )
                         : ReorderableListView.builder(
                             key: ValueKey(widget.routerId),
                             scrollDirection: Axis.horizontal,
-                            //controller: _scrollController,
+                            scrollController: _scrollController,
                             buildDefaultDragHandles: false,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
@@ -471,7 +503,7 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
                               return SizedBox(
                                 key: ValueKey(jobs[i].id),
                                 width: 280,
-                                child: ReorderableDelayedDragStartListener(
+                                child: ReorderableDragStartListener(
                                   index: i,
                                   child: JobTimelineCard(
                                     job: jobs[i],
