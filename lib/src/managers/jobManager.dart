@@ -640,7 +640,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
   final _titleController = TextEditingController();
   DateTime? _partsReceivedDate;
   // Form field values
-  String _priority = 'Medium';
+  String _priority = 'Not set';
   JobStatus _status = JobStatus.notStarted;
   DateTime? _startDate;
   DateTime? _dueDate;
@@ -1268,6 +1268,9 @@ class _EditJobDialogState extends State<EditJobDialog> {
   late List<String> _approvers;
   Map<String, String> _notes = {};
 
+  // worker dropdown state
+  String? _selectedWorker;
+
   @override
   void initState() {
     super.initState();
@@ -1684,7 +1687,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                       vertical: 14,
                                     ),
                                   ),
-                                  items: ['Low', 'Medium', 'High']
+                                  items: ['Low', 'Medium', 'High', 'Not set']
                                       .map((level) => DropdownMenuItem(
                                             value: level,
                                             child: Text(level),
@@ -1781,6 +1784,82 @@ class _EditJobDialogState extends State<EditJobDialog> {
                       _buildDateButton(
                           'Complete Date', _completeDate, 'complete'),
                       const SizedBox(height: 20),
+
+                      Text(
+                        'Assigned Workers',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        value: _selectedWorker,
+                        decoration: InputDecoration(
+                          hintText: 'Select a worker',
+                          hintStyle: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                        dropdownColor: Theme.of(context).cardColor,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 15,
+                        ),
+                        items: ['Test User', 'John Doe', 'Jane Smith', 'None']
+                            .map((worker) => DropdownMenuItem(
+                                  value: worker,
+                                  child: Text(worker),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null && value != 'None' &&
+                              !_workers.contains(value)) {
+                            setState(() {
+                              _workers.add(value);
+                              _selectedWorker = null;
+                            });
+                          }
+                        },
+                      ),
+                      if (_workers.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _workers.map((worker) {
+                            return Chip(
+                              label: Text(worker),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              onDeleted: () {
+                                setState(() {
+                                  _workers.remove(worker);
+                                });
+                              },
+                              backgroundColor:
+                                  Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.1),
+                              labelStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+
+                      const SizedBox(height: 16),
 
                       // Quality Metrics
                       Text(
@@ -1955,25 +2034,25 @@ String formatDate(String isoDate) {
 }
 
 // Legacy function - priority is now stored as String directly
-String parsePriority(dynamic priority) {
-  if (priority is String) return priority;
-  // For backwards compatibility with old int values
-  if (priority is int) {
-    switch (priority) {
-      case 1:
-        return 'Low';
-      case 2:
-      case 3:
-        return 'Medium';
-      case 4:
-      case 5:
-        return 'High';
-      default:
-        return 'Medium';
-    }
-  }
-  return 'Medium';
-}
+// String parsePriority(dynamic priority) {
+//   if (priority is String) return priority;
+//   // For backwards compatibility with old int values
+//   if (priority is int) {
+//     switch (priority) {
+//       case 1:
+//         return 'Low';
+//       case 2:
+//       case 3:
+//         return 'Medium';
+//       case 4:
+//       case 5:
+//         return 'High';
+//       default:
+//         return 'Medium';
+//     }
+//   }
+//   return 'Medium';
+// }
 
 /// Status badge widget
 Widget buildStatusBadge(JobStatus status) {

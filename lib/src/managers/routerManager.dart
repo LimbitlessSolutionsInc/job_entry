@@ -166,7 +166,7 @@ class RouterManagerState extends State<RouterManager> {
         good: 0,
         bad: 0,
         status: JobStatus.notStarted,
-        priority: 'Medium',
+        priority: 'Not set',
         workers: [],
         partsReceivedBy: [],
         approvers: [],

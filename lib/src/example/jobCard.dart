@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import '../../../../styles/globals.dart';
+import '../managers/jobManager.dart';
 import '../data/jobData.dart';
 import '../../../../styles/savedWidgets.dart';
 import 'package:css/css.dart' as css;
@@ -71,19 +72,25 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // title + priority
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    widget.job.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.1,
-                      color: theme.colorScheme.onSurface,
+                  Expanded(
+                    child: Text(
+                      widget.job.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.1,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  _buildPriorityIndicator(),
                   const Spacer(),
                   Icon(
                     Icons.drag_indicator,
@@ -92,14 +99,38 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                   ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                _statusLabel(widget.job.status),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 6),
+              // date/status information (only show if nonempty)
+              if (_dateInfo().isNotEmpty) ...[
+                Text(
+                  _dateInfo(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
+                const SizedBox(height: 4),
+              ],
+              // Text(
+              //   'Created by ${widget.job.createdBy} on ${formatDate(widget.job.dateCreated)}',
+              //   style: TextStyle(
+              //     color: Colors.white,
+              //   ),
+              // ),
+              const Spacer(),
+              Row(
+                children: [
+                  Text(
+                    _statusLabel(widget.job.status),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const Spacer(),
+                  _buildWorkerAvatars(),
+                ],
               ),
             ],
           ),
@@ -121,5 +152,92 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
       case JobStatus.skipped:
         return 'Skipped';
     }
+  }
+
+  /// Returns a widget showing 1/2/3 exclamation marks based on priority string.
+  Widget _buildPriorityIndicator() {
+    final p = widget.job.priority.toLowerCase();
+    int count = 0;
+    if (p == 'low') count = 1;
+    if (p == 'medium') count = 2;
+    if (p == 'high') count = 3;
+    if (p == 'not set') count = 0;
+    if (count == 0) return const SizedBox.shrink();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(count, (_) {
+        return const Padding(
+          padding: EdgeInsets.only(right: 2),
+          child: Text(
+            '!',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.redAccent,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Builds date info
+  String _dateInfo() {
+    final start = widget.job.startDate;
+    final due = widget.job.dueDate;
+    final complete = widget.job.completeDate;
+
+    if (widget.job.status == JobStatus.completed && (due.isEmpty || due == '')) {
+      return '${formatDate(start)} - ${formatDate(complete)}';
+    }
+
+    if (start.isNotEmpty && start != '') {
+      final buf = StringBuffer('Started on ${formatDate(start)}');
+      if (due.isNotEmpty && due != '') {
+        buf.write(' • Due ${formatDate(due)}');
+      }
+      return buf.toString();
+    }
+
+    return '';
+  }
+
+  Widget _buildWorkerAvatars() {
+    final workers = widget.job.workers;
+    if (workers.isEmpty) return const SizedBox.shrink();
+
+    // stack avatars with a slight overlap
+    return SizedBox(
+      width: workers.length * 18.0,
+      height: 20,
+      child: Stack(
+        children: [
+          for (int i = 0; i < workers.length; i++)
+            Positioned(
+              left: i * 16.0,
+              child: CircleAvatar(
+                radius: 10,
+                backgroundColor: Colors.grey.shade800,
+                child: Text(
+                  _initialsFromName(workers[i]),
+                  style: const TextStyle(fontSize: 10, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // extracts initials from worker's name
+  String _initialsFromName(String name) {
+    final parts = name.split(' ');
+    if (parts.length >= 2 && parts[0].isNotEmpty && parts[1].isNotEmpty) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      return parts[0][0].toUpperCase();
+    }
+    return '?';
   }
 }
