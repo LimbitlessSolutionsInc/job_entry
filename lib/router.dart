@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import '../src/organization/organization.dart';
 import '../src/managers/routerManager.dart';
 import '../src/managers/jobManager.dart';
@@ -7,6 +8,7 @@ import '../src/data/routerData.dart';
 import '../src/data/jobData.dart';
 import '../src/data/processTemplates.dart';
 import '../styles/globals.dart';
+import 'dart:math' as math;
 import 'package:css/css.dart' as css;
 import '../src/example/jobCard.dart';
 
@@ -357,6 +359,29 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
     });
   }
 
+  // status pie chart
+  /* Widget _buildStatusPie(List<JobData> jobs) {
+    final relevant = jobs.where((j) => j.status != JobStatus.skipped).toList();
+    if (relevant.isEmpty) return const SizedBox.shrink();
+    final total = relevant.length;
+    final notStarted = relevant.where((j) => j.status == JobStatus.notStarted).length;
+    final inProgress = relevant.where((j) => j.status == JobStatus.inProgress).length;
+    final completed = relevant.where((j) => j.status == JobStatus.completed).length;
+
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: CustomPaint(
+        painter: _PiePainter(
+            notStarted: notStarted,
+            inProgress: inProgress,
+            completed: completed,
+            total: total),
+      ),
+    );
+  } */
+
+
   void _handlePointerSignal(PointerSignalEvent event) {
     if (!_scrollController.hasClients) return;
     if (event is PointerScrollEvent) {
@@ -433,24 +458,28 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
           //     const SizedBox(height: 8),
           //   ],
           // ),
-          Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-            Tooltip(
-              message:
-                  '${widget.selectedRouter?.title ?? 'Unknown Router'}',
-              waitDuration: const Duration(milliseconds: 250),
-              child: Material(
-                color: Colors.transparent,
-                child: Icon(
-                  Icons.info_outline,
-                  size: 24,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withOpacity(0.9),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Tooltip(
+                message:
+                    '${widget.selectedRouter?.title ?? 'Unknown Router'}',
+                waitDuration: const Duration(milliseconds: 250),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 24,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withOpacity(0.9),
+                  ),
                 ),
               ),
-            ),
-          ]),
+              //if (jobs.isNotEmpty) _buildStatusPie(jobs),
+            ],
+          ),
           Expanded(
             child: SizedBox(
               child: Stack(
@@ -573,6 +602,55 @@ class _SectionCard extends StatelessWidget {
     );
   }
 }
+
+// CustomPainter that draws three colored slices inside a circle
+/* class _PiePainter extends CustomPainter {
+  final int notStarted;
+  final int inProgress;
+  final int completed;
+  final int total;
+
+  _PiePainter({
+    required this.notStarted,
+    required this.inProgress,
+    required this.completed,
+    required this.total,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    double startAngle = -math.pi / 2;
+
+    void drawSlice(int count, Color color) {
+      if (count == 0) return;
+      final sweep = (count / total) * 2 * math.pi;
+      paint.color = color;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweep,
+        true,
+        paint,
+      );
+      startAngle += sweep;
+    }
+
+    drawSlice(notStarted, Colors.grey);
+    drawSlice(inProgress, Colors.blue);
+    drawSlice(completed, Colors.green);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PiePainter old) {
+    return old.notStarted != notStarted ||
+        old.inProgress != inProgress ||
+        old.completed != completed ||
+        old.total != total;
+  }
+} */
 
 class _Job extends StatelessWidget {
   const _Job();

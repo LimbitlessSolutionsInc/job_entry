@@ -82,7 +82,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 20,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 1.1,
                         color: theme.colorScheme.onSurface,
@@ -94,7 +94,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                   const Spacer(),
                   Icon(
                     Icons.drag_indicator,
-                    size: 18,
+                    size: 22,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ],
@@ -105,7 +105,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                 Text(
                   _dateInfo(),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 16,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -123,7 +123,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
                   Text(
                     _statusLabel(widget.job.status),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -171,7 +171,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
           child: Text(
             '!',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.redAccent,
             ),
@@ -208,8 +208,8 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
 
     // stack avatars with a slight overlap
     return SizedBox(
-      width: workers.length * 18.0,
-      height: 20,
+      width: workers.length * 26.0,
+      height: 28,
       child: Stack(
         children: [
           for (int i = 0; i < workers.length; i++)

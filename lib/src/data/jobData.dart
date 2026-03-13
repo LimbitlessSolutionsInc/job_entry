@@ -21,6 +21,7 @@ class JobData {
     this.workers = const [],
     this.partsReceivedBy = const [],
     required this.notes,
+    this.documents = const {},
     required this.status,
     required this.good,
     required this.bad,
@@ -39,6 +40,7 @@ class JobData {
   String dueDate;
   String startDate;
   Map<String, dynamic> notes;
+  Map<String, String> documents;
   String processId;
   String priority;
   String completeDate;

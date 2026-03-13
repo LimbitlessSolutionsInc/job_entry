@@ -170,7 +170,8 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
       }
 
       // Add current user to partsReceivedBy list if marking as partsReceived
-      List<String> updatedPartsReceivedBy = List.from(widget.job.partsReceivedBy);
+      List<String> updatedPartsReceivedBy =
+          List.from(widget.job.partsReceivedBy);
       if (newStatus == JobStatus.partsReceived &&
           !updatedPartsReceivedBy.contains(currentUser.displayName)) {
         updatedPartsReceivedBy.add(currentUser.displayName);
@@ -566,6 +567,33 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                       ),
                     ],
 
+                    if (widget.job.documents.isNotEmpty) ...[
+                      const Divider(height: 32),
+                      Text(
+                        'Documents',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ...widget.job.documents.keys.map((key) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                const Text('• ',
+                                    style: TextStyle(fontSize: 14)),
+                                Expanded(
+                                  child: Text(
+                                    key,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
                     const SizedBox(height: 24),
 
                     Row(
@@ -638,6 +666,7 @@ class CreateJobDialog extends StatefulWidget {
 class _CreateJobDialogState extends State<CreateJobDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _documentsController = TextEditingController();
   DateTime? _partsReceivedDate;
   // Form field values
   String _priority = 'Not set';
@@ -654,6 +683,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
   @override
   void dispose() {
     _titleController.dispose();
+    _documentsController.dispose();
     super.dispose();
   }
 
@@ -719,6 +749,26 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
         finalPartsReceivedBy = [currentUser.displayName];
       }
 
+      // parse documents
+      Map<String, String> documents = {};
+      if (_documentsController.text.trim().isNotEmpty) {
+        var lines = _documentsController.text.split('\n');
+        for (var line in lines) {
+          var trimmed = line.trim();
+          if (trimmed.isEmpty) continue;
+          var colonIndex = trimmed.indexOf(':');
+          if (colonIndex > 0) {
+            var key = trimmed.substring(0, colonIndex).trim();
+            var value = trimmed.substring(colonIndex + 1).trim();
+            if (key.isNotEmpty) {
+              documents[key] = value;
+            }
+          } else {
+            documents[trimmed] = '';
+          }
+        }
+      }
+
       final newJob = JobData(
         id: JobManagerState._uuid.v4(), // Generate unique job ID
         title: _titleController.text.trim(),
@@ -731,6 +781,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
         completeDate: finalCompleteDate?.toIso8601String() ?? '',
         partsReceivedDate: finalPartsReceivedDate?.toIso8601String() ?? '',
         notes: {},
+        documents: documents,
         status: _status,
         good: _good,
         bad: _bad,
@@ -921,7 +972,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                       vertical: 14,
                                     ),
                                   ),
-                                  items: ['Low', 'Medium', 'High']
+                                  items: ['Low', 'Medium', 'High', 'Not set']
                                       .map((level) => DropdownMenuItem(
                                             value: level,
                                             child: Text(level),
@@ -1009,9 +1060,11 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                           DropdownButtonFormField<String>(
                             value: _selectedWorker,
                             decoration: InputDecoration(
-                              hintText: 'Select a worker', 
+                              hintText: 'Select a worker',
                               hintStyle: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                                 fontWeight: FontWeight.w400,
                               ),
                               border: OutlineInputBorder(
@@ -1027,14 +1080,16 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                               color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 15,
                             ),
-                            items: ['Test User', 'John Doe', 'Jane Smith', 'None']
-                                .map((worker) => DropdownMenuItem(
-                                      value: worker,
-                                      child: Text(worker),
-                                    ))
-                                .toList(),
+                            items:
+                                ['Test User', 'John Doe', 'Jane Smith', 'None']
+                                    .map((worker) => DropdownMenuItem(
+                                          value: worker,
+                                          child: Text(worker),
+                                        ))
+                                    .toList(),
                             onChanged: (value) {
-                              if (value != null && value != 'None' &&
+                              if (value != null &&
+                                  value != 'None' &&
                                   !_workers.contains(value)) {
                                 setState(() {
                                   _workers.add(value);
@@ -1057,8 +1112,14 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                       _workers.remove(worker);
                                     });
                                   },
-                                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                  labelStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.1),
+                                  labelStyle: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary),
                                 );
                               }).toList(),
                             ),
@@ -1164,6 +1225,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 24),
 
                       Row(
@@ -1256,6 +1318,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
   late final TextEditingController _goodController;
   late final TextEditingController _badController;
   late final TextEditingController _notesController;
+  late final TextEditingController _documentsController;
 
   // Form field values
   late String _priority;
@@ -1267,6 +1330,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
   late List<String> _workers;
   late List<String> _approvers;
   Map<String, String> _notes = {};
+  Map<String, String> _documents = {};
 
   // worker dropdown state
   String? _selectedWorker;
@@ -1284,9 +1348,11 @@ class _EditJobDialogState extends State<EditJobDialog> {
     _workers = List.from(widget.job.workers);
     _approvers = List.from(widget.job.approvers);
     _notes = Map.from(widget.job.notes);
+    _documents = Map.from(widget.job.documents);
 
-    // Initialize notes controller with empty text (existing notes will be preserved)
+    // Initialize controllers with empty text (existing data will be preserved)
     _notesController = TextEditingController(text: '');
+    _documentsController = TextEditingController(text: '');
 
     // Parse dates
     _startDate = _parseDate(widget.job.startDate);
@@ -1356,6 +1422,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
     _goodController.dispose();
     _badController.dispose();
     _notesController.dispose();
+    _documentsController.dispose();
     super.dispose();
   }
 
@@ -1405,7 +1472,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
       }
 
       // Add current user to partsReceivedBy list if marking as partsReceived
-      List<String> updatedPartsReceivedBy = List.from(widget.job.partsReceivedBy);
+      List<String> updatedPartsReceivedBy =
+          List.from(widget.job.partsReceivedBy);
       if (_status == JobStatus.partsReceived &&
           widget.job.status != JobStatus.partsReceived &&
           !updatedPartsReceivedBy.contains(currentUser.displayName)) {
@@ -1437,16 +1505,16 @@ class _EditJobDialogState extends State<EditJobDialog> {
       // Parse new notes from controller text and ADD to existing notes
       // Start with existing notes from widget.job
       Map<String, String> allNotes = Map.from(widget.job.notes);
-      
+
       // Only process if there's new text in the controller
       if (_notesController.text.trim().isNotEmpty) {
         var lines = _notesController.text.split('\n');
         Map<String, int> keyCounts = {}; // Track duplicate keys
-        
+
         for (int i = 0; i < lines.length; i++) {
           var line = lines[i].trim();
           if (line.isEmpty) continue;
-          
+
           var colonIndex = line.indexOf(':');
           if (colonIndex > 0) {
             // Has colon: split on first colon only
@@ -1473,8 +1541,31 @@ class _EditJobDialogState extends State<EditJobDialog> {
           }
         }
       }
-      
+
       _notes = allNotes;
+
+      // Start with existing documents from widget.job
+      Map<String, String> allDocuments = Map.from(widget.job.documents);
+
+      // Only process if there's new text in the controller
+      if (_documentsController.text.trim().isNotEmpty) {
+        var lines = _documentsController.text.split('\n');
+        for (var line in lines) {
+          var trimmed = line.trim();
+          if (trimmed.isEmpty) continue;
+          var colonIndex = trimmed.indexOf(':');
+          if (colonIndex > 0) {
+            var key = trimmed.substring(0, colonIndex).trim();
+            var value = trimmed.substring(colonIndex + 1).trim();
+            if (key.isNotEmpty) {
+              allDocuments[key] = value;
+            }
+          } else {
+            allDocuments[trimmed] = '';
+          }
+        }
+      }
+      _documents = allDocuments;
 
       final updatedJob = JobData(
         id: widget.job.id,
@@ -1487,7 +1578,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
         startDate: finalStartDate?.toIso8601String() ?? '',
         completeDate: finalCompleteDate?.toIso8601String() ?? '',
         partsReceivedDate: finalPartsReceivedDate?.toIso8601String() ?? '',
-        notes: _notes,  
+        notes: _notes,
+        documents: _documents,
         status: _status,
         good: int.tryParse(_goodController.text) ?? 0,
         bad: int.tryParse(_badController.text) ?? 0,
@@ -1799,9 +1891,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         decoration: InputDecoration(
                           hintText: 'Select a worker',
                           hintStyle: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w400,
                           ),
                           border: OutlineInputBorder(
@@ -1824,7 +1915,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                 ))
                             .toList(),
                         onChanged: (value) {
-                          if (value != null && value != 'None' &&
+                          if (value != null &&
+                              value != 'None' &&
                               !_workers.contains(value)) {
                             setState(() {
                               _workers.add(value);
@@ -1847,11 +1939,10 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                   _workers.remove(worker);
                                 });
                               },
-                              backgroundColor:
-                                  Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withOpacity(0.1),
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withOpacity(0.1),
                               labelStyle: TextStyle(
                                   color: Theme.of(context).colorScheme.primary),
                             );
@@ -1859,7 +1950,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         ),
                       ],
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // Quality Metrics
                       Text(
@@ -1961,6 +2052,34 @@ class _EditJobDialogState extends State<EditJobDialog> {
                           ),
                         ),
                       ),
+
+                      const SizedBox(height: 24),
+                      // Documents Section
+                      Text(
+                        'Mold Parameter Documents',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _documentsController,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Enter mold parameter document names (one per line)',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
                       // Action Buttons
                       Padding(
