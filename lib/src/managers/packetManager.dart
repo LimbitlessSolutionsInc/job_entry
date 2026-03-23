@@ -1,10 +1,13 @@
 // Packet Manager - Manages job packets and their routers
 import 'package:flutter/material.dart';
+import 'package:job_entry/styles/globals.dart';
 import '../data/packetData.dart';
 import '../data/routerData.dart';
 import '../example/routerCard.dart';
 import 'package:css/css.dart' as css;
 import 'package:uuid/uuid.dart';
+
+import '../data/orderReceiptData.dart';
 import 'routerManager.dart';
 
 class PacketManager extends StatefulWidget {
@@ -24,6 +27,7 @@ class PacketManager extends StatefulWidget {
 class _PacketManagerState extends State<PacketManager> {
   static const _uuid = Uuid();
   static List<PacketData> packets = [];
+  static List<OrderReceipt> receipts = [];
   String? selectedPacketId;
 
   @override
@@ -265,6 +269,30 @@ class _PacketManagerState extends State<PacketManager> {
       ),
     );
   }
+  
+
+  void _generateOrderReceipt() async {
+    final receipt = await showDialog<OrderReceipt>(
+      context: context,
+      builder: (context) => CreateOrderReceiptDialog(
+        availablePackets: packets.where((p) => !p.isArchived).toList(),
+        createdBy: currentUser.displayName,
+      ),
+    );
+
+    if (receipt != null) {
+      setState(() {
+        receipts.add(receipt);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Receipt ${receipt.id} created.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -339,6 +367,28 @@ class _PacketManagerState extends State<PacketManager> {
                   },
                 ),
         ),
+
+        Padding(
+          padding: const EdgeInsets.only(bottom: 24.0), // push button higher in the layout
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: _generateOrderReceipt,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: css.darkBlue,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(260, 54), // larger width and height
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                ),
+                child: const Text(
+                  'Generate Order',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
+                ),
+              )
+            ],
+          ),
+        )
       ],
     );
   }
@@ -1057,3 +1107,377 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
     );
   }
 }
+
+class CreateOrderReceiptDialog extends StatefulWidget {
+  const CreateOrderReceiptDialog({
+    super.key,
+    required this.availablePackets,
+    required this.createdBy,
+  });
+
+  final List<PacketData> availablePackets;
+  final String createdBy;
+
+  @override
+  State<CreateOrderReceiptDialog> createState() => _CreateOrderReceiptDialogState();
+}
+
+class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _shippedByController = TextEditingController(text: 'Pending');
+  final _newItemNameController = TextEditingController();
+  final _newItemQtyController = TextEditingController();
+  final _newItemNotesController = TextEditingController();
+
+  List<String> _selectedPacketIds = [];
+  List<OrderItem> _items = [];
+
+  @override
+  void dispose() {
+    _shippedByController.dispose();
+    _newItemNameController.dispose();
+    _newItemQtyController.dispose();
+    _newItemNotesController.dispose();
+    super.dispose();
+  }
+
+  void _addItem() {
+    final itemName = _newItemNameController.text.trim();
+    final qty = int.tryParse(_newItemQtyController.text.trim());
+
+    if (itemName.isEmpty || qty == null || qty <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid name and quantity')),
+      );
+      return;
+    }
+
+    setState(() {
+      _items.add(OrderItem(
+        id: Uuid().v4(),
+        name: itemName,
+        quantity: qty,
+        notes: _newItemNotesController.text.trim(),
+      ));
+      _newItemNameController.clear();
+      _newItemQtyController.clear();
+      _newItemNotesController.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dateCreated = DateTime.now().toIso8601String();
+
+    return Dialog(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      size: 32,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Create Order',
+                        style: TextStyle(
+                          fontSize: 22.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const CloseButton(),
+                  ],
+                ),
+              ),
+
+              // Form Content
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Date Created
+                      // Text(
+                      //   'Date Created',
+                      //   style: TextStyle(
+                      //     fontSize: 14,
+                      //     fontWeight: FontWeight.w600,
+                      //     color: css.darkGrey,
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 8),
+                      // TextFormField(
+                      //   readOnly: true,
+                      //   initialValue: dateCreated,
+                      //   decoration: InputDecoration(
+                      //     hintText: 'Date created',
+                      //     border: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(8),
+                      //     ),
+                      //     contentPadding: const EdgeInsets.symmetric(
+                      //       horizontal: 16,
+                      //       vertical: 14,
+                      //     ),
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 16),
+
+                      // Created By
+
+                      // Shipped By
+                      // Text(
+                      //   'Shipped By (admin)',
+                      //   style: TextStyle(
+                      //     fontSize: 14,
+                      //     fontWeight: FontWeight.w600,
+                      //     color: css.darkGrey,
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 8),
+                      // TextFormField(
+                      //   controller: _shippedByController,
+                      //   decoration: InputDecoration(
+                      //     hintText: 'Enter admin name or Pending',
+                      //     border: OutlineInputBorder(
+                      //       borderRadius: BorderRadius.circular(8),
+                      //     ),
+                      //     contentPadding: const EdgeInsets.symmetric(
+                      //       horizontal: 16,
+                      //       vertical: 14,
+                      //     ),
+                      //   ),
+                      //   validator: (value) {
+                      //     if (value == null || value.trim().isEmpty) {
+                      //       return 'Enter admin shipped-by name or Pending';
+                      //     }
+                      //     return null;
+                      //   },
+                      // ),
+
+                      // Included Packets Section
+                      Text(
+                        'Job Packets in Order',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      widget.availablePackets.isEmpty
+                          ? Text('No packets available', style: theme.textTheme.bodyMedium)
+                          : Container(
+                              constraints: const BoxConstraints(maxHeight: 180),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: theme.colorScheme.outline),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: widget.availablePackets.length,
+                                itemBuilder: (context, index) {
+                                  final packet = widget.availablePackets[index];
+                                  final isSelected = _selectedPacketIds.contains(packet.id);
+                                  return CheckboxListTile(
+                                    value: isSelected,
+                                    title: Text(packet.title),
+                                    subtitle: packet.notes.isNotEmpty ? Text(packet.notes) : null,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          _selectedPacketIds.add(packet.id);
+                                        } else {
+                                          _selectedPacketIds.remove(packet.id);
+                                        }
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+
+                      const SizedBox(height: 24),
+
+                      // Items Section
+                      Text(
+                        'Items',
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      ..._items.map((item) => Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: ListTile(
+                              title: Text('${item.quantity} x ${item.name}'),
+                              subtitle: Text(item.notes.isNotEmpty ? item.notes : 'No notes'),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () {
+                                  setState(() => _items.remove(item));
+                                },
+                              ),
+                            ),
+                          )),
+
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: theme.colorScheme.outline),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Add Item',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: css.darkGrey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _newItemNameController,
+                              decoration: InputDecoration(
+                                hintText: 'Enter item name',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _newItemQtyController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      hintText: 'Quantity',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _newItemNotesController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Notes (optional)',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: _addItem,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: css.darkBlue,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Add Item'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (!_formKey.currentState!.validate()) return;
+                              if (_selectedPacketIds.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Select at least one packet')),
+                                );
+                                return;
+                              }
+                              if (_items.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Add at least one item')),
+                                );
+                                return;
+                              }
+
+                              final receipt = OrderReceipt(
+                                id: Uuid().v4(),
+                                dateCreated: dateCreated,
+                                createdBy: widget.createdBy,
+                                packetIds: List.from(_selectedPacketIds),
+                                shippedBy: _shippedByController.text.trim(),
+                                items: {for (var item in _items) item.id: item},
+                              );
+
+                              Navigator.pop(context, receipt);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: css.darkBlue,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Create Receipt'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
