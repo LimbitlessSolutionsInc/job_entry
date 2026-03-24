@@ -1,14 +1,29 @@
 // Packet Manager - Manages job packets and their routers
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:job_entry/styles/globals.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../data/packetData.dart';
 import '../data/routerData.dart';
 import '../example/routerCard.dart';
 import 'package:css/css.dart' as css;
 import 'package:uuid/uuid.dart';
+import '../organization/organization.dart';
 
 import '../data/orderReceiptData.dart';
 import 'routerManager.dart';
+
+String formatDate(String isoDate) {
+  if (isoDate.isEmpty) return 'Not set';
+  try {
+    final date = DateTime.parse(isoDate);
+    return DateFormat('MMM dd, yyyy h:mm a').format(date);
+  } catch (e) {
+    return isoDate;
+  }
+}
 
 class PacketManager extends StatefulWidget {
   const PacketManager({
@@ -285,13 +300,592 @@ class _PacketManagerState extends State<PacketManager> {
         receipts.add(receipt);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Receipt ${receipt.id} created.'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Order #${receipt.id.substring(0, 8)} created'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      });
     }
+  }
+
+  void viewOrderReceipts() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        if (receipts.isEmpty) {
+          return Dialog(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 800),
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 32,
+                        color: css.CSS.lsiTheme.secondaryHeaderColor,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Shipment Orders',
+                          style: TextStyle(
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold,
+                            color: css.darkGrey,
+                          ),
+                        ),
+                      ),
+                      const CloseButton(),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'No shipment orders yet',
+                    style: TextStyle(color: css.darkGrey),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Dialog(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(4),
+                        topRight: Radius.circular(4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 32,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Shipment Orders',
+                            style: TextStyle(
+                              fontSize: 22.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const CloseButton(),
+                      ],
+                    ),
+                  ),
+
+                  // Receipts list
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: receipts.length,
+                          itemBuilder: (context, index) {
+                            final receipt = receipts[index];
+                            return _buildReceiptListItem(context, receipt);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReceiptListItem(BuildContext context, OrderReceipt receipt) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        title: Text('Order #${receipt.id.substring(0, 8)}'),
+        subtitle: Text('Created by ${receipt.createdBy} on ${formatDate(receipt.dateCreated)}'),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: receipt.isShipped
+                ? Colors.green.withOpacity(0.16)
+                : receipt.isApproved
+                    ? Colors.orange.withOpacity(0.16)
+                    : receipt.isNeedsReview
+                        ? Colors.red.withOpacity(0.16)
+                        : Colors.blue.withOpacity(0.16),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            receipt.status,
+            style: TextStyle(
+              color: receipt.isShipped
+                  ? Colors.green
+                  : receipt.isApproved
+                      ? Colors.orange
+                      : receipt.isNeedsReview
+                          ? Colors.red
+                          : Colors.blue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        onTap: () => _showReceiptDetailsDialog(context, receipt),
+      ),
+    );
+  }
+
+  void _showReceiptDetailsDialog(BuildContext context, OrderReceipt receipt) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => Dialog(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(24.0),
+                  decoration: BoxDecoration(
+                    color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(4),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 32,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Order #${receipt.id.substring(0, 8)}',
+                          style: TextStyle(
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                        tooltip: 'Export as PDF',
+                        onPressed: () => _exportReceiptToPdf(context, receipt),
+                        iconSize: 28,
+                      ),
+                      SizedBox(width: 8),
+                      const CloseButton(),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Order Details Section
+                      Text(
+                        'Order Details',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDetailRow('Created By', receipt.createdBy),
+                      _buildDetailRow('Created On', formatDate(receipt.dateCreated)),
+                      _buildDetailRow(
+                        'Approved By',
+                        receipt.approvedBy.isNotEmpty ? receipt.approvedBy : 'Not approved',
+                        valueColor: receipt.approvedBy.isNotEmpty ? css.darkGrey : Colors.red,
+                      ),
+                      _buildDetailRow(
+                        'Approved On',
+                        receipt.approvedOn.isNotEmpty ? formatDate(receipt.approvedOn) : 'TBD',
+                        valueColor: receipt.approvedOn.isNotEmpty ? css.darkGrey : Colors.red,
+                      ),
+                      _buildDetailRow(
+                        'Shipped By',
+                        receipt.shippedBy.isNotEmpty ? receipt.shippedBy : 'Not shipped yet',
+                        valueColor: receipt.shippedBy.isNotEmpty ? css.darkGrey : Colors.red,
+                      ),
+                      _buildDetailRow(
+                        'Shipped On',
+                        receipt.shippedOn.isNotEmpty ? formatDate(receipt.shippedOn) : 'TBD',
+                        valueColor: receipt.shippedOn.isNotEmpty ? css.darkGrey : Colors.red,
+                      ),
+                      _buildDetailRow(
+                        'Status',
+                        receipt.status,
+                        valueColor: receipt.isShipped
+                            ? Colors.green
+                            : receipt.isApproved
+                                ? Colors.orange
+                                : css.darkGrey,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      Text(
+                        'Included Packets',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      receipt.packetIds.isEmpty
+                          ? Text(
+                              'No packets included',
+                              style: TextStyle(color: css.darkGrey, fontStyle: FontStyle.italic),
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: receipt.packetIds.map((packetId) {
+                                final packet = packets.firstWhere(
+                                  (p) => p.id == packetId,
+                                  orElse: () => PacketData(
+                                    id: packetId,
+                                    title: 'Unknown Packet',
+                                    color: 0xFF808080,
+                                    dateCreated: '',
+                                    createdBy: '',
+                                    routerIds: [],
+                                    notes: '',
+                                  ),
+                                );
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Text(
+                                    '• ${packet.title}',
+                                    style: TextStyle(fontSize: 14, color: css.darkGrey),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+
+                      const SizedBox(height: 24),
+
+                      // Items section with table
+                      Text(
+                        'Items',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: css.darkGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      receipt.items.isEmpty
+                          ? Text(
+                              'No items',
+                              style: TextStyle(color: css.darkGrey, fontStyle: FontStyle.italic),
+                            )
+                          : SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
+                                columns: const [
+                                  DataColumn(label: Text('Item')),
+                                  DataColumn(label: Text('Quantity'), numeric: true),
+                                  DataColumn(label: Text('Notes')),
+                                ],
+                                rows: receipt.items.values.map((item) {
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(item.name)),
+                                      DataCell(Text(item.quantity.toString())),
+                                      DataCell(Text(item.notes.isNotEmpty ? item.notes : '-')),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+
+                      const SizedBox(height: 24),
+
+                      // Status action buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (receipt.isDraft) 
+                            ElevatedButton(
+                              onPressed: () {
+                                setStateDialog(() {
+                                  receipt.status = 'Needs review';
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: css.darkBlue,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Mark as Ready for Review'),
+                            )
+                          else if (receipt.isNeedsReview) 
+                            ElevatedButton(
+                              onPressed: currentUser.status == OrgStatus.admin
+                                  ? () {
+                                      setStateDialog(() {
+                                        receipt.status = 'Approved';
+                                        receipt.approvedBy = currentUser.displayName;
+                                        receipt.approvedOn = DateTime.now().toIso8601String();
+                                      });
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: currentUser.status == OrgStatus.admin ? css.darkBlue : Colors.grey,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Approve for Shipment'),
+                            )
+                          else if (receipt.isApproved) 
+                            ElevatedButton(
+                              onPressed: currentUser.status == OrgStatus.admin
+                                  ? () {
+                                      setStateDialog(() {
+                                        receipt.status = 'Shipped';
+                                        receipt.shippedBy = currentUser.displayName;
+                                        receipt.shippedOn = DateTime.now().toIso8601String();
+                                      });
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: currentUser.status == OrgStatus.admin ? Colors.green : Colors.grey,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Mark as Shipped'),
+                            )
+                          else 
+                            Text(
+                              'Order shipped on ${formatDate(receipt.shippedOn)}',
+                              style: TextStyle(color: css.darkGrey),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
+  }
+
+  Future<void> _exportReceiptToPdf(BuildContext context, OrderReceipt receipt) async {
+    final includedPackets = _PacketManagerState.packets
+        .where((p) => receipt.packetIds.contains(p.id))
+        .toList();
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            // Header with title and status badge
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('Receipt of Shipment',
+                    style: pw.TextStyle(fontSize: 26, fontWeight: pw.FontWeight.bold)),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(
+                      color: receipt.isShipped
+                          ? PdfColors.green
+                          : receipt.isApproved
+                              ? PdfColors.orange
+                              : receipt.isNeedsReview
+                                  ? PdfColors.red
+                                  : PdfColors.blue,
+                      width: 2,
+                    ),
+                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+                  ),
+                  child: pw.Text(
+                    receipt.status,
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: receipt.isShipped
+                          ? PdfColors.green
+                          : receipt.isApproved
+                              ? PdfColors.orange
+                              : receipt.isNeedsReview
+                                  ? PdfColors.red
+                                  : PdfColors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 24),
+            pw.Text('Order Details',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            _buildPdfDetailRow('Order ID:', receipt.id),
+            _buildPdfDetailRow('Created By:', receipt.createdBy),
+            _buildPdfDetailRow('Date Created:', formatDate(receipt.dateCreated)),
+            _buildPdfDetailRow('Approved By:', receipt.approvedBy.isNotEmpty ? receipt.approvedBy : 'Not approved'),
+            _buildPdfDetailRow('Approved On:', receipt.approvedOn.isNotEmpty ? formatDate(receipt.approvedOn) : 'TBD'),
+            _buildPdfDetailRow('Shipped By:', receipt.shippedBy.isNotEmpty ? receipt.shippedBy : 'Not shipped yet'),
+            _buildPdfDetailRow('Shipped On:', receipt.shippedOn.isNotEmpty ? formatDate(receipt.shippedOn) : 'TBD'),
+            pw.SizedBox(height: 24),
+            
+            pw.Text('Included Packets',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            if (includedPackets.isEmpty)
+              pw.Text('No packets included', style: pw.TextStyle(fontSize: 12))
+            else
+              pw.Column(
+                children: includedPackets.map((packet) {
+                  return pw.Container(
+                    margin: const pw.EdgeInsets.only(bottom: 4),
+                    child: pw.Bullet(
+                      text: packet.title,
+                      style: pw.TextStyle(fontSize: 14),
+                    ),
+                  );
+                }).toList(),
+              ),
+            pw.SizedBox(height: 24),
+            pw.Text('Items',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            receipt.items.isEmpty
+                ? pw.Text('No items', style: pw.TextStyle(fontSize: 12))
+                : pw.Table.fromTextArray(
+                    headers: ['Quantity', 'Description', 'Notes'],
+                    data: receipt.items.values.map((item) {
+                      return [item.quantity.toString(), item.name, item.notes.isNotEmpty ? item.notes : '-'];
+                    }).toList(),
+                    border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                    headerStyle: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.black,
+                      fontSize: 12,
+                    ),
+                    headerDecoration: pw.BoxDecoration(
+                      color: PdfColors.blueGrey200,
+                    ),
+                    cellAlignment: pw.Alignment.centerLeft,
+                    cellStyle: pw.TextStyle(fontSize: 11),
+                  ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  }
+
+  pw.Widget _buildPdfDetailCell(String value) => pw.Padding(
+        padding: const pw.EdgeInsets.all(4),
+        child: pw.Text(value, style: pw.TextStyle(fontSize: 12)),
+      );
+
+  pw.Widget _buildPdfDetailRow(String label, String value) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.SizedBox(
+              width: 100,
+              child: pw.Text(label,
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  )),
+            ),
+            pw.Expanded(
+              child: pw.Text(value, style: pw.TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {Color? valueColor}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 120,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: css.darkGrey,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: valueColor ?? css.darkGrey,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
   }
 
   @override
@@ -369,7 +963,7 @@ class _PacketManagerState extends State<PacketManager> {
         ),
 
         Padding(
-          padding: const EdgeInsets.only(bottom: 24.0), // push button higher in the layout
+          padding: const EdgeInsets.only(bottom: 24.0), 
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -378,11 +972,27 @@ class _PacketManagerState extends State<PacketManager> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: css.darkBlue,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(260, 54), // larger width and height
+                  minimumSize: const Size(260, 54), 
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
                 ),
                 child: const Text(
                   'Generate Order',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              ElevatedButton(
+                onPressed: viewOrderReceipts,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: css.darkBlue,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(260, 54), 
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                ),
+                child: const Text(
+                  'View Receipts',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
                 ),
               )
@@ -1124,7 +1734,6 @@ class CreateOrderReceiptDialog extends StatefulWidget {
 
 class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _shippedByController = TextEditingController(text: 'Pending');
   final _newItemNameController = TextEditingController();
   final _newItemQtyController = TextEditingController();
   final _newItemNotesController = TextEditingController();
@@ -1134,7 +1743,6 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
 
   @override
   void dispose() {
-    _shippedByController.dispose();
     _newItemNameController.dispose();
     _newItemQtyController.dispose();
     _newItemNotesController.dispose();
@@ -1145,18 +1753,11 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
     final itemName = _newItemNameController.text.trim();
     final qty = int.tryParse(_newItemQtyController.text.trim());
 
-    if (itemName.isEmpty || qty == null || qty <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid name and quantity')),
-      );
-      return;
-    }
-
     setState(() {
       _items.add(OrderItem(
         id: Uuid().v4(),
         name: itemName,
-        quantity: qty,
+        quantity: qty ?? 0,
         notes: _newItemNotesController.text.trim(),
       ));
       _newItemNameController.clear();
@@ -1218,65 +1819,6 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Date Created
-                      // Text(
-                      //   'Date Created',
-                      //   style: TextStyle(
-                      //     fontSize: 14,
-                      //     fontWeight: FontWeight.w600,
-                      //     color: css.darkGrey,
-                      //   ),
-                      // ),
-                      // const SizedBox(height: 8),
-                      // TextFormField(
-                      //   readOnly: true,
-                      //   initialValue: dateCreated,
-                      //   decoration: InputDecoration(
-                      //     hintText: 'Date created',
-                      //     border: OutlineInputBorder(
-                      //       borderRadius: BorderRadius.circular(8),
-                      //     ),
-                      //     contentPadding: const EdgeInsets.symmetric(
-                      //       horizontal: 16,
-                      //       vertical: 14,
-                      //     ),
-                      //   ),
-                      // ),
-                      // const SizedBox(height: 16),
-
-                      // Created By
-
-                      // Shipped By
-                      // Text(
-                      //   'Shipped By (admin)',
-                      //   style: TextStyle(
-                      //     fontSize: 14,
-                      //     fontWeight: FontWeight.w600,
-                      //     color: css.darkGrey,
-                      //   ),
-                      // ),
-                      // const SizedBox(height: 8),
-                      // TextFormField(
-                      //   controller: _shippedByController,
-                      //   decoration: InputDecoration(
-                      //     hintText: 'Enter admin name or Pending',
-                      //     border: OutlineInputBorder(
-                      //       borderRadius: BorderRadius.circular(8),
-                      //     ),
-                      //     contentPadding: const EdgeInsets.symmetric(
-                      //       horizontal: 16,
-                      //       vertical: 14,
-                      //     ),
-                      //   ),
-                      //   validator: (value) {
-                      //     if (value == null || value.trim().isEmpty) {
-                      //       return 'Enter admin shipped-by name or Pending';
-                      //     }
-                      //     return null;
-                      //   },
-                      // ),
-
-                      // Included Packets Section
                       Text(
                         'Job Packets in Order',
                         style: TextStyle(
@@ -1334,7 +1876,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                       ..._items.map((item) => Card(
                             margin: const EdgeInsets.symmetric(vertical: 4),
                             child: ListTile(
-                              title: Text('${item.quantity} x ${item.name}'),
+                              title: Text('${item.name} (x${item.quantity})'),
                               subtitle: Text(item.notes.isNotEmpty ? item.notes : 'No notes'),
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete_outline),
@@ -1342,8 +1884,11 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                                   setState(() => _items.remove(item));
                                 },
                               ),
+                              tileColor: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
                             ),
                           )),
+
+                      SizedBox(height: 12),
 
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -1437,25 +1982,17 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                           ElevatedButton(
                             onPressed: () {
                               if (!_formKey.currentState!.validate()) return;
-                              if (_selectedPacketIds.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Select at least one packet')),
-                                );
-                                return;
-                              }
-                              if (_items.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Add at least one item')),
-                                );
-                                return;
-                              }
 
                               final receipt = OrderReceipt(
                                 id: Uuid().v4(),
                                 dateCreated: dateCreated,
                                 createdBy: widget.createdBy,
                                 packetIds: List.from(_selectedPacketIds),
-                                shippedBy: _shippedByController.text.trim(),
+                                status: 'Draft',
+                                approvedBy: '',
+                                approvedOn: '',
+                                shippedBy: '',
+                                shippedOn: '',
                                 items: {for (var item in _items) item.id: item},
                               );
 
@@ -1465,7 +2002,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                               backgroundColor: css.darkBlue,
                               foregroundColor: Colors.white,
                             ),
-                            child: const Text('Create Receipt'),
+                            child: const Text('Create'),
                           ),
                         ],
                       ),

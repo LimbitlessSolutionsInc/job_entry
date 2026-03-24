@@ -21,17 +21,27 @@ class OrderReceipt {
     required this.createdBy,
     required this.packetIds,
     required this.items,
-    this.shippedBy = 'Pending',
-    this.status = 'Pending',
+    this.approvedBy = '',
+    this.approvedOn = '',
+    this.shippedBy = '',
+    this.shippedOn = '',
+    this.status = 'draft',
   });
 
   final String id;
   String dateCreated;
   String createdBy;
   List<String> packetIds;
+  String approvedBy;
+  String approvedOn;
   String shippedBy;
+  String shippedOn;
   String status;
   Map<String, OrderItem> items;
 
-  bool get isShipped => shippedBy.isNotEmpty && shippedBy.toLowerCase() != 'pending';
+  bool get isDraft => status.toLowerCase() == 'draft';
+  bool get isNeedsReview => status.toLowerCase() == 'needs review';
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isShipped => status.toLowerCase() == 'shipped';
 }
+
