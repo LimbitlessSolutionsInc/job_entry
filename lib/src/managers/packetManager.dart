@@ -330,7 +330,7 @@ class _PacketManagerState extends State<PacketManager> {
                       Icon(
                         Icons.receipt_long_outlined,
                         size: 32,
-                        color: css.CSS.lsiTheme.secondaryHeaderColor,
+                      color: Theme.of(context).primaryColor,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -368,7 +368,7 @@ class _PacketManagerState extends State<PacketManager> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                      color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -475,7 +475,7 @@ class _PacketManagerState extends State<PacketManager> {
                 Container(
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
-                    color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                    color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(4),
@@ -1549,168 +1549,213 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
 
     return Dialog(
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 600),
+        constraints: const BoxConstraints(maxWidth: 700),
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Edit Job Packet',
-                    style: theme.textTheme.headlineMedium,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(24.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(4),
                   ),
-                  const SizedBox(height: 24),
-                  TextFormField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Packet Title',
-                      border: OutlineInputBorder(),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 32,
+                      color: Colors.white,
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a title';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _notesController,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes (optional)',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Color',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _availableColors.map((color) {
-                      final isSelected = color == _selectedColor;
-                      return InkWell(
-                        onTap: () => setState(() => _selectedColor = color),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.transparent,
-                              width: 3,
-                            ),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: color.withOpacity(0.5),
-                                      blurRadius: 8,
-                                      spreadRadius: 2,
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                          child: isSelected
-                              ? const Icon(Icons.check, color: Colors.white)
-                              : null,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Edit Job Packet',
+                        style: TextStyle(
+                          fontSize: 22.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.5,
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Routers in Packet',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  if (availableRouters.isEmpty)
-                    Text(
-                      'No routers available',
-                      style:
-                          TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                    )
-                  else
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.colorScheme.outline),
-                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: availableRouters.length,
-                        itemBuilder: (context, index) {
-                          final router = availableRouters[index];
-                          final isSelected =
-                              _selectedRouterIds.contains(router.id);
+                    ),
+                    const CloseButton(),
+                  ],
+                ),
+              ),
 
-                          return CheckboxListTile(
-                            value: isSelected,
-                            onChanged: (value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedRouterIds.add(router.id);
-                                } else {
-                                  _selectedRouterIds.remove(router.id);
-                                }
-                              });
-                            },
-                            title: Text(router.title),
-                            secondary: Container(
-                              width: 24,
-                              height: 24,
+              // Form Content
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Packet Title',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a title';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _notesController,
+                        decoration: const InputDecoration(
+                          labelText: 'Notes (optional)',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Color',
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _availableColors.map((color) {
+                          final isSelected = color == _selectedColor;
+                          return InkWell(
+                            onTap: () => setState(() => _selectedColor = color),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              width: 40,
+                              height: 40,
                               decoration: BoxDecoration(
-                                color: Color(router.color),
-                                shape: BoxShape.circle,
+                                color: color,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: color.withOpacity(0.5),
+                                          blurRadius: 8,
+                                          spreadRadius: 2,
+                                        ),
+                                      ]
+                                    : [],
                               ),
+                              child: isSelected
+                                  ? const Icon(Icons.check, color: Colors.white)
+                                  : null,
                             ),
                           );
-                        },
+                        }).toList(),
                       ),
-                    ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            widget.onSave(
-                              _titleController.text.trim(),
-                              _notesController.text.trim(),
-                              _selectedColor.value,
-                              _selectedRouterIds,
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
+                      const SizedBox(height: 24),
+                      Text(
+                        'Routers in Packet',
+                        style: TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
-                        child: const Text('Save'),
+                      ),
+                      const SizedBox(height: 8),
+                      if (availableRouters.isEmpty)
+                        Text(
+                          'No routers available',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      else
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Theme.of(context).colorScheme.outline),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: availableRouters.length,
+                            itemBuilder: (context, index) {
+                              final router = availableRouters[index];
+                              final isSelected =
+                                  _selectedRouterIds.contains(router.id);
+
+                              return CheckboxListTile(
+                                value: isSelected,
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedRouterIds.add(router.id);
+                                    } else {
+                                      _selectedRouterIds.remove(router.id);
+                                    }
+                                  });
+                                },
+                                title: Text(router.title),
+                                secondary: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: Color(router.color),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                widget.onSave(
+                                  _titleController.text.trim(),
+                                  _notesController.text.trim(),
+                                  _selectedColor.value,
+                                  _selectedRouterIds,
+                                );
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: const Text('Update Packet'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -1782,7 +1827,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                  color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(4),
                     topRight: Radius.circular(4),
@@ -1884,7 +1929,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                                   setState(() => _items.remove(item));
                                 },
                               ),
-                              tileColor: css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                              tileColor: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
                             ),
                           )),
 

@@ -181,7 +181,7 @@ class _ArchivePageState extends State<ArchivePage> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -199,7 +199,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                 style: TextStyle(
                                   fontSize: 22.0,
                                   fontWeight: FontWeight.normal,
-                                  color: css.CSS.lsiTheme.primaryColor,
+                                  color: Theme.of(context).primaryColor,
                                   letterSpacing: 1.5,
                                 ),
                               ),
@@ -431,7 +431,7 @@ class _ArchivePageState extends State<ArchivePage> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -449,7 +449,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                 style: TextStyle(
                                   fontSize: 22.0,
                                   fontWeight: FontWeight.normal,
-                                  color: css.CSS.lsiTheme.primaryColor,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   letterSpacing: 1.5,
                                 ),
                               ),

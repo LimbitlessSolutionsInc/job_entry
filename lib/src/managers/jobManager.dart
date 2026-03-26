@@ -139,7 +139,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
             ElevatedButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: css.CSS.lsiTheme.secondaryHeaderColor,
+                backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Confirm'),
@@ -346,7 +346,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(4),
                     topRight: Radius.circular(4),
@@ -364,7 +364,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                             style: TextStyle(
                               fontSize: 22.0,
                               fontWeight: FontWeight.bold,
-                              color: css.CSS.lsiTheme.primaryColor,
+                              color: Theme.of(context).colorScheme.onSurface,
                               letterSpacing: 1.5,
                             ),
                           ),
@@ -627,7 +627,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                             label: const Text('Edit Job'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                                  css.CSS.lsiTheme.secondaryHeaderColor,
+                                  Theme.of(context).primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -697,7 +697,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: css.CSS.lsiTheme.secondaryHeaderColor,
+              primary: Theme.of(context).secondaryHeaderColor,
             ),
           ),
           child: child!,
@@ -884,7 +884,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
                     color:
-                        css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                        Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(4),
@@ -1246,7 +1246,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                             onPressed: _handleCreate,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                                  css.CSS.lsiTheme.secondaryHeaderColor,
+                                  Theme.of(context).primaryColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -1403,7 +1403,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
             ElevatedButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: css.CSS.lsiTheme.secondaryHeaderColor,
+                backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Confirm'),
@@ -1436,7 +1436,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: css.CSS.lsiTheme.secondaryHeaderColor,
+              primary: Theme.of(context).secondaryHeaderColor,
             ),
           ),
           child: child!,
@@ -1685,7 +1685,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
                     color:
-                        css.CSS.lsiTheme.secondaryHeaderColor.withOpacity(0.1),
+                        Theme.of(context).primaryColor.withOpacity(0.1),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(4),
@@ -2102,7 +2102,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                               onPressed: _handleUpdate,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    css.CSS.lsiTheme.secondaryHeaderColor,
+                                    Theme.of(context).primaryColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,

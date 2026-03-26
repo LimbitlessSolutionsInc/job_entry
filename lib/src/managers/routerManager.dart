@@ -415,7 +415,7 @@ class RouterManagerState extends State<RouterManager> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: css.CSS.lsiTheme.primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -433,7 +433,7 @@ class RouterManagerState extends State<RouterManager> {
                                 style: TextStyle(
                                   fontSize: 22.0,
                                   fontWeight: FontWeight.normal,
-                                  color: css.CSS.lsiTheme.primaryColor,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   letterSpacing: 1.5,
                                 ),
                               ),
@@ -1753,6 +1753,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
     return Dialog(
       child: SingleChildScrollView(
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 800),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
