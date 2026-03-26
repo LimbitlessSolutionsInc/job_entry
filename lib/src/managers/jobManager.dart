@@ -129,6 +129,9 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
           title: Text(title),
           content: Text(message),
           actions: [
@@ -311,7 +314,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               style: TextStyle(
                 fontSize: 15.0,
                 fontWeight: FontWeight.w200,
-                color: css.darkGrey,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -338,6 +341,10 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 700),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -346,7 +353,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(4),
                     topRight: Radius.circular(4),
@@ -389,7 +396,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
-                        color: css.darkGrey,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -405,7 +412,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
-                        color: css.darkGrey,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -428,7 +435,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
-                        color: css.darkGrey,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -458,7 +465,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                       style: TextStyle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.bold,
-                        color: css.darkGrey,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -483,14 +490,16 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 Text(
                                   'Good Parts',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -517,14 +526,16 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 Text(
                                   'Bad Parts',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -542,7 +553,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                         style: TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -574,7 +585,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                         style: TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -627,7 +638,7 @@ class _JobDetailsDialogState extends State<JobDetailsDialog> {
                             label: const Text('Edit Job'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                                  Theme.of(context).primaryColor,
+                                  Theme.of(context).primaryColorDark,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -803,7 +814,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: css.darkGrey,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -873,6 +884,10 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 700),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -883,8 +898,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                 Container(
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
+                    color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(4),
@@ -898,7 +912,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                         style: TextStyle(
                           fontSize: 22.0,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const Spacer(),
@@ -919,7 +933,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -956,7 +970,8 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -997,7 +1012,8 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -1053,7 +1069,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: css.darkGrey,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -1134,7 +1150,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1167,7 +1183,8 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -1200,7 +1217,8 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -1246,7 +1264,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                             onPressed: _handleCreate,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                                  Theme.of(context).primaryColor,
+                                  Theme.of(context).primaryColorDark,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -1255,7 +1273,7 @@ class _CreateJobDialogState extends State<CreateJobDialog> {
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
+                              children: [
                                 Icon(Icons.add, size: 20),
                                 SizedBox(width: 8),
                                 Text(
@@ -1393,6 +1411,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
           title: Text(title),
           content: Text(message),
           actions: [
@@ -1604,7 +1623,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: css.darkGrey,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -1674,6 +1693,10 @@ class _EditJobDialogState extends State<EditJobDialog> {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 700),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -1684,8 +1707,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                 Container(
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).primaryColor.withOpacity(0.1),
+                    color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(4),
@@ -1696,7 +1718,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                       Icon(
                         Icons.edit_outlined,
                         size: 32,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1705,7 +1727,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                           style: TextStyle(
                             fontSize: 22.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -1726,7 +1748,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1763,7 +1785,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -1804,7 +1827,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -1865,7 +1889,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1882,7 +1906,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1958,7 +1982,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1973,7 +1997,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -2003,7 +2028,8 @@ class _EditJobDialogState extends State<EditJobDialog> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: css.darkGrey,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -2033,7 +2059,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
 
@@ -2060,7 +2086,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -2102,7 +2128,7 @@ class _EditJobDialogState extends State<EditJobDialog> {
                               onPressed: _handleUpdate,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    Theme.of(context).primaryColor,
+                                    Theme.of(context).primaryColorDark,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,

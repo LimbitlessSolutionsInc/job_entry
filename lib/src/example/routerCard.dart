@@ -34,6 +34,8 @@ class RouterCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
           title: const Text('Delete Router'),
           content: Text('Are you sure you want to delete "$title"?'),
           actions: [
@@ -102,14 +104,14 @@ class RouterCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           'Created by: $createdBy on $createdDate',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -126,7 +128,7 @@ class RouterCard extends StatelessWidget {
                           onPressed: onEdit,
                           tooltip: 'Edit',
                           iconSize: 18,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(
                             minWidth: 20,
@@ -153,7 +155,6 @@ class RouterCard extends StatelessWidget {
                           onPressed: onInfo,
                           tooltip: 'View Details',
                           iconSize: 18,
-                          color: Colors.white,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(
                             minWidth: 20,
@@ -166,7 +167,6 @@ class RouterCard extends StatelessWidget {
                           onPressed: onUnarchive,
                           tooltip: 'Unarchive',
                           iconSize: 18,
-                          color: Colors.white,
                           padding: const EdgeInsets.all(4),
                           constraints: const BoxConstraints(
                             minWidth: 20,

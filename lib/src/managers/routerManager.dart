@@ -213,6 +213,8 @@ class RouterManagerState extends State<RouterManager> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
+            backgroundColor: Theme.of(context).cardColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
             title: const Text('Archive Router'),
             content:
                 const Text('Are you sure you want to archive this router?'),
@@ -309,6 +311,8 @@ class RouterManagerState extends State<RouterManager> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
+            backgroundColor: Theme.of(context).cardColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
             title: const Text('Archive Router'),
             content: Text(
                 'Are you sure you want to archive "${currentRouter.title}"?'),
@@ -407,6 +411,10 @@ class RouterManagerState extends State<RouterManager> {
         return Dialog(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 700),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -415,7 +423,7 @@ class RouterManagerState extends State<RouterManager> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -446,8 +454,8 @@ class RouterManagerState extends State<RouterManager> {
                                 ),
                                 child: Text(
                                   isArchived ? 'Archived' : 'Active',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w200,
                                     fontSize: 12,
                                   ),
@@ -457,7 +465,7 @@ class RouterManagerState extends State<RouterManager> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.download),
+                          icon: Icon(Icons.download, color: Theme.of(context).colorScheme.onSurface),
                           tooltip: 'Export to PDF',
                           onPressed: () => _exportRouterToPdf(context, router),
                         ),
@@ -708,7 +716,7 @@ class RouterManagerState extends State<RouterManager> {
                     ),
                     child: pw.Text(
                       isArchived ? 'Archived' : 'Active',
-                      style: const pw.TextStyle(
+                      style: pw.TextStyle(
                         color: PdfColors.white,
                         fontSize: 10,
                       ),
@@ -1053,21 +1061,22 @@ class RouterManagerState extends State<RouterManager> {
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: css.darkBlue,
+                backgroundColor: Theme.of(context).primaryColorDark,
                 elevation: 2,
               ),
               onPressed: _addRouter,
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.add, size: 20),
+                      Icon(Icons.add, size: 20, color: Colors.white),
                       SizedBox(width: 8),
                       Text(
                         'Add Router',
                         style: TextStyle(
                           fontSize: 16,
+                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -1206,10 +1215,10 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
           color: Colors.grey.withOpacity(0.2),
           child: Text(
             processType,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.0,
               fontWeight: FontWeight.w400,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               letterSpacing: 1.25,
             ),
           ),
@@ -1223,7 +1232,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
           CheckboxListTile(
             title: Text(
               router.title,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             value: isSelected,
             onChanged: (bool? value) {
@@ -1253,7 +1262,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 800),
           decoration: BoxDecoration(
-            color: css.CSS.darkTheme.cardColor,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
             boxShadow: const [
               BoxShadow(
@@ -1280,29 +1289,29 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     style: TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: 1.25,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Router Name*",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w200,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: 1.25,
                   ),
                 ),
                 const SizedBox(height: 8.0),
                 TextFormField(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
                     hintText: 'Enter router name',
-                    hintStyle: const TextStyle(color: Colors.white70),
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+                        const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -1315,12 +1324,12 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   },
                 ),
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Process*",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w200,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: 1.25,
                   ),
                 ),
@@ -1367,12 +1376,12 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 // Display "Jobs in this process:" and list template jobs if existing process selected and jobs list isnt empty?
 
                 CheckboxListTile(
-                  title: const Text(
+                  title: Text(
                     'New process',
                     style: TextStyle(
                       fontSize: 14.0,
                       fontWeight: FontWeight.w200,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     )
                   ), 
                   value: newProcess != null,
@@ -1393,21 +1402,21 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 ),
                 if (newProcess != null) ...[
                   const SizedBox(height: 8.0),
-                  const Text(
+                  Text(
                     'New Process Name*',
                     style: TextStyle(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w200,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8.0),
                   TextFormField(
                     controller: _newProcessController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       hintText: 'Enter new process name',
-                      hintStyle: const TextStyle(color: Colors.white70),
+                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
                     ),
@@ -1428,12 +1437,12 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   ),
                 ],
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Router Color",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w200,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 Container(
@@ -1458,7 +1467,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                             color: color,
                             shape: BoxShape.circle,
                             border: _routerColor == index
-                                ? Border.all(color: Colors.white, width: 3.0)
+                                ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3.0)
                                 : null,
                           ),
                         ),
@@ -1468,12 +1477,12 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 ),
 
                 const SizedBox(height: 16.0),
-                const Text(
+                Text(
                   "Connected Routers (Optional)",
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w200,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8.0),
@@ -1484,11 +1493,11 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: RouterManagerState.routers.where((r) => r.dateArchived.isEmpty).isEmpty
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.all(12.0),
                         child: Text(
                           'No available routers to connect',
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         ),
                       )
                     : ConstrainedBox(
@@ -1509,12 +1518,12 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
 
                 const SizedBox(height: 16.0),
                 CheckboxListTile(
-                  title: const Text(
+                  title: Text(
                     'Start with empty job list',
                     style: TextStyle(
                       fontSize: 14.0,
                       fontWeight: FontWeight.w200,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   value: _clearJobs,
@@ -1556,7 +1565,7 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: css.darkBlue,
+                      backgroundColor: Theme.of(context).primaryColorDark,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24.0,
                         vertical: 12.0,
@@ -1582,10 +1591,10 @@ class _CreateRouterFormWidgetState extends State<CreateRouterFormWidget> {
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.add, size: 20),
+                      children: [
+                        Icon(Icons.add, size: 20, color: Colors.white),
                         SizedBox(width: 8),
-                        const Text(
+                        Text(
                           "Add Router",
                           style: TextStyle(
                             fontSize: 16.0,
@@ -1864,7 +1873,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                             color: color,
                             shape: BoxShape.circle,
                             border: _routerColor == index
-                                ? Border.all(color: Colors.white, width: 3.0)
+                                ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3.0)
                                 : null,
                           ),
                         ),
@@ -1956,7 +1965,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: css.darkBlue,
+                      backgroundColor: Theme.of(context).primaryColorDark,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24.0,
                         vertical: 12.0,
@@ -1979,7 +1988,7 @@ class _EditRouterFormWidgetState extends State<EditRouterFormWidget> {
                         );
                       }
                     },
-                    child: const Text(
+                    child: Text(
                       "Update Router",
                       style: TextStyle(
                         fontSize: 16.0,

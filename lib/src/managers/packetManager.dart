@@ -187,6 +187,9 @@ class _PacketManagerState extends State<PacketManager> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
@@ -284,7 +287,6 @@ class _PacketManagerState extends State<PacketManager> {
       ),
     );
   }
-  
 
   void _generateOrderReceipt() async {
     final receipt = await showDialog<OrderReceipt>(
@@ -330,7 +332,9 @@ class _PacketManagerState extends State<PacketManager> {
                       Icon(
                         Icons.receipt_long_outlined,
                         size: 32,
-                      color: Theme.of(context).primaryColor,
+                        color: Theme.of(context)
+                            .primaryColorDark
+                            .withOpacity(0.25),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -339,7 +343,7 @@ class _PacketManagerState extends State<PacketManager> {
                           style: TextStyle(
                             fontSize: 22.0,
                             fontWeight: FontWeight.bold,
-                            color: css.darkGrey,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -349,7 +353,8 @@ class _PacketManagerState extends State<PacketManager> {
                   const SizedBox(height: 24),
                   Text(
                     'No shipment orders yet',
-                    style: TextStyle(color: css.darkGrey),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -360,6 +365,10 @@ class _PacketManagerState extends State<PacketManager> {
         return Dialog(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 800),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -368,7 +377,8 @@ class _PacketManagerState extends State<PacketManager> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
+                      color:
+                          Theme.of(context).primaryColorDark.withOpacity(0.25),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -379,7 +389,7 @@ class _PacketManagerState extends State<PacketManager> {
                         Icon(
                           Icons.receipt_long_outlined,
                           size: 32,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -388,7 +398,7 @@ class _PacketManagerState extends State<PacketManager> {
                             style: TextStyle(
                               fontSize: 22.0,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -428,7 +438,8 @@ class _PacketManagerState extends State<PacketManager> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
         title: Text('Order #${receipt.id.substring(0, 8)}'),
-        subtitle: Text('Created by ${receipt.createdBy} on ${formatDate(receipt.dateCreated)}'),
+        subtitle: Text(
+            'Created by ${receipt.createdBy} on ${formatDate(receipt.dateCreated)}'),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
@@ -462,256 +473,328 @@ class _PacketManagerState extends State<PacketManager> {
 
   void _showReceiptDetailsDialog(BuildContext context, OrderReceipt receipt) {
     showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setStateDialog) => Dialog(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.all(24.0),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(4),
-                      topRight: Radius.circular(4),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.receipt_long_outlined,
-                        size: 32,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Order #${receipt.id.substring(0, 8)}',
-                          style: TextStyle(
-                            fontSize: 22.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+        context: context,
+        builder: (context) => StatefulBuilder(
+              builder: (context, setStateDialog) => Dialog(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 900),
+                  color: Theme.of(context).cardColor,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header
+                        Container(
+                          padding: const EdgeInsets.all(24.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .secondaryHeaderColor
+                                .withOpacity(0.1),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(4),
+                              topRight: Radius.circular(4),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 32,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Order #${receipt.id.substring(0, 8)}',
+                                  style: TextStyle(
+                                    fontSize: 22.0,
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.picture_as_pdf,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface),
+                                tooltip: 'Export as PDF',
+                                onPressed: () =>
+                                    _exportReceiptToPdf(context, receipt),
+                                iconSize: 28,
+                              ),
+                              SizedBox(width: 8),
+                              const CloseButton(),
+                            ],
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-                        tooltip: 'Export as PDF',
-                        onPressed: () => _exportReceiptToPdf(context, receipt),
-                        iconSize: 28,
-                      ),
-                      SizedBox(width: 8),
-                      const CloseButton(),
-                    ],
-                  ),
-                ),
 
-                // Content
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Order Details Section
-                      Text(
-                        'Order Details',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDetailRow('Created By', receipt.createdBy),
-                      _buildDetailRow('Created On', formatDate(receipt.dateCreated)),
-                      _buildDetailRow(
-                        'Approved By',
-                        receipt.approvedBy.isNotEmpty ? receipt.approvedBy : 'Not approved',
-                        valueColor: receipt.approvedBy.isNotEmpty ? css.darkGrey : Colors.red,
-                      ),
-                      _buildDetailRow(
-                        'Approved On',
-                        receipt.approvedOn.isNotEmpty ? formatDate(receipt.approvedOn) : 'TBD',
-                        valueColor: receipt.approvedOn.isNotEmpty ? css.darkGrey : Colors.red,
-                      ),
-                      _buildDetailRow(
-                        'Shipped By',
-                        receipt.shippedBy.isNotEmpty ? receipt.shippedBy : 'Not shipped yet',
-                        valueColor: receipt.shippedBy.isNotEmpty ? css.darkGrey : Colors.red,
-                      ),
-                      _buildDetailRow(
-                        'Shipped On',
-                        receipt.shippedOn.isNotEmpty ? formatDate(receipt.shippedOn) : 'TBD',
-                        valueColor: receipt.shippedOn.isNotEmpty ? css.darkGrey : Colors.red,
-                      ),
-                      _buildDetailRow(
-                        'Status',
-                        receipt.status,
-                        valueColor: receipt.isShipped
-                            ? Colors.green
-                            : receipt.isApproved
-                                ? Colors.orange
-                                : css.darkGrey,
-                      ),
+                        // Content
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Order Details Section
+                              Text(
+                                'Order Details',
+                                style: TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDetailRow('Created By', receipt.createdBy),
+                              _buildDetailRow('Created On',
+                                  formatDate(receipt.dateCreated)),
+                              _buildDetailRow(
+                                'Approved By',
+                                receipt.approvedBy.isNotEmpty
+                                    ? receipt.approvedBy
+                                    : 'Not approved',
+                                valueColor: receipt.approvedBy.isNotEmpty
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.red,
+                              ),
+                              _buildDetailRow(
+                                'Approved On',
+                                receipt.approvedOn.isNotEmpty
+                                    ? formatDate(receipt.approvedOn)
+                                    : 'TBD',
+                                valueColor: receipt.approvedOn.isNotEmpty
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.red,
+                              ),
+                              _buildDetailRow(
+                                'Shipped By',
+                                receipt.shippedBy.isNotEmpty
+                                    ? receipt.shippedBy
+                                    : 'Not shipped yet',
+                                valueColor: receipt.shippedBy.isNotEmpty
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.red,
+                              ),
+                              _buildDetailRow(
+                                'Shipped On',
+                                receipt.shippedOn.isNotEmpty
+                                    ? formatDate(receipt.shippedOn)
+                                    : 'TBD',
+                                valueColor: receipt.shippedOn.isNotEmpty
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : Colors.red,
+                              ),
+                              _buildDetailRow(
+                                'Status',
+                                receipt.status,
+                                valueColor: receipt.isShipped
+                                    ? Colors.green
+                                    : receipt.isApproved
+                                        ? Colors.orange
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                              ),
 
-                      const SizedBox(height: 24),
+                              const SizedBox(height: 24),
 
-                      Text(
-                        'Included Packets',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                              Text(
+                                'Included Packets',
+                                style: TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
 
-                      receipt.packetIds.isEmpty
-                          ? Text(
-                              'No packets included',
-                              style: TextStyle(color: css.darkGrey, fontStyle: FontStyle.italic),
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: receipt.packetIds.map((packetId) {
-                                final packet = packets.firstWhere(
-                                  (p) => p.id == packetId,
-                                  orElse: () => PacketData(
-                                    id: packetId,
-                                    title: 'Unknown Packet',
-                                    color: 0xFF808080,
-                                    dateCreated: '',
-                                    createdBy: '',
-                                    routerIds: [],
-                                    notes: '',
-                                  ),
-                                );
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Text(
-                                    '• ${packet.title}',
-                                    style: TextStyle(fontSize: 14, color: css.darkGrey),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
+                              receipt.packetIds.isEmpty
+                                  ? Text(
+                                      'No packets included',
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                          fontStyle: FontStyle.italic),
+                                    )
+                                  : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children:
+                                          receipt.packetIds.map((packetId) {
+                                        final packet = packets.firstWhere(
+                                          (p) => p.id == packetId,
+                                          orElse: () => PacketData(
+                                            id: packetId,
+                                            title: 'Unknown Packet',
+                                            color: 0xFF808080,
+                                            dateCreated: '',
+                                            createdBy: '',
+                                            routerIds: [],
+                                            notes: '',
+                                          ),
+                                        );
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 4),
+                                          child: Text(
+                                            '• ${packet.title}',
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
 
-                      const SizedBox(height: 24),
+                              const SizedBox(height: 24),
 
-                      // Items section with table
-                      Text(
-                        'Items',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                              // Items section with table
+                              Text(
+                                'Items',
+                                style: TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
 
-                      receipt.items.isEmpty
-                          ? Text(
-                              'No items',
-                              style: TextStyle(color: css.darkGrey, fontStyle: FontStyle.italic),
-                            )
-                          : SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DataTable(
-                                columns: const [
-                                  DataColumn(label: Text('Item')),
-                                  DataColumn(label: Text('Quantity'), numeric: true),
-                                  DataColumn(label: Text('Notes')),
+                              receipt.items.isEmpty
+                                  ? Text(
+                                      'No items',
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                          fontStyle: FontStyle.italic),
+                                    )
+                                  : SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: DataTable(
+                                        columns: const [
+                                          DataColumn(label: Text('Item')),
+                                          DataColumn(
+                                              label: Text('Quantity'),
+                                              numeric: true),
+                                          DataColumn(label: Text('Notes')),
+                                        ],
+                                        rows: receipt.items.values.map((item) {
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(Text(item.name)),
+                                              DataCell(Text(
+                                                  item.quantity.toString())),
+                                              DataCell(Text(
+                                                  item.notes.isNotEmpty
+                                                      ? item.notes
+                                                      : '-')),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+
+                              const SizedBox(height: 24),
+
+                              // Status action buttons
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  if (receipt.isDraft)
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setStateDialog(() {
+                                          receipt.status = 'Needs review';
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            Theme.of(context).primaryColorDark,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text(
+                                          'Mark as Ready for Review'),
+                                    )
+                                  else if (receipt.isNeedsReview)
+                                    ElevatedButton(
+                                      onPressed:
+                                          currentUser.status == OrgStatus.admin
+                                              ? () {
+                                                  setStateDialog(() {
+                                                    receipt.status = 'Approved';
+                                                    receipt.approvedBy =
+                                                        currentUser.displayName;
+                                                    receipt.approvedOn =
+                                                        DateTime.now()
+                                                            .toIso8601String();
+                                                  });
+                                                }
+                                              : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: currentUser.status ==
+                                                OrgStatus.admin
+                                            ? Theme.of(context).primaryColorDark
+                                            : Colors.grey,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Approve for Shipment'),
+                                    )
+                                  else if (receipt.isApproved)
+                                    ElevatedButton(
+                                      onPressed:
+                                          currentUser.status == OrgStatus.admin
+                                              ? () {
+                                                  setStateDialog(() {
+                                                    receipt.status = 'Shipped';
+                                                    receipt.shippedBy =
+                                                        currentUser.displayName;
+                                                    receipt.shippedOn =
+                                                        DateTime.now()
+                                                            .toIso8601String();
+                                                  });
+                                                }
+                                              : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: currentUser.status ==
+                                                OrgStatus.admin
+                                            ? Colors.green
+                                            : Colors.grey,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: const Text('Mark as Shipped'),
+                                    )
+                                  else
+                                    Text(
+                                      'Order shipped on ${formatDate(receipt.shippedOn)}',
+                                      style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface),
+                                    ),
                                 ],
-                                rows: receipt.items.values.map((item) {
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(Text(item.name)),
-                                      DataCell(Text(item.quantity.toString())),
-                                      DataCell(Text(item.notes.isNotEmpty ? item.notes : '-')),
-                                    ],
-                                  );
-                                }).toList(),
                               ),
-                            ),
-
-                      const SizedBox(height: 24),
-
-                      // Status action buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          if (receipt.isDraft) 
-                            ElevatedButton(
-                              onPressed: () {
-                                setStateDialog(() {
-                                  receipt.status = 'Needs review';
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: css.darkBlue,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Mark as Ready for Review'),
-                            )
-                          else if (receipt.isNeedsReview) 
-                            ElevatedButton(
-                              onPressed: currentUser.status == OrgStatus.admin
-                                  ? () {
-                                      setStateDialog(() {
-                                        receipt.status = 'Approved';
-                                        receipt.approvedBy = currentUser.displayName;
-                                        receipt.approvedOn = DateTime.now().toIso8601String();
-                                      });
-                                    }
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: currentUser.status == OrgStatus.admin ? css.darkBlue : Colors.grey,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Approve for Shipment'),
-                            )
-                          else if (receipt.isApproved) 
-                            ElevatedButton(
-                              onPressed: currentUser.status == OrgStatus.admin
-                                  ? () {
-                                      setStateDialog(() {
-                                        receipt.status = 'Shipped';
-                                        receipt.shippedBy = currentUser.displayName;
-                                        receipt.shippedOn = DateTime.now().toIso8601String();
-                                      });
-                                    }
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: currentUser.status == OrgStatus.admin ? Colors.green : Colors.grey,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Mark as Shipped'),
-                            )
-                          else 
-                            Text(
-                              'Order shipped on ${formatDate(receipt.shippedOn)}',
-                              style: TextStyle(color: css.darkGrey),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ));
+              ),
+            ));
   }
 
-  Future<void> _exportReceiptToPdf(BuildContext context, OrderReceipt receipt) async {
+  Future<void> _exportReceiptToPdf(
+      BuildContext context, OrderReceipt receipt) async {
     final includedPackets = _PacketManagerState.packets
         .where((p) => receipt.packetIds.contains(p.id))
         .toList();
@@ -730,9 +813,11 @@ class _PacketManagerState extends State<PacketManager> {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Text('Receipt of Shipment',
-                    style: pw.TextStyle(fontSize: 26, fontWeight: pw.FontWeight.bold)),
+                    style: pw.TextStyle(
+                        fontSize: 26, fontWeight: pw.FontWeight.bold)),
                 pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(
                       color: receipt.isShipped
@@ -744,7 +829,8 @@ class _PacketManagerState extends State<PacketManager> {
                                   : PdfColors.blue,
                       width: 2,
                     ),
-                    borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+                    borderRadius:
+                        const pw.BorderRadius.all(pw.Radius.circular(8)),
                   ),
                   child: pw.Text(
                     receipt.status,
@@ -765,19 +851,38 @@ class _PacketManagerState extends State<PacketManager> {
             ),
             pw.SizedBox(height: 24),
             pw.Text('Order Details',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 8),
             _buildPdfDetailRow('Order ID:', receipt.id),
             _buildPdfDetailRow('Created By:', receipt.createdBy),
-            _buildPdfDetailRow('Date Created:', formatDate(receipt.dateCreated)),
-            _buildPdfDetailRow('Approved By:', receipt.approvedBy.isNotEmpty ? receipt.approvedBy : 'Not approved'),
-            _buildPdfDetailRow('Approved On:', receipt.approvedOn.isNotEmpty ? formatDate(receipt.approvedOn) : 'TBD'),
-            _buildPdfDetailRow('Shipped By:', receipt.shippedBy.isNotEmpty ? receipt.shippedBy : 'Not shipped yet'),
-            _buildPdfDetailRow('Shipped On:', receipt.shippedOn.isNotEmpty ? formatDate(receipt.shippedOn) : 'TBD'),
+            _buildPdfDetailRow(
+                'Date Created:', formatDate(receipt.dateCreated)),
+            _buildPdfDetailRow(
+                'Approved By:',
+                receipt.approvedBy.isNotEmpty
+                    ? receipt.approvedBy
+                    : 'Not approved'),
+            _buildPdfDetailRow(
+                'Approved On:',
+                receipt.approvedOn.isNotEmpty
+                    ? formatDate(receipt.approvedOn)
+                    : 'TBD'),
+            _buildPdfDetailRow(
+                'Shipped By:',
+                receipt.shippedBy.isNotEmpty
+                    ? receipt.shippedBy
+                    : 'Not shipped yet'),
+            _buildPdfDetailRow(
+                'Shipped On:',
+                receipt.shippedOn.isNotEmpty
+                    ? formatDate(receipt.shippedOn)
+                    : 'TBD'),
             pw.SizedBox(height: 24),
-            
+
             pw.Text('Included Packets',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 8),
             if (includedPackets.isEmpty)
               pw.Text('No packets included', style: pw.TextStyle(fontSize: 12))
@@ -795,16 +900,22 @@ class _PacketManagerState extends State<PacketManager> {
               ),
             pw.SizedBox(height: 24),
             pw.Text('Items',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 8),
             receipt.items.isEmpty
                 ? pw.Text('No items', style: pw.TextStyle(fontSize: 12))
                 : pw.Table.fromTextArray(
                     headers: ['Quantity', 'Description', 'Notes'],
                     data: receipt.items.values.map((item) {
-                      return [item.quantity.toString(), item.name, item.notes.isNotEmpty ? item.notes : '-'];
+                      return [
+                        item.quantity.toString(),
+                        item.name,
+                        item.notes.isNotEmpty ? item.notes : '-'
+                      ];
                     }).toList(),
-                    border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                    border: pw.TableBorder.all(
+                        color: PdfColors.grey300, width: 0.5),
                     headerStyle: pw.TextStyle(
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.black,
@@ -821,7 +932,8 @@ class _PacketManagerState extends State<PacketManager> {
       ),
     );
 
-    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
   pw.Widget _buildPdfDetailCell(String value) => pw.Padding(
@@ -868,7 +980,7 @@ class _PacketManagerState extends State<PacketManager> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: css.darkGrey,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -877,7 +989,7 @@ class _PacketManagerState extends State<PacketManager> {
                 value,
                 style: TextStyle(
                   fontSize: 14,
-                  color: valueColor ?? css.darkGrey,
+                  color: valueColor ?? Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -892,114 +1004,120 @@ class _PacketManagerState extends State<PacketManager> {
   Widget build(BuildContext context) {
     final activePackets = packets.where((p) => !p.isArchived).toList();
 
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _showCreatePacketDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Create Packet'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: css.darkBlue,
-                  foregroundColor: Colors.white,
+    return Container(
+      color: Theme.of(context).primaryColorLight,
+      child: Column(
+        children: [
+          Container(
+            color: Theme.of(context).primaryColorLight,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _showCreatePacketDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Packet'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColorDark,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        // Packet list
-        Expanded(
-          child: activePackets.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.inventory_2_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No job packets yet',
-                        style: TextStyle(
-                          fontSize: 18,
+          // Packet list
+          Expanded(
+            child: activePackets.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 64,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Create a packet to get started',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 16),
+                        Text(
+                          'No job packets yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        Text(
+                          'Create a packet to get started',
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: activePackets.length,
+                    itemBuilder: (context, index) {
+                      final packet = activePackets[index];
+                      final isSelected = packet.id == selectedPacketId;
+
+                      return PacketCard(
+                        packet: packet,
+                        isSelected: isSelected,
+                        onTap: () {
+                          setState(() => selectedPacketId = packet.id);
+                          widget.onPacketSelected?.call(packet.id);
+                          _showPacketDetailsDialog(packet);
+                        },
+                      );
+                    },
+                  ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _generateOrderReceipt,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColorDark,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(260, 54),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 16),
+                  ),
+                  child: const Text(
+                    'Generate Order',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: viewOrderReceipts,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColorDark,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(260, 54),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 16),
+                  ),
+                  child: const Text(
+                    'View Receipts',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: activePackets.length,
-                  itemBuilder: (context, index) {
-                    final packet = activePackets[index];
-                    final isSelected = packet.id == selectedPacketId;
-
-                    return PacketCard(
-                      packet: packet,
-                      isSelected: isSelected,
-                      onTap: () {
-                        setState(() => selectedPacketId = packet.id);
-                        widget.onPacketSelected?.call(packet.id);
-                        _showPacketDetailsDialog(packet);
-                      },
-                    );
-                  },
-                ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.only(bottom: 24.0), 
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: _generateOrderReceipt,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: css.darkBlue,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(260, 54), 
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                ),
-                child: const Text(
-                  'Generate Order',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              ElevatedButton(
-                onPressed: viewOrderReceipts,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: css.darkBlue,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(260, 54), 
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                ),
-                child: const Text(
-                  'View Receipts',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w200),
-                ),
-              )
-            ],
-          ),
-        )
-      ],
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }
@@ -1113,6 +1231,10 @@ class PacketDetailsDialog extends StatelessWidget {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 600),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1124,20 +1246,19 @@ class PacketDetailsDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          packet.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            packet.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        CloseButton(
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ]
-                    ),
+                          CloseButton(
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ]),
                     if (packet.notes.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -1233,7 +1354,8 @@ class PacketDetailsDialog extends StatelessWidget {
                               icon: const Icon(Icons.edit),
                               label: const Text('Edit'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: css.darkBlue,
+                                backgroundColor:
+                                    Theme.of(context).primaryColorDark,
                                 foregroundColor: Colors.white,
                               ),
                             ),
@@ -1314,6 +1436,10 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 800),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -1469,7 +1595,7 @@ class _CreatePacketDialogState extends State<CreatePacketDialog> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: css.darkBlue,
+                          backgroundColor: Theme.of(context).primaryColorDark,
                           foregroundColor: Colors.white,
                         ),
                         child: const Text('Done'),
@@ -1550,6 +1676,10 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 700),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1558,10 +1688,10 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
                 ),
                 child: Row(
@@ -1569,7 +1699,7 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                     Icon(
                       Icons.edit_outlined,
                       size: 32,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1578,7 +1708,7 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                         style: TextStyle(
                           fontSize: 22.0,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -1680,14 +1810,16 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                         Text(
                           'No routers available',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         )
                       else
                         Container(
                           constraints: const BoxConstraints(maxHeight: 200),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Theme.of(context).colorScheme.outline),
+                            border: Border.all(
+                                color: Theme.of(context).colorScheme.outline),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: ListView.builder(
@@ -1740,7 +1872,8 @@ class _EditPacketDialogState extends State<EditPacketDialog> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).primaryColor,
+                              backgroundColor:
+                                  Theme.of(context).primaryColorDark,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -1774,7 +1907,8 @@ class CreateOrderReceiptDialog extends StatefulWidget {
   final String createdBy;
 
   @override
-  State<CreateOrderReceiptDialog> createState() => _CreateOrderReceiptDialogState();
+  State<CreateOrderReceiptDialog> createState() =>
+      _CreateOrderReceiptDialogState();
 }
 
 class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
@@ -1819,6 +1953,10 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
     return Dialog(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 800),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1827,10 +1965,10 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
                 ),
                 child: Row(
@@ -1838,7 +1976,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                     Icon(
                       Icons.receipt_long_outlined,
                       size: 32,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1847,7 +1985,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                         style: TextStyle(
                           fontSize: 22.0,
                           fontWeight: FontWeight.w400,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -1869,16 +2007,18 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                         style: TextStyle(
                           fontSize: 18.0,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
                       widget.availablePackets.isEmpty
-                          ? Text('No packets available', style: theme.textTheme.bodyMedium)
+                          ? Text('No packets available',
+                              style: theme.textTheme.bodyMedium)
                           : Container(
                               constraints: const BoxConstraints(maxHeight: 180),
                               decoration: BoxDecoration(
-                                border: Border.all(color: theme.colorScheme.outline),
+                                border: Border.all(
+                                    color: theme.colorScheme.outline),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: ListView.builder(
@@ -1886,11 +2026,14 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                                 itemCount: widget.availablePackets.length,
                                 itemBuilder: (context, index) {
                                   final packet = widget.availablePackets[index];
-                                  final isSelected = _selectedPacketIds.contains(packet.id);
+                                  final isSelected =
+                                      _selectedPacketIds.contains(packet.id);
                                   return CheckboxListTile(
                                     value: isSelected,
                                     title: Text(packet.title),
-                                    subtitle: packet.notes.isNotEmpty ? Text(packet.notes) : null,
+                                    subtitle: packet.notes.isNotEmpty
+                                        ? Text(packet.notes)
+                                        : null,
                                     onChanged: (value) {
                                       setState(() {
                                         if (value == true) {
@@ -1913,7 +2056,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                         style: TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.bold,
-                          color: css.darkGrey,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1922,14 +2065,18 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                             margin: const EdgeInsets.symmetric(vertical: 4),
                             child: ListTile(
                               title: Text('${item.name} (x${item.quantity})'),
-                              subtitle: Text(item.notes.isNotEmpty ? item.notes : 'No notes'),
+                              subtitle: Text(item.notes.isNotEmpty
+                                  ? item.notes
+                                  : 'No notes'),
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete_outline),
                                 onPressed: () {
                                   setState(() => _items.remove(item));
                                 },
                               ),
-                              tileColor: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
+                              tileColor: Theme.of(context)
+                                  .secondaryHeaderColor
+                                  .withOpacity(0.1),
                             ),
                           )),
 
@@ -1949,7 +2096,7 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: css.darkGrey,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -1978,7 +2125,8 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
                                         horizontal: 16,
                                         vertical: 14,
                                       ),
@@ -1994,7 +2142,8 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      contentPadding: const EdgeInsets.symmetric(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
                                         horizontal: 16,
                                         vertical: 14,
                                       ),
@@ -2009,7 +2158,8 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                               child: ElevatedButton(
                                 onPressed: _addItem,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: css.darkBlue,
+                                  backgroundColor:
+                                      Theme.of(context).primaryColorDark,
                                   foregroundColor: Colors.white,
                                 ),
                                 child: const Text('Add Item'),
@@ -2044,7 +2194,8 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
                               Navigator.pop(context, receipt);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: css.darkBlue,
+                              backgroundColor:
+                                  Theme.of(context).primaryColorDark,
                               foregroundColor: Colors.white,
                             ),
                             child: const Text('Create'),
@@ -2062,4 +2213,3 @@ class _CreateOrderReceiptDialogState extends State<CreateOrderReceiptDialog> {
     );
   }
 }
-

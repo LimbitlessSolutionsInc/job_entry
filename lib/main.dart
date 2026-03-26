@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: css.CSS.darkTheme,
+      theme: css.CSS.lsiTheme,
       home: const TabBarWidget(),
     );
   }
@@ -58,6 +58,7 @@ class _TabBarWidgetState extends State<TabBarWidget> with SingleTickerProviderSt
             Tab(text: 'Archive'),
           ],
         ),
+        backgroundColor: Theme.of(context).primaryColorLight.withOpacity(0.9),
       ),
       body: TabBarView(
         controller: _tabController,

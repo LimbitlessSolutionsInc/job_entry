@@ -55,7 +55,7 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
           padding: const EdgeInsets.all(14),
           height: 210,
           decoration: BoxDecoration(
-            color: theme.cardColor.withOpacity(0.92),
+            color: theme.cardColor.withOpacity(0.7),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: accentColor,
@@ -63,8 +63,8 @@ class _JobTimelineCardState extends State<JobTimelineCard> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(_isHovering ? 0.14 : 0.08),
-                blurRadius: _isHovering ? 14 : 8,
+                color: Theme.of(context).shadowColor.withOpacity(_isHovering ? 0.6 : 0.3),
+                blurRadius: _isHovering ? 12 : 6,
                 offset: const Offset(0, 3),
               ),
             ],

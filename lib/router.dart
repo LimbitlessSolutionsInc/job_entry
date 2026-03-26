@@ -66,7 +66,6 @@ class _RouterPageState extends State<RouterPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-
         final isWide = width >= 900;
 
         final leftPane = RouterManager(
@@ -86,10 +85,9 @@ class _RouterPageState extends State<RouterPage> {
         );
 
         if (isWide) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: Card(
-              child: Row(
+          return Card(
+            color: Theme.of(context).primaryColorLight.withOpacity(0.9),
+            child: Row(
                 children: [
                   SizedBox(
                     width: 320,
@@ -107,17 +105,15 @@ class _RouterPageState extends State<RouterPage> {
                   ),
                 ],
               ),
-            ),
-          );
+            );
         }
 
         // show one pane at a time, with a toggle
         return Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-              child: Card(
-                child: showRouterList
+            Card(
+              color: Theme.of(context).primaryColorLight.withOpacity(0.9),
+              child: showRouterList
                     ? RouterSidebarFrame(
                         child: RouterManager(
                           onRouterSelected: _onRouterSelected,
@@ -126,7 +122,6 @@ class _RouterPageState extends State<RouterPage> {
                     : RouterProcessFrame(
                         child: RouterWorkspace(selectedRouter: selectedRouter),
                       ),
-              ),
             ),
             Positioned(
               left: 18,
@@ -305,6 +300,8 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
         title: const Text('Delete Job'),
         content: Text(
             'Are you sure you want to delete "${job.title}"? This action cannot be undone.'),
@@ -442,6 +439,10 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
 
     return Center(
       child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColorLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
         constraints: const BoxConstraints(maxWidth: 2000),
         child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
           const SizedBox(height: 20),
@@ -559,7 +560,7 @@ class _ProcessTimelineViewState extends State<ProcessTimelineView> {
                     child: FloatingActionButton(
                       heroTag: 'add-job-${widget.routerId}',
                       onPressed: _handleAdd,
-                      backgroundColor: css.darkBlue,
+                      backgroundColor: Theme.of(context).primaryColorDark,
                       foregroundColor: Colors.white,
                       tooltip: 'Add Job',
                       child: const Icon(Icons.add),
@@ -587,7 +588,7 @@ class _SectionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: Theme.of(context).canvasColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).dividerColor),
       ),

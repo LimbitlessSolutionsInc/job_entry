@@ -143,10 +143,10 @@ class _ArchivePageState extends State<ArchivePage> {
               width: 140,
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15.0,
                   fontWeight: FontWeight.w200,
-                  color: css.darkGrey,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -173,6 +173,10 @@ class _ArchivePageState extends State<ArchivePage> {
         return Dialog(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 700),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -181,7 +185,7 @@ class _ArchivePageState extends State<ArchivePage> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -212,8 +216,8 @@ class _ArchivePageState extends State<ArchivePage> {
                                 ),
                                 child: Text(
                                   isArchived ? 'Archived' : 'Active',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w200,
                                     fontSize: 12,
                                   ),
@@ -389,10 +393,10 @@ class _ArchivePageState extends State<ArchivePage> {
               width: 140,
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15.0,
                   fontWeight: FontWeight.w200,
-                  color: css.darkGrey,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -423,6 +427,10 @@ class _ArchivePageState extends State<ArchivePage> {
         return Dialog(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 700),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -431,7 +439,7 @@ class _ArchivePageState extends State<ArchivePage> {
                   Container(
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColorDark.withOpacity(0.25),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
@@ -462,8 +470,8 @@ class _ArchivePageState extends State<ArchivePage> {
                                 ),
                                 child: Text(
                                   isArchived ? 'Archived' : 'Active',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontWeight: FontWeight.w200,
                                     fontSize: 12,
                                   ),
@@ -629,6 +637,7 @@ class _ArchivePageState extends State<ArchivePage> {
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).primaryColorLight,
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: !hasAnyArchived
@@ -675,7 +684,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   letterSpacing: 1.5,
                                 ),
                               ),
@@ -730,7 +739,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   letterSpacing: 1.5,
                                 ),
                               ),
@@ -815,13 +824,6 @@ class _ArchivePageState extends State<ArchivePage> {
                                             iconSize: 20,
                                             tooltip: 'Unarchive',
                                             onPressed: () => _unarchivePacket(index),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete_forever),
-                                            iconSize: 20,
-                                            tooltip: 'Delete Permanently',
-                                            color: Colors.red,
-                                            onPressed: () => _deletePacket(index),
                                           ),
                                         ],
                                       ),
