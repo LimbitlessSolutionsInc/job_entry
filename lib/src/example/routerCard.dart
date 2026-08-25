@@ -1,0 +1,186 @@
+import 'package:flutter/material.dart';
+import 'package:css/css.dart' as css;
+
+class RouterCard extends StatelessWidget {
+  const RouterCard({
+    super.key,
+    required this.title,
+    required this.createdBy,
+    required this.createdDate,
+    this.color,
+    this.isSelected = false,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+    this.onInfo,
+    this.onArchive,
+    this.onUnarchive,
+  });
+
+  final String title;
+  final String createdBy;
+  final String createdDate;
+  final Color? color;
+  final bool isSelected;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onInfo;
+  final VoidCallback? onArchive;
+  final VoidCallback? onUnarchive;
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+          title: const Text('Delete Router'),
+          content: Text('Are you sure you want to delete "$title"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (onDelete != null) {
+                  onDelete!();
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cardColor = color ?? theme.colorScheme.primary;
+    
+    return Card(
+      clipBehavior: Clip.hardEdge,
+      elevation: isSelected ? 4 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+        side: BorderSide(
+          color: cardColor,
+          width: isSelected ? 4 : 2,
+        ),
+      ),
+      child: InkWell(
+        hoverColor: cardColor.withOpacity(0.05),
+        splashColor: cardColor.withOpacity(0.1),
+        onTap: onTap,
+        child: Container(
+          color: isSelected ? cardColor.withOpacity(0.05) : null,
+          child: SizedBox(
+            width: double.infinity,
+            height: 100,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Created by: $createdBy on $createdDate',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (onEdit != null)
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: onEdit,
+                          tooltip: 'Edit',
+                          iconSize: 18,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                        ),
+                      // if (onDelete != null)
+                      //   IconButton(
+                      //     icon: const Icon(Icons.delete),
+                      //     onPressed: () => _showDeleteConfirmation(context),
+                      //     tooltip: 'Delete',
+                      //     iconSize: 18,
+                      //     color: css.chartGrey,
+                      //     padding: const EdgeInsets.all(4),
+                      //     constraints: const BoxConstraints(
+                      //       minWidth: 20,
+                      //       minHeight: 20,
+                      //     ),
+                      //   ),
+
+                      if (onInfo != null)
+                        IconButton(
+                          icon: const Icon(Icons.info_outline),
+                          onPressed: onInfo,
+                          tooltip: 'View Details',
+                          iconSize: 18,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                        ),
+                      if (onUnarchive != null)
+                        IconButton(
+                          icon: const Icon(Icons.outbox_rounded),
+                          onPressed: onUnarchive,
+                          tooltip: 'Unarchive',
+                          iconSize: 18,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                        ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

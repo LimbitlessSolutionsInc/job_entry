@@ -1,688 +1,675 @@
-import 'package:job_entry/router.dart';
-import 'package:css/css.dart';
-
-import 'dart:async';
-import 'dart:convert';
-
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'dart:ui' as ui;
+import '../src/organization/organization.dart';
+import '../src/managers/routerManager.dart';
+import '../src/managers/jobManager.dart';
+import '../src/data/routerData.dart';
+import '../src/data/jobData.dart';
+import '../src/data/processTemplates.dart';
+import '../styles/globals.dart';
+import 'dart:math' as math;
+import 'package:css/css.dart' as css;
+import '../src/example/jobCard.dart';
 
-import '../../../src/organization/organization.dart';
-import 'src/router_master.dart';
-import '../../../styles/globals.dart';
-import '../../../src/database/database.dart';
-import '../../../src/database/push.dart';
-import '../../../src/functions/lsi_functions.dart';
-import 'styles/savedWidgets.dart';
+class RouterPage extends StatefulWidget {
+  const RouterPage({super.key});
 
-enum SelectedView { routers, archive }
-
-class RouterScreen extends StatefulWidget {
-  RouterScreen({
-    super.key,
-    required this.size
-  });
-
-  final Size size;
+  // final Size size;
 
   @override
-  State<RouterScreen> createState() => _RouterScreenState();
+  State<RouterPage> createState() => _RouterPageState();
 }
 
-class _RouterScreenState extends State<RouterScreen> {
-  bool testing = false;
-  bool update = false;
-  bool showRouterView = true;
-  String selectedProcess = '';
-  String selectedRouter = '';
-  SelectedView selectedView = SelectedView.routers;
-  List<ProcessData> processList = [];
-  List<JobData> jobList = [];
-  List<DropDownItems> dropDownWorkers = [];
-  List<DropDownItems> dropDownApprovers = [];
+class _RouterPageState extends State<RouterPage> {
+  bool showRouterList = true;
+  String? selectedRouterId;
+  RouterData? selectedRouter;
 
-  dynamic routers = {};
-
-  StreamSubscription<DatabaseEvent>? fbadded;
-  StreamSubscription<DatabaseEvent>? fbchanged;
-  StreamSubscription<DatabaseEvent>? fbremoved;
+  final List<RouterData> routers = [
+    // Sample data can be added here for demo
+  ];
 
   @override
   void initState() {
-    deviceWidth = widget.size.width;
-    deviceHeight = widget.size.height;
-    
-    dropDownWorkers = [DropDownItems(value: '', text: 'Pick Workers')];
-    if(Org.statusAllowed(StatusAllowed.allAdmins, currentUser.status)){
-      for(String uid in allUsersData.keys){
-        if(uid != 'Play Store' && allUsersData[uid]['orgData'] != null && Org.statusAllowed(StatusAllowed.all, Org.getOrgStatusFromString(allUsersData[uid]['orgData']['status'])) && 
-          allUsersData[uid]['orgData']['active'] != null && allUsersData[uid]['orgData']['active']){
-            dropDownWorkers.add( DropDownItems(value: uid, text: usersProfile[uid]['displayName']) );
-        }
-      }
-    }
-    else{
-      for(String uid in userSchedules.keys){
-        dropDownWorkers.add( DropDownItems(value: uid, text: usersProfile[uid]['displayName']) );
-      }
-    }
-
-    dropDownApprovers = [DropDownItems(value: '', text: 'Pick Approvers')] + Org.managers;
-
-    start();
-    listenToFirebase();
     super.initState();
+    selectedRouterId = routers.isNotEmpty ? routers[0].id : null;
+
+    currentUser = UsersProfile(
+      uid: 'testUser',
+      displayName: 'Test User',
+      status: OrgStatus.admin,
+      imageUrl: null,
+      canRemoteWork: true,
+    );
+
+    // deviceWidth = widget.size.width;
+    // deviceHeight = widget.size.height;
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  void _togglePane() {
+    setState(() => showRouterList = !showRouterList);
   }
 
-  void start() async {
-    try{
-      await Database.once('router/routers', 'team').then((value) {
-        setState(() {
-          routers = value;
-        });
-      });
-      if (routers != null) {
-        selectedRouter = routers.keys.first;
-      } else {
-        selectedRouter = '';
-      }
-      updateRouters();
-    }
-    catch(e){
-      print('start -> exception: $e');
-    }
-  }
-
-  void listenToFirebase() {
-    try {
-      if (testing) {
-        // final String jsonString =
-        //     await rootBundle.loadString('json/test_data.json');
-        // routers = json.decode(jsonString);
-
-        setState(() {});
-        updateRouters();
-      } else {
-        DatabaseReference ref = Database.reference('router/routers', 'team');
-
-        fbadded = ref.onChildAdded.listen((event) {
-          print('Firebase Child Added: ${event.snapshot.key}');
-          carryFunction(event);
-        });
-
-        fbchanged = ref.onChildChanged.listen((event) {
-          print('Firebase Child Changed: ${event.snapshot.key}');
-          carryFunction(event);
-        });
-
-        fbremoved = ref.onChildRemoved.listen((event) {
-          setState(() {
-            routers[event.snapshot.key] = {};
-            routers = LSIFunctions.removeNull(routers);
-            updateRouters();
-          });
-        });
-      }
-    } catch (e) {
-      print('router.dart -> listenToFirebase -> Exception: $e');
-    }
-  }
-
-  void carryFunction(event) {
-    dynamic temp = event.snapshot.value;
-    WidgetsBinding.instance.addPostFrameCallback((_){
-      setState(() {
-        routers[event.snapshot.key] = temp;
-        updateRouters();
-      });
+  void _onRouterSelected(String routerId, List<RouterData> routersList) {
+    setState(() {
+      selectedRouterId = routerId;
+      selectedRouter = routersList.firstWhere(
+        (r) => r.id == routerId,
+        orElse: () => routersList.first,
+      );
     });
-  }
-
-  void updateRouters() {
-    try {
-      if(processList.isNotEmpty){ processList.clear(); }
-      if(jobList.isNotEmpty){ jobList.clear(); }
-      // final routerMap = routers['router'];
-      // final routerKey = routerMap.keys.first;
-
-      if (selectedRouter.isNotEmpty) {
-        print('updateRouters called for $selectedRouter');
-        final router = routers[selectedRouter];
-
-        final processesMap = router['processes'];
-        int index = 0;
-        if(processesMap != null){
-          for (String processID in processesMap.keys) {
-            processList.add(ProcessData(
-              id: processID,
-              title: processesMap[processID]['title'],
-              dateCreated: processesMap[processID]['dateCreated'],
-              createdBy: processesMap[processID]['createdBy'],
-              routerId: processesMap[processID]['routerId'],
-              notify: processesMap[processID]['notify'] ?? false,
-              order: processesMap[processID]['order'] ?? index,
-            ));
-            index++;
-          }
-        }
-        //selectedProcess = processList.isNotEmpty ? processList.first.id! : '';
-
-        final jobsMap = router['jobs'];
-        if(jobsMap != null){
-          for(String jobID in jobsMap.keys) {
-            final j = jobsMap[jobID];
-            jobList.add(JobData(
-              id: jobID,
-              title: j['title'],
-              description: j['description'],
-              dateCreated: j['dateCreated'],
-              createdBy: j['createdBy'],
-              priority: j['priority'] ?? 0,
-              processId: j['processId'], 
-              dueDate: j['dueDate'],
-              completeDate: j['completedDate'],
-              startDate: j['startDate'],
-              workers: List<String>.from(j['workers']),
-              approvers: List<String>.from(j['approvers'] ?? []),
-              numApprovals: List<String>.from(j['approvers'] ?? []).length,
-              status: JobStatus.values.firstWhere((e) => e.toString().split('.').last == j['status']),
-              good: j['good'],
-              bad: j['bad'],
-              isApproved: List<String>.from(j['isApproved'] ?? []),
-              isArchive: j['isArchive'],
-              notes: (j['notes'] != null)
-                  ? Map<String, dynamic>.from(j['notes'])
-                  : null,
-              prevJobs: (j['prevJobs'] != null)
-                  ? Map<String, dynamic>.from(j['prevJobs'])
-                  : null,
-            ));
-          }
-        }
-      }
-      setState(() {});
-    } catch (e) {
-      print('router.dart -> updateRouters -> Exception: $e');
-    }
-  }
-
-  List<RouterData> routerData() {
-    List<RouterData> data = [];
-    if (routers != null && routers.isNotEmpty) {
-      for (String key in routers.keys) {
-        data.add(RouterData(
-          color: routers[key]['details']['color'],
-          title: routers[key]['details']['title'],
-          id: key,
-          createdBy: usersProfile[routers[key]['details']['createdBy']]
-              ['displayName'],
-          dateCreated: routers[key]['details']['dateCreated'],
-        ));
-      }
-    }
-    return data;
-  }
-
-  Widget routerView(){
-    return Container(
-      width: (deviceWidth - 320) > 320 ? 265 : deviceWidth - 1,
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(
-            color: Theme.of(context).primaryColorDark,
-            width: (deviceWidth - 320) > 320 ? 1 : 0,
-          ),
-        ),
-      ),
-      child: RouterManager(
-        width: (deviceWidth - 320) > 320 ? 265 : deviceWidth - 1,
-        height: deviceHeight - 25,
-        cardWidth: CSS.responsive(width: (deviceWidth - 320) > 320 ? 265 : deviceWidth),
-        allowEditing: true,
-        routerData: routerData(),
-        startRouter: selectedRouter,
-        canArchiveRouter: (id){
-          try{
-            int processCount = routers[id]['processes'].keys.length;
-            dynamic allJobs = routers[id]['jobs'];
-            bool allJobsApproved = true;
-            if(allJobs != null){
-              for(String jobId in allJobs.keys){
-                List<String> approvedList = [];
-                if(allJobs[jobId]['isApproved'] != null){
-                  approvedList = List<String>.from(allJobs[jobId]['isApproved']);
-                }
-                if(approvedList.length < processCount){
-                  allJobsApproved = false;
-                  break;
-                }
-              }
-            }
-            else{
-              allJobsApproved = false;
-            }
-
-            print('routerView -> canArchiveRouter -> allJobsApproved for $id: processCount $processCount $allJobsApproved');
-
-            return allJobsApproved;
-          }
-          catch(e){
-            print('routerView -> canArchiveRouter -> exception: $e');
-            return false;
-          }
-        },
-        onRouterTap: (id) {
-          setState(() {
-            selectedRouter = id;
-          });
-          print('selectedRouter: $selectedRouter');
-          updateRouters();
-          setState(() {
-            update = true;
-            if(showRouterView && (deviceWidth - 320) <= 320){
-              showRouterView = false;
-            }
-          });
-        },
-        onSubmit: (title, image, date, color) {
-          DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
-          String createdDate =
-              dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
-          Database.push('team', children: 'router/routers/', data: {
-            'details': {
-              'createdBy': currentUser.uid,
-              'dateCreated': createdDate,
-              'title': title,
-              'color': color,
-            }
-          });
-        },
-        onUpdate: (title, image, date, color, id) {
-          DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
-          String createdDate = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
-          Database.update(
-            'team',
-            children: 'router/routers/$id',
-            location: 'details',
-            data: {
-              'createdBy': currentUser.uid,
-              'dateCreated': createdDate,
-              'title': title,
-              'color': color,
-            }
-          );
-        },
-        //don't think we need to declare routers as empty
-        // onComplete: (id) {
-        //   DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
-        //   String createdDate = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
-        //   Database.update(
-        //     'team',
-        //     children: 'router/routers/$id/details',
-        //     location: 'complete',
-        //     data: {'markedBy': currentUser.uid, 'date': createdDate}).then((value) {
-        //       Database.update(
-        //         'team',
-        //         children: 'managment/Cus/',
-        //         location: project,
-        //         data: null
-        //       );
-        //     }
-        //   );
-        // },
-        onRouterDelete: (id) {
-          try {
-            Database.update(
-              'team',
-              children: 'router/archive',
-              location: id,
-              data: routers[id]
-            );
-
-            Database.update(
-              'team',
-              children: 'router/archive/$id/details',
-              location: 'dateArchived',
-              data: DateFormat('MM-dd-yyyy hh:mm:ss')
-                  .format(DateTime.now())
-                  .replaceAll(' ', 'T'),
-            );
- 
-            Database.update(
-              'team',
-              children: 'router/archive/$id/details',
-              location: 'archivedBy',
-              data: currentUser.uid
-            );
-
-            Database.update(
-              'team',
-              children: 'router/routers', 
-              location: id, 
-              data: null
-            );
-          } catch (e) {
-            print('router.dart -> onRouterDelete -> Exception: $e');
-          }
-        },
-        onTitleChange: (id, title) {
-          Database.update(
-            'team',
-            children: 'router/routers/$id',
-            location: 'title',
-            data: title
-          );
-        },
-      )
-    );
-  }
-
-  Widget processView(){
-    return ProcessManager(
-      update: update,
-      allowEditing: true,
-      width: (deviceWidth - 320) > 320 ? deviceWidth - 265 : deviceWidth,
-      height: deviceHeight - 25,
-      routerId: selectedRouter,
-      processData: processList,
-      jobData: jobList,
-      screenOffset: Offset(
-        (!useSideNav)? 0: ((showList)? navSize.width + sideListSize + 265:navSize.width + 265),
-        (!useSideNav) ? appBarHeight : 0
-      ),
-      callback: () {
-        setState(() {
-          update = false;
-        });
-      },
-      workers: dropDownWorkers,
-      approvers: dropDownApprovers,
-      onSubmit: (title, notify) {
-        DateFormat dayFormatter = DateFormat('MM-dd-yyyy hh:mm:ss');
-        String date = dayFormatter.format(DateTime.now()).replaceAll(' ', 'T');
-        
-        Database.push(
-          'team',
-          children: 'router/routers/$selectedRouter/processes',
-          data: {
-            'createdBy': currentUser.uid,
-            'routerId': selectedRouter,
-            'dateCreated': date,
-            'title': title,
-            'notify': notify,
-            'order': processList.length,
-          }
-        );
-      },
-      onEdit: (data, id) {
-        Database.update('team',
-            children: 'router/routers/$selectedRouter/processes',
-            location: id,
-            data: data);
-      },
-      onCreateJob: (data) {
-        if (data['workers'] != null) {
-          List<String> sendTo = [];
-          for (int i = 0; i < data['workers'].length; i++) {
-            if (data['workers'][i] != currentUser.uid) {
-              sendTo.add(data['workers'][i]);
-            }
-          }
-          if (sendTo.isNotEmpty) {
-            print('sendTo: $sendTo');
-            Messaging.sendPushMessage(sendTo, 'LSI Router Manager',
-                '${currentUser.displayName} assigned you to a new job!');
-          }
-        }
-        if (data['approvers'] != null) {
-          List<String> sendTo = [];
-          for (int i = 0; i < data['approvers'].length; i++) {
-            if (data['approvers'][i] != currentUser.uid) {
-              sendTo.add(data['approvers'][i]);
-            }
-          }
-          if (sendTo.isNotEmpty) {
-            print('sendTo: $sendTo');
-            Messaging.sendPushMessage(sendTo, 'LSI Router Manager',
-              '${currentUser.displayName} assigned you as an approver to a new job');
-          }
-        }
-        print('onCreateJob data for $selectedRouter: $data');
-        Database.push(
-          'team',
-          children: 'router/routers/$selectedRouter/jobs',
-          data: data,
-        ).then((value) {
-          setState(() {
-            update = true;
-          });
-        });
-      },
-      onEditJob: (data, loc, newWorkers) {
-        List<String> uids = [];
-        int currentCards = 0;
-
-        // for (String i in currentJobData.keys) {
-        //   if (currentJobData[i]!.id == loc) {
-        //     currentCards = (currentJobData[i]!.notes == null)? 0:currentJobData[i]!.notes!.length;
-        //   }
-        // }
-        if (data['workers'] != null && !data['workers'].toString().contains(currentUser.uid)) {
-          for (int i = 0; i < data['workers'].length; i++) {
-            uids.add(data['workers'][i]);
-          }
-        }
-        if (data['notes'] != null) {
-          if (currentCards != data['notes'].length) {
-            for (String key in data['notes'].keys) {
-              if (data['notes'][key]['createdBy'] !=
-                  currentUser.uid) {
-                uids.add(data['notes'][key]['createdBy']);
-              }
-            }
-          }
-        }
-        if (data['workers'] != null && newWorkers.isNotEmpty) {
-          List<String> sendTo = [];
-          for (int i = 0; i < newWorkers.length; i++) {
-            if (newWorkers[i] != currentUser.uid && data['workers'].contains(newWorkers[i])) {
-              uids.add(newWorkers[i]);
-            }
-          }
-          sendTo = uids.toSet().toList();
-
-          if (sendTo.isNotEmpty) {
-            Messaging.sendPushMessage(sendTo, 'LSI Router Manager',
-              '${currentUser.displayName} assigned you to a new job!');
-          }
-        }
-        Database.update(
-          'team',
-          children: 'router/routers/$selectedRouter/jobs',
-          location: loc,
-          data: data
-        ).then((value) {
-          setState(() {
-            update = true;
-          });
-        });
-      },
-      onProcessOrderChange: (val) { //continue -nlw
-        String child = 'router/routers/$selectedRouter';
-        Database.update(
-          'team',
-          children: child,
-          location: 'processes',
-          data: val
-        );
-      },
-      onJobPriorityChange: (val, change) {
-        try{
-          JobData job = jobList.firstWhere((job) => job.id == change['job']);
-          ProcessData newProcess = processList.firstWhere((proc) => proc.id == val[change['job']]['processId']);
-          ProcessData oldProcess = processList.firstWhere((proc) => proc.id == change['process']);
-          if (job.processId != change['process'] && oldProcess.notify) {
-            List<String> allowSend = [];
-            for(int i = 0; i < job.workers.length; i++){
-              if(job.workers[i] != currentUser.uid) {
-                allowSend.add(job.workers[i]);
-              }
-            }
-            for(int i = 0; i < job.approvers.length; i++){
-              if(job.approvers[i] != currentUser.uid && !allowSend.contains(job.approvers[i])) {
-                allowSend.add(job.approvers[i]);
-              }
-            }
-            if(allowSend.isNotEmpty){
-              Messaging.sendPushMessage(
-                allowSend,
-                'LSI Router Manager', 
-                '${job.title} has moved to ${newProcess.title}'
-              );
-            }
-          }
-          String child = 'router/routers/$selectedRouter';
-          for (String key in val.keys) {
-            Database.update(
-              'team',
-              children: '$child/jobs/$key',
-              location: 'priority',
-              data: val[key]['priority']
-            );
-            Database.update(
-              'team',
-              children: '$child/jobs/$key',
-              location: 'processId',
-              data: val[key]['processId']
-            );
-          }
-        }
-        catch(e){
-          print('onJobPriorityChange -> exception: $e');
-        }
-      },
-      onJobDelete: (id) {
-        Database.update(
-          'team',
-          children: 'router/routers/archive/$selectedRouter/jobs',
-          location: id,
-          data: routers[selectedRouter]['jobs'][id],
-        ).then((value) {
-          Database.update(
-            'team',
-            children: 'router/routers/$selectedRouter/jobs',
-            location: id,
-            data: null,
-          );
-        });
-      },
-      onProcessDelete: (id) {
-        Database.update(
-          'team',
-          children: 'router/routers/archive/$selectedRouter/processes',
-          location: id,
-          data: routers[selectedRouter]['processes'][id],
-        ).then((value) {
-          Database.update(
-            'team',
-            children: 'router/routers/$selectedRouter/processes',
-            location: id,
-            data: null,
-          );
-        });
-      },
-      onTitleChange: (id, title) {
-        Database.update(
-          'team',
-          children: 'router/routers/$selectedRouter/processes/$id',
-          location: 'title',
-          data: title
-        );
-      },
-    );
-  }
-
-  Widget archiveView(){
-    return RouterArchiveManager(
-      width: deviceWidth,
-      height: deviceHeight - appBarHeight,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) {
-          return;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isWide = width >= 900;
+
+        final leftPane = RouterManager(
+          onRouterSelected: _onRouterSelected,
+        );
+        final rightPane = RouterWorkspace(selectedRouter: selectedRouter);
+
+        const SizedBox(width: 12);
+        Alignment.centerLeft;
+        Text(
+          'Current User: ${currentUser.displayName}',
+          style: TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.w600,
+            color: css.darkBlue,
+          ),
+        );
+
+        if (isWide) {
+          return Card(
+            color: Theme.of(context).primaryColorLight.withOpacity(0.9),
+            child: Row(
+                children: [
+                  SizedBox(
+                    width: 320,
+                    child: RouterSidebarFrame(
+                      child: RouterManager(
+                        onRouterSelected: _onRouterSelected,
+                      ),
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: RouterProcessFrame(
+                      child: RouterWorkspace(selectedRouter: selectedRouter),
+                    ),
+                  ),
+                ],
+              ),
+            );
         }
-        setState(() {
-          // widget.callback(
-          //     call: LSICallbacks.gotoPage, place: AppScreens.main);
-        });
-      },
-      child: Container(
-        height: deviceHeight,
-        color: Theme.of(context).cardColor,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+
+        // show one pane at a time, with a toggle
+        return Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.only(top: 10),
-              width: deviceWidth,
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                border: Border(
-                  bottom: BorderSide(
-                      color: Theme.of(context).primaryColorDark,
-                      width: 1),
+            Card(
+              color: Theme.of(context).primaryColorLight.withOpacity(0.9),
+              child: showRouterList
+                    ? RouterSidebarFrame(
+                        child: RouterManager(
+                          onRouterSelected: _onRouterSelected,
+                        ),
+                      )
+                    : RouterProcessFrame(
+                        child: RouterWorkspace(selectedRouter: selectedRouter),
+                      ),
+            ),
+            Positioned(
+              left: 18,
+              bottom: 18,
+              child: FloatingActionButton(
+                onPressed: _togglePane,
+                child: Icon(
+                  showRouterList
+                      ? Icons.arrow_forward_ios
+                      : Icons.arrow_back_ios,
                 ),
               ),
-              child: Tabs(
-                tabs: const ['Routers', 'Archive'],
-                selectedTab: selectedView.index,
-                height: 25,
-                width: deviceWidth < 500 ? deviceWidth : 500,
-                onTap: (val) {
-                  setState(() {
-                    selectedView = SelectedView.values.elementAt(val);
-                  });
-                },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// A thin wrapper for sidebar
+class RouterSidebarFrame extends StatelessWidget {
+  const RouterSidebarFrame({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Padding(padding: const EdgeInsets.all(12), child: child),
+    );
+  }
+}
+
+/// A thin wrapper for process timeline
+class RouterProcessFrame extends StatelessWidget {
+  const RouterProcessFrame({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+      child: Padding(padding: const EdgeInsets.all(12), child: child),
+    );
+  }
+}
+
+/// Process timeline area
+class RouterWorkspace extends StatelessWidget {
+  const RouterWorkspace({super.key, this.selectedRouter});
+
+  final RouterData? selectedRouter;
+
+  @override
+  Widget build(BuildContext context) {
+    if (selectedRouter == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'No router selected',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(
-              height: deviceHeight - 40,
-              child: selectedView == SelectedView.routers
-              ? ((deviceWidth - 320) > 320
-                  ? Row(children: [routerView(), processView()])
-                  : Stack(
-                    children: [
-                      showRouterView ? routerView() : processView(),
-                      LSIFloatingActionButton(
-                        alignment: Alignment.bottomLeft,
-                        allowed: true, 
-                        color: Theme.of(context).secondaryHeaderColor, 
-                        icon: (showRouterView ? Icons.arrow_forward_ios : Icons.arrow_back_ios),
-                        onTap: (){
-                          setState(() {
-                            showRouterView = !showRouterView;
-                          });
-                        }
-                      )
-                    ]
-                  )
-                ) : archiveView()
-            )
+            const SizedBox(height: 8),
+            Text(
+              'Select a router from the list to view details',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
           ],
         ),
+      );
+    }
+
+    return ProcessTimelineView(
+        routerId: selectedRouter!.id,
+        processId: selectedRouter!.processId,
+        selectedRouter: selectedRouter);
+  }
+}
+
+/// Process Timeline View - Shows horizontal timeline of jobs for a router
+class ProcessTimelineView extends StatefulWidget {
+  const ProcessTimelineView({
+    super.key,
+    required this.routerId,
+    required this.processId,
+    required this.selectedRouter,
+  });
+
+  final String routerId;
+  final String processId;
+  final RouterData? selectedRouter;
+
+  @override
+  State<ProcessTimelineView> createState() => _ProcessTimelineViewState();
+}
+
+class _ProcessTimelineViewState extends State<ProcessTimelineView> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-scroll to first in-progress job after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToFirstInProgressJob();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToFirstInProgressJob() {
+    final jobs = RouterManager.routerJobs[widget.routerId] ?? [];
+    final firstInProgressIndex =
+        jobs.indexWhere((job) => job.status == JobStatus.inProgress);
+
+    if (firstInProgressIndex != -1 && _scrollController.hasClients) {
+      final scrollPosition = firstInProgressIndex * 300.0;
+      _scrollController.animateTo(
+        scrollPosition,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  /// Handle editing a job
+  Future<void> _handleEdit(JobData job) async {
+    final updatedJob = await showEditJobDialog(context, job);
+    if (updatedJob != null) {
+      setState(() {
+        final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+        final jobIndex = jobList.indexWhere((j) => j.id == job.id);
+        if (jobIndex != -1) {
+          jobList[jobIndex] = updatedJob;
+        }
+      });
+
+      // Reopen the details dialog to show updated data
+      showJobDetailsDialog(
+        context,
+        updatedJob,
+        onEdit: () => _handleEdit(updatedJob),
+        onDelete: () => _handleDelete(updatedJob),
+        onStatusChange: (updatedJobFromStatus) =>
+            _handleStatusChange(updatedJobFromStatus),
+      );
+    }
+  }
+
+  /// Handle status change from job details dialog
+  void _handleStatusChange(JobData updatedJob) {
+    setState(() {
+      final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+      final jobIndex = jobList.indexWhere((j) => j.id == updatedJob.id);
+      if (jobIndex != -1) {
+        jobList[jobIndex] = updatedJob;
+      }
+    });
+  }
+
+  /// Handle deleting a job with confirmation
+  Future<void> _handleDelete(JobData job) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+        title: const Text('Delete Job'),
+        content: Text(
+            'Are you sure you want to delete "${job.title}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+        jobList.removeWhere((j) => j.id == job.id);
+      });
+    }
+  }
+
+  /// Handle adding a new job at the end of timeline
+  Future<void> _handleAdd() async {
+    final newJob = await showCreateJobDialog(
+      context,
+      routerId: widget.routerId,
+      processId: widget.processId,
+    );
+    if (newJob != null) {
+      setState(() {
+        final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+        jobList.add(newJob);
+      });
+    }
+  }
+
+  void _handleReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final jobList = RouterManager.routerJobs[widget.routerId] ?? [];
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final moved = jobList.removeAt(oldIndex);
+      jobList.insert(newIndex, moved);
+    });
+  }
+
+  // status pie chart
+  /* Widget _buildStatusPie(List<JobData> jobs) {
+    final relevant = jobs.where((j) => j.status != JobStatus.skipped).toList();
+    if (relevant.isEmpty) return const SizedBox.shrink();
+    final total = relevant.length;
+    final notStarted = relevant.where((j) => j.status == JobStatus.notStarted).length;
+    final inProgress = relevant.where((j) => j.status == JobStatus.inProgress).length;
+    final completed = relevant.where((j) => j.status == JobStatus.completed).length;
+
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: CustomPaint(
+        painter: _PiePainter(
+            notStarted: notStarted,
+            inProgress: inProgress,
+            completed: completed,
+            total: total),
+      ),
+    );
+  } */
+
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (!_scrollController.hasClients) return;
+    if (event is PointerScrollEvent) {
+      final maxExtent = _scrollController.position.maxScrollExtent;
+      final nextOffset = (_scrollController.offset + event.scrollDelta.dy)
+          .clamp(0.0, maxExtent)
+          .toDouble();
+      _scrollController.jumpTo(nextOffset);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Get jobs for this router
+    final jobs = RouterManager.routerJobs[widget.routerId] ?? [];
+
+    // Get process type from process ID
+    final processType = RouterManager.processIdToType[widget.processId];
+
+    // Text(
+    //   'Process: $processType',
+    //   textAlign: TextAlign.center,
+    //   style: const TextStyle(
+    //     fontSize: 20,
+    //   ),
+    // );
+
+    // if (jobs.isEmpty || processType == null) {
+    //   return SizedBox(
+    //     height: 100,
+    //     child: Center(
+    //       child: Column(
+    //         mainAxisAlignment: MainAxisAlignment.center,
+    //         children: [
+    //           Text(
+    //             'Create a job to get started!',
+    //             textAlign: TextAlign.center,
+    //             style: TextStyle(
+    //               fontSize: 28,
+    //               color: Colors.grey[600],
+    //             ),
+    //           ),
+    //           IconButton(
+    //             onPressed: () {
+    //               _handleAdd(0);
+    //             },
+    //             icon: Icon(
+    //               Icons.add_circle_outline,
+    //               size: 70,
+    //               color: Colors.grey[400],
+    //             ),
+    //           ),
+    //         ],
+    //       ),
+    //     ),
+    //   );
+    // }
+
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColorLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        constraints: const BoxConstraints(maxWidth: 2000),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          const SizedBox(height: 20),
+          // Column(
+          //   children: [
+          //     Text(
+          //       'Router Name: ${widget.selectedRouter?.title ?? 'Unknown Router'}',
+          //       textAlign: TextAlign.center,
+          //       style: const TextStyle(
+          //         fontSize: 18,
+          //         color: Colors.grey,
+          //       ),
+          //     ),
+          //     const SizedBox(height: 8),
+          //   ],
+          // ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Tooltip(
+                message:
+                    '${widget.selectedRouter?.title ?? 'Unknown Router'}',
+                waitDuration: const Duration(milliseconds: 250),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 24,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withOpacity(0.9),
+                  ),
+                ),
+              ),
+              //if (jobs.isNotEmpty) _buildStatusPie(jobs),
+            ],
+          ),
+          Expanded(
+            child: SizedBox(
+              child: Stack(
+                children: [
+                  Listener(
+                    onPointerSignal: _handlePointerSignal,
+                    child: (jobs.isEmpty || processType == null)
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'No jobs yet in this router',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Click the + button to create the first job!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ReorderableListView.builder(
+                            key: ValueKey(widget.routerId),
+                            scrollDirection: Axis.horizontal,
+                            scrollController: _scrollController,
+                            buildDefaultDragHandles: false,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            itemCount: jobs.length,
+                            onReorder: _handleReorder,
+                            proxyDecorator: (child, index, animation) {
+                              return Material(
+                                color: Colors.transparent,
+                                elevation: 8,
+                                borderRadius: BorderRadius.circular(14),
+                                child: child,
+                              );
+                            },
+                            itemBuilder: (context, i) {
+                              return SizedBox(
+                                key: ValueKey(jobs[i].id),
+                                width: 280,
+                                child: ReorderableDragStartListener(
+                                  index: i,
+                                  child: JobTimelineCard(
+                                    job: jobs[i],
+                                    jobNumber: i + 1,
+                                    onTap: () {
+                                      showJobDetailsDialog(
+                                        context,
+                                        jobs[i],
+                                        onEdit: () => _handleEdit(jobs[i]),
+                                        onDelete: () => _handleDelete(jobs[i]),
+                                        onStatusChange: (updatedJob) =>
+                                            _handleStatusChange(updatedJob),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: FloatingActionButton(
+                      heroTag: 'add-job-${widget.routerId}',
+                      onPressed: _handleAdd,
+                      backgroundColor: Theme.of(context).primaryColorDark,
+                      foregroundColor: Colors.white,
+                      tooltip: 'Add Job',
+                      child: const Icon(Icons.add),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        ]),
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).canvasColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+// CustomPainter that draws three colored slices inside a circle
+/* class _PiePainter extends CustomPainter {
+  final int notStarted;
+  final int inProgress;
+  final int completed;
+  final int total;
+
+  _PiePainter({
+    required this.notStarted,
+    required this.inProgress,
+    required this.completed,
+    required this.total,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    double startAngle = -math.pi / 2;
+
+    void drawSlice(int count, Color color) {
+      if (count == 0) return;
+      final sweep = (count / total) * 2 * math.pi;
+      paint.color = color;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweep,
+        true,
+        paint,
+      );
+      startAngle += sweep;
+    }
+
+    drawSlice(notStarted, Colors.grey);
+    drawSlice(inProgress, Colors.blue);
+    drawSlice(completed, Colors.green);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PiePainter old) {
+    return old.notStarted != notStarted ||
+        old.inProgress != inProgress ||
+        old.completed != completed ||
+        old.total != total;
+  }
+} */
+
+class _Job extends StatelessWidget {
+  const _Job();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 700),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Theme.of(context).dividerColor),
+        ),
+        child: const Text('Process and jobs', textAlign: TextAlign.center),
       ),
     );
   }
